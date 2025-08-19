@@ -262,141 +262,140 @@ export default function Campaigns() {
                 </div>
               )}
               
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              <div className="space-y-4">
                 {filteredCampaigns.map((campaign: EmailCampaign) => (
-                  <Card key={campaign.id} className="hover:shadow-lg transition-shadow relative">
-                    <div className="absolute top-4 left-4 z-10">
-                      <Checkbox
-                        checked={selectedCampaigns.includes(campaign.id)}
-                        onCheckedChange={(checked) => handleCampaignSelect(campaign.id, !!checked)}
-                        data-testid={`checkbox-campaign-${campaign.id}`}
-                      />
-                    </div>
-                    
-                    <CardHeader className="pb-3 pt-12">
-                      <div className="flex items-start justify-between">
+                  <Card key={campaign.id} className="hover:shadow-md transition-shadow">
+                    <CardContent className="p-6">
+                      <div className="flex items-start space-x-4">
+                        <div className="pt-1">
+                          <Checkbox
+                            checked={selectedCampaigns.includes(campaign.id)}
+                            onCheckedChange={(checked) => handleCampaignSelect(campaign.id, !!checked)}
+                            data-testid={`checkbox-campaign-${campaign.id}`}
+                          />
+                        </div>
+                        
                         <div className="flex-1">
-                          <CardTitle className="text-lg font-medium text-gray-900 line-clamp-1">
-                            {campaign.subject}
-                          </CardTitle>
-                          <div className="flex items-center mt-2">
-                            <Badge className={getStatusColor(campaign.status)}>
-                              {formatStatus(campaign.status)}
-                            </Badge>
-                            {campaign.isFollowUp && (
-                              <Badge variant="outline" className="ml-2">
-                                Follow-up #{campaign.followUpSequence}
-                              </Badge>
-                            )}
-                          </div>
-                        </div>
-                      </div>
-                    </CardHeader>
-                    
-                    <CardContent>
-                      <div className="space-y-3">
-                        <div className="text-sm text-gray-600 line-clamp-3">
-                          {campaign.content.substring(0, 150)}...
-                        </div>
-
-                        <div className="flex items-center justify-between text-xs text-gray-500">
-                          <span>
-                            {campaign.tone.charAt(0).toUpperCase() + campaign.tone.slice(1)} tone
-                          </span>
-                          <span>
-                            {campaign.createdAt 
-                              ? new Date(campaign.createdAt).toLocaleDateString()
-                              : ""
-                            }
-                          </span>
-                        </div>
-
-                        {campaign.sentAt && (
-                          <div className="text-xs text-gray-500">
-                            Sent: {new Date(campaign.sentAt).toLocaleString()}
-                          </div>
-                        )}
-
-                        {campaign.openedAt && (
-                          <div className="text-xs text-green-600">
-                            Opened: {new Date(campaign.openedAt).toLocaleString()}
-                          </div>
-                        )}
-
-                        {campaign.repliedAt && (
-                          <div className="text-xs text-blue-600">
-                            Replied: {new Date(campaign.repliedAt).toLocaleString()}
-                          </div>
-                        )}
-
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                          <Button variant="ghost" size="sm" data-testid={`button-view-${campaign.id}`}>
-                            <Eye className="h-3 w-3 mr-1" />
-                            View
-                          </Button>
-                          
-                          {campaign.status === 'draft' ? (
-                            <div className="flex space-x-1">
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => setEditingCampaign(campaign)}
-                                data-testid={`button-edit-${campaign.id}`}
-                              >
-                                <Edit className="h-3 w-3 mr-1" />
-                                Edit
-                              </Button>
-                              <Button 
-                                variant="ghost" 
-                                size="sm"
-                                onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                                data-testid={`button-send-${campaign.id}`}
-                              >
-                                <Send className="h-3 w-3 mr-1" />
-                                Send
-                              </Button>
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <h3 className="text-lg font-semibold text-gray-900 mb-2">
+                                {campaign.subject}
+                              </h3>
+                              <div className="flex items-center space-x-3 mb-3">
+                                <Badge className={getStatusColor(campaign.status)}>
+                                  {formatStatus(campaign.status)}
+                                </Badge>
+                                {campaign.isFollowUp && (
+                                  <Badge variant="outline">
+                                    Follow-up #{campaign.followUpSequence}
+                                  </Badge>
+                                )}
+                                <span className="text-sm text-gray-500">
+                                  {campaign.tone.charAt(0).toUpperCase() + campaign.tone.slice(1)} tone
+                                </span>
+                              </div>
                             </div>
-                          ) : (
-                            <>
-                              {campaign.status === 'sent' && !campaign.isFollowUp && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedCampaignForSchedule(campaign);
-                                    setShowFollowUpScheduler(true);
-                                  }}
-                                  data-testid={`button-schedule-${campaign.id}`}
-                                >
-                                  <Clock className="h-3 w-3 mr-1" />
-                                  Follow-up
-                                </Button>
-                              )}
-                            </>
-                          )}
-                          
-                          <AlertDialog>
-                            <AlertDialogTrigger asChild>
-                              <Button variant="ghost" size="sm" data-testid={`button-delete-${campaign.id}`}>
-                                <Trash2 className="h-3 w-3 mr-1" />
-                                Delete
+                            
+                            <div className="flex items-center space-x-2 ml-4">
+                              <Button variant="ghost" size="sm" data-testid={`button-view-${campaign.id}`}>
+                                <Eye className="h-4 w-4 mr-1" />
+                                View
                               </Button>
-                            </AlertDialogTrigger>
-                            <AlertDialogContent>
-                              <AlertDialogHeader>
-                                <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
-                                <AlertDialogDescription>
-                                  Are you sure you want to delete "{campaign.subject}"? This action cannot be undone.
-                                </AlertDialogDescription>
-                              </AlertDialogHeader>
-                              <AlertDialogFooter>
-                                <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                <AlertDialogAction onClick={() => deleteCampaignMutation.mutate(campaign.id)}>
-                                  Delete
-                                </AlertDialogAction>
-                              </AlertDialogFooter>
-                            </AlertDialogContent>
-                          </AlertDialog>
+                              
+                              {campaign.status === 'draft' ? (
+                                <>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => setEditingCampaign(campaign)}
+                                    data-testid={`button-edit-${campaign.id}`}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Edit
+                                  </Button>
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                                    data-testid={`button-send-${campaign.id}`}
+                                  >
+                                    <Send className="h-4 w-4 mr-1" />
+                                    Send
+                                  </Button>
+                                </>
+                              ) : (
+                                <>
+                                  {campaign.status === 'sent' && !campaign.isFollowUp && (
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedCampaignForSchedule(campaign);
+                                        setShowFollowUpScheduler(true);
+                                      }}
+                                      data-testid={`button-schedule-${campaign.id}`}
+                                    >
+                                      <Clock className="h-4 w-4 mr-1" />
+                                      Follow-up
+                                    </Button>
+                                  )}
+                                </>
+                              )}
+                              
+                              <AlertDialog>
+                                <AlertDialogTrigger asChild>
+                                  <Button variant="ghost" size="sm" data-testid={`button-delete-${campaign.id}`}>
+                                    <Trash2 className="h-4 w-4 mr-1" />
+                                    Delete
+                                  </Button>
+                                </AlertDialogTrigger>
+                                <AlertDialogContent>
+                                  <AlertDialogHeader>
+                                    <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+                                    <AlertDialogDescription>
+                                      Are you sure you want to delete "{campaign.subject}"? This action cannot be undone.
+                                    </AlertDialogDescription>
+                                  </AlertDialogHeader>
+                                  <AlertDialogFooter>
+                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                    <AlertDialogAction onClick={() => deleteCampaignMutation.mutate(campaign.id)}>
+                                      Delete
+                                    </AlertDialogAction>
+                                  </AlertDialogFooter>
+                                </AlertDialogContent>
+                              </AlertDialog>
+                            </div>
+                          </div>
+                          
+                          <div className="text-sm text-gray-600 mb-3 line-clamp-2">
+                            {campaign.content.substring(0, 200)}...
+                          </div>
+                          
+                          <div className="flex items-center justify-between text-xs text-gray-500">
+                            <div className="flex items-center space-x-4">
+                              <span>
+                                Created: {campaign.createdAt 
+                                  ? new Date(campaign.createdAt).toLocaleDateString()
+                                  : ""
+                                }
+                              </span>
+                              {campaign.sentAt && (
+                                <span className="text-gray-600">
+                                  Sent: {new Date(campaign.sentAt).toLocaleString()}
+                                </span>
+                              )}
+                              {campaign.openedAt && (
+                                <span className="text-green-600">
+                                  Opened: {new Date(campaign.openedAt).toLocaleString()}
+                                </span>
+                              )}
+                              {campaign.repliedAt && (
+                                <span className="text-blue-600">
+                                  Replied: {new Date(campaign.repliedAt).toLocaleString()}
+                                </span>
+                              )}
+                            </div>
+                          </div>
                         </div>
                       </div>
                     </CardContent>
