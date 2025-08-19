@@ -162,24 +162,21 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
                     {getStatusBadge(campaign.status)}
                   </div>
 
-                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-4">
-                    <div className="text-center p-3 bg-white rounded border">
-                      <p className="text-2xl font-bold text-blue-600">
-                        {campaign.sentAt ? "1" : "0"}
-                      </p>
-                      <p className="text-sm text-gray-600">Sent</p>
+                  <div className="flex items-center space-x-6 mb-4 text-sm">
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-blue-600">
+                        {campaign.sentAt ? "1" : "0"} Sent
+                      </span>
                     </div>
-                    <div className="text-center p-3 bg-white rounded border">
-                      <p className="text-2xl font-bold text-green-600">
-                        {campaign.openedAt ? "1" : "0"}
-                      </p>
-                      <p className="text-sm text-gray-600">Opened</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-green-600">
+                        {campaign.openedAt ? "1" : "0"} Opened
+                      </span>
                     </div>
-                    <div className="text-center p-3 bg-white rounded border">
-                      <p className="text-2xl font-bold text-purple-600">
-                        {campaign.repliedAt ? "1" : "0"}
-                      </p>
-                      <p className="text-sm text-gray-600">Replied</p>
+                    <div className="flex items-center space-x-2">
+                      <span className="font-medium text-purple-600">
+                        {campaign.repliedAt ? "1" : "0"} Replied
+                      </span>
                     </div>
                   </div>
 
