@@ -31,7 +31,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
   const [generatedEmail, setGeneratedEmail] = useState<EmailGenerationResponse | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [editedSubject, setEditedSubject] = useState("");
-  
+
   const { toast } = useToast();
 
   // Fetch leads for selection
@@ -152,6 +152,75 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
       subject: editedSubject,
       content: editedContent,
     });
+  };
+
+  // Send email mutation
+  const sendEmailMutation = useMutation({
+    mutationFn: async () => {
+      // First save the campaign
+      const response = await apiRequest("POST", "/api/email-campaigns", {
+        leadId: selectedLeadId,
+        subject: editedSubject,
+        content: editedContent,
+        tone: selectedTone,
+        isFollowUp: false,
+        followUpSequence: 0,
+      });
+      const campaignData = await response.json();
+
+      // Then send the email
+      const sendResponse = await apiRequest("POST", `/api/campaigns/${campaignData.id}/send`, {
+        leadId: selectedLeadId,
+      });
+      return sendResponse.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Success",
+        description: "Email sent successfully!",
+      });
+      onSuccess();
+    },
+    onError: (error) => {
+      if (isUnauthorizedError(error)) {
+        toast({
+          title: "Unauthorized",
+          description: "You are logged out. Logging in again...",
+          variant: "destructive",
+        });
+        setTimeout(() => {
+          window.location.href = "/api/login";
+        }, 500);
+        return;
+      }
+      toast({
+        title: "Error",
+        description: "Failed to send email",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleSendEmail = () => {
+    if (!editedSubject || !editedContent) {
+      toast({
+        title: "Error",
+        description: "Please ensure both subject and content are filled",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!selectedLeadId) {
+      toast({
+        title: "Error",
+        description: "Please select a lead first",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    sendEmailMutation.mutate();
   };
 
   const toneOptions = [
@@ -340,22 +409,22 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
               </Button>
             )}
           </div>
-          
+
           <div className="flex items-center space-x-3">
             <Button
               variant="outline"
               onClick={onClose}
-              disabled={generateMutation.isPending || saveMutation.isPending}
+              disabled={generateMutation.isPending || saveMutation.isPending || sendEmailMutation.isPending}
             >
               Cancel
             </Button>
-            
+
             {generatedEmail && (
               <>
                 <Button
                   variant="outline"
                   onClick={handleSave}
-                  disabled={saveMutation.isPending}
+                  disabled={saveMutation.isPending || sendEmailMutation.isPending}
                 >
                   {saveMutation.isPending ? (
                     <>
@@ -369,13 +438,23 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
                     </>
                   )}
                 </Button>
-                
+
                 <Button
                   className="bg-primary-500 hover:bg-primary-600"
-                  disabled={saveMutation.isPending}
+                  onClick={handleSendEmail}
+                  disabled={saveMutation.isPending || sendEmailMutation.isPending}
                 >
-                  <i className="fas fa-paper-plane mr-2"></i>
-                  Send Email
+                  {sendEmailMutation.isPending ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Sending...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-paper-plane mr-2"></i>
+                      Send Email
+                    </>
+                  )}
                 </Button>
               </>
             )}

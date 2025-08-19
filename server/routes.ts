@@ -449,16 +449,20 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { leadId } = req.body;
       
+      if (!leadId) {
+        return res.status(400).json({ success: false, error: "Lead ID is required" });
+      }
+      
       const result = await emailService.sendCampaignEmail(id, leadId);
       
       if (result.success) {
-        res.json({ success: true, messageId: result.messageId });
+        res.json({ success: true, messageId: result.messageId, trackingId: result.trackingId });
       } else {
         res.status(400).json({ success: false, error: result.error });
       }
     } catch (error) {
       console.error("Error sending email:", error);
-      res.status(500).json({ message: "Failed to send email" });
+      res.status(500).json({ success: false, message: "Failed to send email" });
     }
   });
 
