@@ -1,7 +1,8 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
+import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -17,6 +18,7 @@ export default function Campaigns() {
   
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
+  const queryClient = useQueryClient();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -34,8 +36,29 @@ export default function Campaigns() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
-    queryKey: ["/api/campaigns"],
+    queryKey: ["/api/email-campaigns"],
     enabled: isAuthenticated,
+  });
+
+  // Send email mutation
+  const sendEmailMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      return await apiRequest("POST", `/api/email-campaigns/${campaignId}/send`);
+    },
+    onSuccess: (data, campaignId) => {
+      toast({
+        title: "Success",
+        description: "Email sent successfully!",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to send email",
+        variant: "destructive",
+      });
+    },
   });
 
   const getStatusColor = (status: string) => {
@@ -173,6 +196,34 @@ export default function Campaigns() {
                           <i className="fas fa-eye mr-1"></i>
                           View
                         </Button>
+                        
+                        {campaign.status === 'draft' && campaign.leadId && (
+                          <Button 
+                            size="sm"
+                            onClick={() => sendEmailMutation.mutate(campaign.id)}
+                            disabled={sendEmailMutation.isPending}
+                            data-testid={`button-send-${campaign.id}`}
+                          >
+                            {sendEmailMutation.isPending ? (
+                              <>
+                                <i className="fas fa-spinner fa-spin mr-1"></i>
+                                Sending...
+                              </>
+                            ) : (
+                              <>
+                                <i className="fas fa-paper-plane mr-1"></i>
+                                Send
+                              </>
+                            )}
+                          </Button>
+                        )}
+                        
+                        {campaign.status === 'sent' && (
+                          <Button variant="outline" size="sm">
+                            <i className="fas fa-clock mr-1"></i>
+                            Schedule Follow-up
+                          </Button>
+                        )}
                         <Button variant="ghost" size="sm">
                           <i className="fas fa-edit mr-1"></i>
                           Edit
