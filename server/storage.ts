@@ -87,7 +87,7 @@ export class DatabaseStorage implements IStorage {
     return newLead;
   }
 
-  async updateLead(id: string, lead: Partial<InsertLead>): Promise<Lead> {
+  async updateLead(id: string, lead: Partial<InsertLead> & { lastContactDate?: Date }): Promise<Lead> {
     const [updatedLead] = await db
       .update(leads)
       .set({ ...lead, updatedAt: new Date() })
@@ -114,6 +114,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Email campaign operations
+  async getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | undefined> {
+    // In a real implementation, you'd store trackingId in the database
+    // For now, extract campaign ID from tracking ID
+    const [campaignId] = trackingId.split('_');
+    return this.getEmailCampaignById(campaignId);
+  }
+
   async getEmailCampaigns(leadId?: string, limit = 50): Promise<EmailCampaign[]> {
     const query = db.select().from(emailCampaigns);
     
@@ -145,10 +152,23 @@ export class DatabaseStorage implements IStorage {
     return newCampaign!;
   }
 
-  async updateEmailCampaign(id: string, campaign: Partial<InsertEmailCampaign>): Promise<EmailCampaign> {
+  async updateEmailCampaign(id: string, campaign: Partial<InsertEmailCampaign> & { sentAt?: Date; openedAt?: Date; repliedAt?: Date }): Promise<EmailCampaign> {
+    const updateData: any = { ...campaign, updatedAt: new Date() };
+    
+    // Set timestamps based on status
+    if (campaign.status === 'sent' && !updateData.sentAt) {
+      updateData.sentAt = new Date();
+    }
+    if (campaign.status === 'opened' && !updateData.openedAt) {
+      updateData.openedAt = new Date();
+    }
+    if (campaign.status === 'replied' && !updateData.repliedAt) {
+      updateData.repliedAt = new Date();
+    }
+
     const [updatedCampaign] = await db
       .update(emailCampaigns)
-      .set({ ...campaign, updatedAt: new Date() })
+      .set(updateData)
       .where(eq(emailCampaigns.id, id))
       .returning();
     return updatedCampaign;

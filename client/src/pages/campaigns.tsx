@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AIEmailGenerator from "@/components/email/ai-email-generator";
+import EmailTracker from "@/components/email/email-tracker";
 import type { EmailCampaign } from "@shared/schema";
 
 export default function Campaigns() {
@@ -31,8 +32,8 @@ export default function Campaigns() {
     }
   }, [isAuthenticated, isLoading, toast]);
 
-  const { data: campaigns, isLoading: campaignsLoading } = useQuery({
-    queryKey: ["/api/email-campaigns"],
+  const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
+    queryKey: ["/api/campaigns"],
     enabled: isAuthenticated,
   });
 
@@ -98,13 +99,16 @@ export default function Campaigns() {
             </Button>
           </div>
 
+          {/* Email Tracking Dashboard */}
+          <EmailTracker />
+
           {/* Campaigns Grid */}
           {campaignsLoading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
               <p className="text-gray-600">Loading campaigns...</p>
             </div>
-          ) : campaigns && campaigns.length > 0 ? (
+          ) : campaigns && Array.isArray(campaigns) && campaigns.length > 0 ? (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {campaigns.map((campaign: EmailCampaign) => (
                 <Card key={campaign.id} className="hover:shadow-lg transition-shadow">

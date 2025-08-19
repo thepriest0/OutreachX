@@ -2,6 +2,8 @@ import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, isAuthenticated } from "./replitAuth";
+import { emailService } from "./services/emailService";
+import { generateEmail } from "./services/gemini";
 import { insertLeadSchema, insertEmailCampaignSchema, insertInsightSchema } from "@shared/schema";
 import { generateColdEmail, generateFollowUpEmail, generateInsights } from "./services/gemini";
 import { parseLeadsFromCSV, validateCSVLeads, convertLeadsToCSV, getCSVTemplate } from "./services/csvHandler";
@@ -250,6 +252,75 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error generating email:", error);
       res.status(500).json({ message: "Failed to generate email" });
+    }
+  });
+
+  // Email campaign tracking routes
+  app.get('/api/email/track/open/:trackingId', async (req, res) => {
+    try {
+      const { trackingId } = req.params;
+      await emailService.handleEmailOpen(trackingId);
+      
+      // Return 1x1 transparent pixel
+      const pixel = Buffer.from('R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7', 'base64');
+      res.set({
+        'Content-Type': 'image/gif',
+        'Content-Length': pixel.length.toString(),
+        'Cache-Control': 'no-cache, no-store, must-revalidate'
+      });
+      res.send(pixel);
+    } catch (error) {
+      console.error("Error tracking email open:", error);
+      res.status(200).send(); // Still return success to avoid broken images
+    }
+  });
+
+  app.get('/api/email/track/click/:trackingId', async (req, res) => {
+    try {
+      const { trackingId } = req.params;
+      const { url } = req.query;
+      
+      if (url) {
+        await emailService.handleEmailClick(trackingId, url as string);
+        res.redirect(url as string);
+      } else {
+        res.status(400).json({ message: "URL parameter required" });
+      }
+    } catch (error) {
+      console.error("Error tracking email click:", error);
+      res.status(500).json({ message: "Failed to track click" });
+    }
+  });
+
+  app.post('/api/campaigns/:id/send', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { leadId } = req.body;
+      
+      const result = await emailService.sendCampaignEmail(id, leadId);
+      
+      if (result.success) {
+        res.json({ success: true, messageId: result.messageId });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error("Error sending email:", error);
+      res.status(500).json({ message: "Failed to send email" });
+    }
+  });
+
+  app.post('/api/campaigns/:id/schedule-followup', isAuthenticated, async (req: any, res) => {
+    try {
+      const { id } = req.params;
+      const { delay } = req.body; // delay in seconds
+      
+      const followUpId = await emailService.scheduleFollowUp(id, delay || 86400); // Default 24 hours
+      
+      res.json({ success: true, followUpCampaignId: followUpId });
+    } catch (error) {
+      console.error("Error scheduling follow-up:", error);
+      res.status(500).json({ message: "Failed to schedule follow-up" });
     }
   });
 
