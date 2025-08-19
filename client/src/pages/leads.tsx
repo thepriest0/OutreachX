@@ -167,7 +167,7 @@ export default function Leads() {
                   </Button>
                   <Button
                     onClick={() => setShowLeadForm(true)}
-                    className="bg-primary-500 hover:bg-primary-600"
+                    className="bg-blue-600 hover:bg-blue-700 text-white"
                   >
                     <i className="fas fa-plus mr-2"></i>
                     Add Lead
