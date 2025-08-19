@@ -1,3 +1,4 @@
+
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -232,7 +233,7 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
                             <Button
                               onClick={() => scheduleFollowUpMutation.mutate({ 
                                 campaignId: campaign.id, 
-                                delay: 86400 // 24 hours
+                                delay: 86400
                               })}
                               disabled={scheduleFollowUpMutation.isPending}
                               size="sm"

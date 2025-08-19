@@ -28,7 +28,7 @@ export default function Leads() {
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
-  
+
   const { toast } = useToast();
   const { user, isLoading, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
@@ -63,11 +63,11 @@ export default function Leads() {
       const response = await fetch("/api/leads/export", {
         credentials: "include",
       });
-      
+
       if (!response.ok) {
         throw new Error("Export failed");
       }
-      
+
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement("a");
@@ -77,7 +77,7 @@ export default function Leads() {
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
-      
+
       toast({
         title: "Success",
         description: "Leads exported successfully",
@@ -137,7 +137,7 @@ export default function Leads() {
           title="Leads"
           subtitle="Manage your lead database and track outreach progress."
         />
-        
+
         <div className="p-6">
           <Card>
             <CardContent className="p-6">
