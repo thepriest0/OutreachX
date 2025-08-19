@@ -1,7 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
 import { storage } from "./storage";
-import { setupAuth, isAuthenticated } from "./replitAuth";
+import { setupAuth, requireAuth, requireRole } from "./auth";
 import { emailService } from "./services/emailService";
 import { generateEmail } from "./services/gemini";
 import { insertLeadSchema, insertEmailCampaignSchema, insertInsightSchema } from "@shared/schema";
@@ -16,7 +16,7 @@ const upload = multer({ storage: multer.memoryStorage() });
 
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
-  await setupAuth(app);
+  setupAuth(app);
 
   // Start follow-up scheduler
   followUpScheduler.start();
@@ -108,22 +108,12 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Auth routes
-  app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
-    try {
-      const userId = req.user.claims.sub;
-      const user = await storage.getUser(userId);
-      res.json(user);
-    } catch (error) {
-      console.error("Error fetching user:", error);
-      res.status(500).json({ message: "Failed to fetch user" });
-    }
-  });
+  // User info route (already handled in auth.ts)
 
   // Dashboard routes
-  app.get('/api/dashboard/stats', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/stats', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getDashboardStats(userId);
       res.json(stats);
     } catch (error) {
@@ -132,9 +122,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/dashboard/recent-leads', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/recent-leads', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const limit = parseInt(req.query.limit as string) || 5;
       const leads = await storage.getRecentLeads(userId, limit);
       res.json(leads);
@@ -145,9 +135,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Leads routes
-  app.get('/api/leads', isAuthenticated, async (req: any, res) => {
+  app.get('/api/leads', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const limit = parseInt(req.query.limit as string) || 50;
       const search = req.query.search as string;
       
@@ -165,7 +155,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leads/:id', isAuthenticated, async (req, res) => {
+  app.get('/api/leads/:id', requireAuth, async (req, res) => {
     try {
       const lead = await storage.getLeadById(req.params.id);
       if (!lead) {
@@ -178,9 +168,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/leads', isAuthenticated, async (req: any, res) => {
+  app.post('/api/leads', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedData = insertLeadSchema.parse(req.body);
       const lead = await storage.createLead({ ...validatedData, createdBy: userId });
       res.status(201).json(lead);
@@ -190,7 +180,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/leads/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/leads/:id', requireAuth, async (req, res) => {
     try {
       const validatedData = insertLeadSchema.partial().parse(req.body);
       const lead = await storage.updateLead(req.params.id, validatedData);
@@ -201,7 +191,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/leads/:id', isAuthenticated, async (req, res) => {
+  app.delete('/api/leads/:id', requireAuth, async (req, res) => {
     try {
       await storage.deleteLead(req.params.id);
       res.status(204).send();
@@ -212,9 +202,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // CSV import/export routes
-  app.post('/api/leads/import', isAuthenticated, upload.single('file'), async (req: any, res) => {
+  app.post('/api/leads/import', requireAuth, upload.single('file'), async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       if (!req.file) {
         return res.status(400).json({ message: "No file uploaded" });
@@ -248,9 +238,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/leads/export', isAuthenticated, async (req: any, res) => {
+  app.get('/api/leads/export', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const leads = await storage.getLeads(userId);
       const csv = convertLeadsToCSV(leads);
       
@@ -276,7 +266,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email campaign routes
-  app.get('/api/email-campaigns', isAuthenticated, async (req, res) => {
+  app.get('/api/email-campaigns', requireAuth, async (req, res) => {
     try {
       const leadId = req.query.leadId as string;
       const limit = parseInt(req.query.limit as string) || 50;
@@ -288,9 +278,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/email-campaigns', isAuthenticated, async (req: any, res) => {
+  app.post('/api/email-campaigns', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const validatedData = insertEmailCampaignSchema.parse(req.body);
       const campaign = await storage.createEmailCampaign({ ...validatedData, createdBy: userId });
       res.status(201).json(campaign);
@@ -300,7 +290,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.put('/api/email-campaigns/:id', isAuthenticated, async (req, res) => {
+  app.put('/api/email-campaigns/:id', requireAuth, async (req, res) => {
     try {
       const validatedData = insertEmailCampaignSchema.partial().parse(req.body);
       const campaign = await storage.updateEmailCampaign(req.params.id, validatedData);
@@ -311,7 +301,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/email-campaigns/:id/send', isAuthenticated, async (req, res) => {
+  app.post('/api/email-campaigns/:id/send', requireAuth, async (req, res) => {
     try {
       const campaignId = req.params.id;
       const campaign = await storage.getEmailCampaignById(campaignId);
@@ -337,11 +327,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/email-campaigns/:id/schedule-followup', isAuthenticated, async (req: any, res) => {
+  app.post('/api/email-campaigns/:id/schedule-followup', requireAuth, async (req: any, res) => {
     try {
       const campaignId = req.params.id;
       const { delayDays } = req.body;
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       
       if (!delayDays || delayDays < 1 || delayDays > 30) {
         return res.status(400).json({ message: "Delay days must be between 1 and 30" });
@@ -355,7 +345,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.delete('/api/email-campaigns/:id/cancel-followups', isAuthenticated, async (req, res) => {
+  app.delete('/api/email-campaigns/:id/cancel-followups', requireAuth, async (req, res) => {
     try {
       const campaign = await storage.getEmailCampaignById(req.params.id);
       if (!campaign || !campaign.leadId) {
@@ -371,7 +361,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI email generation routes
-  app.post('/api/ai/generate-email', isAuthenticated, async (req, res) => {
+  app.post('/api/ai/generate-email', requireAuth, async (req, res) => {
     try {
       const { leadId, tone, isFollowUp, parentEmailId } = req.body;
       
@@ -489,7 +479,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/campaigns/:id/send', isAuthenticated, async (req: any, res) => {
+  app.post('/api/campaigns/:id/send', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { leadId } = req.body;
@@ -511,7 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/campaigns/:id/schedule-followup', isAuthenticated, async (req: any, res) => {
+  app.post('/api/campaigns/:id/schedule-followup', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
       const { delay } = req.body; // delay in seconds
@@ -526,7 +516,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Insights routes
-  app.get('/api/insights', isAuthenticated, async (req, res) => {
+  app.get('/api/insights', requireAuth, async (req, res) => {
     try {
       const type = req.query.type as string;
       const limit = parseInt(req.query.limit as string) || 10;
@@ -538,9 +528,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/insights/generate', isAuthenticated, async (req: any, res) => {
+  app.post('/api/insights/generate', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const stats = await storage.getDashboardStats(userId);
       
       const insightContent = await generateInsights({
@@ -566,9 +556,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Dashboard statistics routes
-  app.get('/api/dashboard/performance', isAuthenticated, async (req: any, res) => {
+  app.get('/api/dashboard/performance', requireAuth, async (req: any, res) => {
     try {
-      const userId = req.user.claims.sub;
+      const userId = req.user.id;
       const performance = await storage.getPerformanceData(userId);
       res.json(performance);
     } catch (error) {

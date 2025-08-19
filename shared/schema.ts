@@ -27,7 +27,7 @@ export const sessions = pgTable(
 );
 
 // Enums
-export const userRoleEnum = pgEnum("user_role", ["founder", "strategist", "designer"]);
+export const userRoleEnum = pgEnum("user_role", ["head_admin", "admin", "founder", "strategist", "designer"]);
 export const leadStatusEnum = pgEnum("lead_status", ["new", "contacted", "replied", "follow_up_scheduled", "qualified", "closed"]);
 export const emailStatusEnum = pgEnum("email_status", ["draft", "sent", "opened", "replied", "bounced"]);
 export const emailToneEnum = pgEnum("email_tone", ["professional", "casual", "direct"]);
@@ -35,7 +35,9 @@ export const emailToneEnum = pgEnum("email_tone", ["professional", "casual", "di
 // User storage table.
 export const users = pgTable("users", {
   id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  username: varchar("username").unique().notNull(),
   email: varchar("email").unique(),
+  password: varchar("password").notNull(),
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
@@ -126,11 +128,25 @@ export const insightsRelations = relations(insights, ({ one }) => ({
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
+  username: true,
   email: true,
+  password: true,
   firstName: true,
   lastName: true,
   profileImageUrl: true,
   role: true,
+});
+
+export const loginSchema = z.object({
+  username: z.string().min(1, "Username is required"),
+  password: z.string().min(1, "Password is required"),
+});
+
+export const registerSchema = insertUserSchema.extend({
+  confirmPassword: z.string().min(1, "Confirm password is required"),
+}).refine((data) => data.password === data.confirmPassword, {
+  message: "Passwords don't match",
+  path: ["confirmPassword"],
 });
 
 export const insertLeadSchema = createInsertSchema(leads).pick({
