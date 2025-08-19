@@ -1,0 +1,103 @@
+Project Name: OutreachX – AI-Powered Lead & Outreach Dashboard
+
+Tech Stack:
+
+Frontend: React (or Next.js) + TailwindCSS
+
+Backend: Node.js (Express or NestJS)
+
+Database: PostgreSQL (or Supabase for hosted option)
+
+AI: Google Gemini API (for generating cold emails + follow-ups)
+
+Email Integration: Gmail/Outlook API (OAuth) or SMTP
+
+File Handling: CSV import/export
+
+🎯 Build Requirements
+
+You are to build a web app that helps a design studio manage leads and automate cold outreach with Gemini AI.
+
+🔑 Core Features
+
+Authentication & Team Access
+
+Secure login system.
+
+Role-based access (founders, strategists, designers).
+
+Lead Management
+
+Add leads manually (form: name, company, role, email, notes).
+
+Bulk import leads from CSV.
+
+Display all leads in a searchable/filterable table.
+
+Export filtered leads to CSV.
+
+AI-Powered Cold Email Generation (Gemini)
+
+For each lead, allow generating a cold email using Gemini.
+
+User can select tone: Professional, Casual, Direct.
+
+Email draft is editable before sending.
+
+Follow-Up Sequences
+
+Ability to create up to 3 follow-up emails per lead.
+
+Gemini generates follow-ups automatically (shorter, referencing previous email).
+
+Option to schedule follow-ups: e.g., “Send 3 days after no reply.”
+
+System marks replies to stop follow-ups automatically.
+
+Email Sending & Tracking
+
+Connect Gmail/Outlook via OAuth.
+
+Send initial + follow-up emails directly from the dashboard.
+
+Track status: Sent, Opened, Replied, Follow-up Scheduled.
+
+Dashboard & Insights
+
+Show outreach statistics (emails sent, opened, replied, follow-ups triggered).
+
+Gemini AI generates short insights (e.g., “Follow-ups increased reply rate by 20% this week”).
+
+✨ Gemini Prompts to Use
+
+Cold Email Draft Prompt:
+
+Write a cold outreach email to {name}, who is a {role} at {company}. 
+Tone: {tone}. The sender is a UI/UX and branding design studio. 
+Make it short, personalized, and with a clear call-to-action to book a call.
+
+
+Follow-Up Email Prompt:
+
+Write a polite follow-up email for {name}, a {role} at {company}, 
+assuming they haven’t replied to the first outreach. 
+Keep it shorter than the first, maintain {tone}, 
+and add subtle urgency without being pushy.
+
+
+Insight Prompt:
+
+Based on this outreach data: {data}, summarize trends in 3 sentences or less. 
+Mention reply rate, follow-up effectiveness, and any improvement suggestions.
+
+✅ Deliverables
+
+A responsive React + Node.js web app.
+
+Manual lead entry + bulk CSV upload/export.
+
+AI-generated cold emails + follow-up sequences using Gemini API.
+
+Email integration with Gmail/Outlook + status tracking.
+
+Dashboard showing outreach stats + AI insights.
