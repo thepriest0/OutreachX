@@ -76,7 +76,7 @@ export default function Campaigns() {
             </div>
             <Button
               onClick={() => setShowEmailGenerator(true)}
-              className="bg-primary-500 hover:bg-primary-600"
+              className="bg-blue-600 hover:bg-blue-700 text-white"
             >
               <i className="fas fa-robot mr-2"></i>
               Generate AI Email
@@ -195,7 +195,7 @@ export default function Campaigns() {
               </p>
               <Button
                 onClick={() => setShowEmailGenerator(true)}
-                className="bg-primary-500 hover:bg-primary-600"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 <i className="fas fa-robot mr-2"></i>
                 Generate Your First Email
