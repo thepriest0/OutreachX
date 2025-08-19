@@ -360,6 +360,107 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.get('/api/email-campaigns/:id/followups', requireAuth, async (req, res) => {
+    try {
+      const campaign = await storage.getEmailCampaignById(req.params.id);
+      if (!campaign || !campaign.leadId) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      const followUps = await storage.getFollowUpCampaignsForLead(campaign.leadId);
+      res.json(followUps);
+    } catch (error) {
+      console.error("Error fetching follow-ups:", error);
+      res.status(500).json({ message: "Failed to fetch follow-ups" });
+    }
+  });
+
+  app.post('/api/email-campaigns/:id/generate-followup', requireAuth, async (req, res) => {
+    try {
+      const { sequence, tone, delayDays } = req.body;
+      const campaign = await storage.getEmailCampaignById(req.params.id);
+      
+      if (!campaign || !campaign.leadId) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+
+      const lead = await storage.getLeadById(campaign.leadId);
+      if (!lead) {
+        return res.status(404).json({ message: "Lead not found" });
+      }
+
+      const followUpEmail = await generateFollowUpEmail({
+        name: lead.name,
+        role: lead.role || 'Decision Maker',
+        company: lead.company,
+        tone: tone,
+        isFollowUp: true,
+        previousEmailContent: campaign.content,
+        followUpSequence: sequence,
+      });
+
+      res.json(followUpEmail);
+    } catch (error) {
+      console.error("Error generating follow-up email:", error);
+      res.status(500).json({ message: "Failed to generate follow-up email" });
+    }
+  });
+
+  app.post('/api/email-campaigns/:id/update-followups', requireAuth, async (req, res) => {
+    try {
+      const { schedules } = req.body;
+      const userId = req.user.id;
+      const parentCampaign = await storage.getEmailCampaignById(req.params.id);
+      
+      if (!parentCampaign || !parentCampaign.leadId) {
+        return res.status(404).json({ message: "Parent campaign not found" });
+      }
+
+      // Cancel existing follow-ups first
+      await followUpScheduler.cancelFollowUpsForLead(parentCampaign.leadId);
+
+      const results = [];
+      for (const schedule of schedules) {
+        if (schedule.enabled && schedule.subject && schedule.content) {
+          const scheduledAt = new Date();
+          scheduledAt.setDate(scheduledAt.getDate() + schedule.delayDays);
+
+          const followUpCampaign = await storage.createEmailCampaign({
+            leadId: parentCampaign.leadId,
+            subject: schedule.subject,
+            content: schedule.content,
+            tone: schedule.tone,
+            status: 'draft',
+            isFollowUp: true,
+            followUpSequence: schedule.sequence,
+            parentEmailId: req.params.id,
+            scheduledAt,
+            createdBy: userId,
+          });
+
+          results.push(followUpCampaign);
+          console.log(`Follow-up #${schedule.sequence} scheduled for ${scheduledAt.toISOString()}`);
+        }
+      }
+
+      res.json({ message: "Follow-up schedules updated successfully", followUps: results });
+    } catch (error) {
+      console.error("Error updating follow-up schedules:", error);
+      res.status(500).json({ message: "Failed to update follow-up schedules" });
+    }
+  });
+
+  app.delete('/api/email-campaigns/followup/:id', requireAuth, async (req, res) => {
+    try {
+      const followUpId = req.params.id;
+      await followUpScheduler.cancelFollowUp(followUpId);
+      res.json({ message: "Follow-up deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting follow-up:", error);
+      res.status(500).json({ message: "Failed to delete follow-up" });
+    }
+  });
+
   app.post('/api/email-campaigns/:id/mark-replied', requireAuth, async (req, res) => {
     try {
       const campaignId = req.params.id;

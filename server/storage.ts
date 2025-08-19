@@ -412,6 +412,29 @@ export class DatabaseStorage implements IStorage {
       .orderBy(emailCampaigns.followUpSequence);
   }
 
+  async updateFollowUpCampaign(campaignId: string, updates: Partial<EmailCampaign>): Promise<void> {
+    await db
+      .update(emailCampaigns)
+      .set({ 
+        ...updates,
+        updatedAt: new Date() 
+      })
+      .where(eq(emailCampaigns.id, campaignId));
+  }
+
+  async getFollowUpCampaignsForLead(leadId: string): Promise<EmailCampaign[]> {
+    return await db
+      .select()
+      .from(emailCampaigns)
+      .where(
+        and(
+          eq(emailCampaigns.leadId, leadId),
+          eq(emailCampaigns.isFollowUp, true)
+        )
+      )
+      .orderBy(emailCampaigns.followUpSequence);
+  }
+
   async getPerformanceData(userId: string): Promise<any> {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);

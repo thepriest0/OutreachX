@@ -14,7 +14,10 @@ import type { EmailCampaign } from "@shared/schema";
 
 export default function Campaigns() {
   const [showEmailGenerator, setShowEmailGenerator] = useState(false);
-  
+  const [selectedLeads, setSelectedLeads] = useState<any[]>([]);
+  const [showFollowUpScheduler, setShowFollowUpScheduler] = useState(false);
+  const [selectedCampaignForSchedule, setSelectedCampaignForSchedule] = useState<any>(null);
+
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
@@ -67,7 +70,7 @@ export default function Campaigns() {
           title="Email Campaigns"
           subtitle="Manage your email outreach campaigns and track performance."
         />
-        
+
         <div className="p-6">
           {/* Action Bar */}
           <div className="flex items-center justify-between mb-6">
@@ -120,7 +123,7 @@ export default function Campaigns() {
                       <div className="text-sm text-gray-600 line-clamp-3">
                         {campaign.content.substring(0, 150)}...
                       </div>
-                      
+
                       <div className="flex items-center justify-between text-xs text-gray-500">
                         <span>
                           {campaign.tone.charAt(0).toUpperCase() + campaign.tone.slice(1)} tone
@@ -165,13 +168,8 @@ export default function Campaigns() {
                             variant="ghost" 
                             size="sm"
                             onClick={() => {
-                              // Open follow-up scheduler dialog
-                              setShowEmailGenerator(false);
-                              // You could add a state for showing follow-up scheduler here
-                              toast({
-                                title: "Follow-up Scheduler",
-                                description: "Follow-up scheduling will be available in the detailed view",
-                              });
+                              setSelectedCampaignForSchedule(campaign);
+                              setShowFollowUpScheduler(true);
                             }}
                           >
                             <i className="fas fa-clock mr-1"></i>
@@ -206,13 +204,60 @@ export default function Campaigns() {
 
         {/* AI Email Generator Modal */}
         {showEmailGenerator && (
-          <AIEmailGenerator
-            onClose={() => setShowEmailGenerator(false)}
-            onSuccess={() => {
-              setShowEmailGenerator(false);
-              // Optionally refresh campaigns
-            }}
-          />
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Generate AI Email Campaign</h2>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setShowEmailGenerator(false)}
+                  >
+                    <i className="fas fa-times"></i>
+                  </Button>
+                </div>
+                <AIEmailGenerator
+                  leads={selectedLeads}
+                  onSuccess={() => {
+                    setShowEmailGenerator(false);
+                    setSelectedLeads([]);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {showFollowUpScheduler && selectedCampaignForSchedule && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Follow-up Campaign Manager</h2>
+                  <Button
+                    variant="ghost"
+                    onClick={() => {
+                      setShowFollowUpScheduler(false);
+                      setSelectedCampaignForSchedule(null);
+                    }}
+                  >
+                    <i className="fas fa-times"></i>
+                  </Button>
+                </div>
+                <FollowUpScheduler
+                  campaignId={selectedCampaignForSchedule.id}
+                  leadName={selectedCampaignForSchedule.lead?.name || 'Lead'}
+                  leadCompany={selectedCampaignForSchedule.lead?.company || 'Company'}
+                  leadRole={selectedCampaignForSchedule.lead?.role || 'Decision Maker'}
+                  originalTone={selectedCampaignForSchedule.tone || 'professional'}
+                  onSuccess={() => {
+                    setShowFollowUpScheduler(false);
+                    setSelectedCampaignForSchedule(null);
+                  }}
+                />
+              </div>
+            </div>
+          </div>
         )}
       </main>
     </div>
