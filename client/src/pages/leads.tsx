@@ -113,7 +113,7 @@ export default function Leads() {
     return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
-  if (isLoading) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -126,9 +126,7 @@ export default function Leads() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
+
 
   return (
     <div className="flex h-screen bg-gray-50">

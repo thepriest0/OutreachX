@@ -57,9 +57,6 @@ export default function Campaigns() {
     );
   }
 
-  if (!isAuthenticated) {
-    return null;
-  }
 
   return (
     <div className="flex h-screen bg-gray-50">
