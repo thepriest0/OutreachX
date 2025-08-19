@@ -29,7 +29,7 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   const { toast } = useToast();
-  const { user } = useAuth();
+  const { user, isLoading, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
   const { data: leads, isLoading: leadsLoading } = useQuery({
