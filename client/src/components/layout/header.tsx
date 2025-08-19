@@ -13,8 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, Search, Plus, LogOut, User, Settings, Moon, Sun } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
-import LeadForm from "@/components/leads/lead-form";
-import { useToast } from "@/hooks/use-toast";
 
 interface HeaderProps {
   title: string;
@@ -25,8 +23,6 @@ interface HeaderProps {
 export default function Header({ title, subtitle, actions }: HeaderProps) {
   const { user } = useAuth();
   const [theme, setTheme] = useState<"light" | "dark">("light");
-  const [showLeadForm, setShowLeadForm] = useState(false);
-  const { toast } = useToast();
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -80,7 +76,6 @@ export default function Header({ title, subtitle, actions }: HeaderProps) {
             size="sm"
             className="hidden sm:flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
             data-testid="button-new-lead"
-            onClick={() => setShowLeadForm(true)}
           >
             <Plus className="h-4 w-4" />
             <span>New Lead</span>
@@ -185,20 +180,6 @@ export default function Header({ title, subtitle, actions }: HeaderProps) {
           </DropdownMenu>
         </div>
       </div>
-
-      {/* Lead Form Modal */}
-      {showLeadForm && (
-        <LeadForm
-          onClose={() => setShowLeadForm(false)}
-          onSuccess={() => {
-            setShowLeadForm(false);
-            toast({
-              title: "Success",
-              description: "Lead added successfully!",
-            });
-          }}
-        />
-      )}
     </header>
   );
 }
