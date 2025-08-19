@@ -410,44 +410,22 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Email reply webhook (for Gmail integration)
   app.post('/api/email/webhook/reply', async (req, res) => {
     try {
-      let messageData;
-      
-      // Check if this is a Pub/Sub message
-      if (req.body.message && req.body.message.data) {
-        // Decode Pub/Sub message
-        const decodedData = Buffer.from(req.body.message.data, 'base64').toString();
-        const pubsubMessage = JSON.parse(decodedData);
-        
-        // Extract Gmail notification data
-        messageData = {
-          messageId: pubsubMessage.historyId || pubsubMessage.messageId,
-          threadId: pubsubMessage.threadId,
-          from: pubsubMessage.from,
-          subject: pubsubMessage.subject
-        };
-        
-        console.log('Received Pub/Sub Gmail notification:', messageData);
-      } else {
-        // Direct webhook call (for testing)
-        messageData = req.body;
-      }
-      
-      const { messageId, from, subject, threadId } = messageData;
+      const { messageId, from, subject, threadId } = req.body;
       
       // Find campaign by message ID or thread ID
       const campaigns = await storage.getEmailCampaigns();
       const campaign = campaigns.find(c => 
         c.messageId === messageId || 
         c.messageId === threadId ||
-        (c.trackingId && subject && subject.includes(c.trackingId))
+        (c.trackingId && subject.includes(c.trackingId))
       );
       
       if (campaign) {
         await emailTrackingService.markEmailReplied(campaign.messageId || campaign.id);
-        console.log(`Email reply detected: Campaign ${campaign.id} from ${from || 'unknown'}`);
+        console.log(`Email reply detected: Campaign ${campaign.id} from ${from}`);
         res.json({ success: true, message: "Reply tracked successfully" });
       } else {
-        console.log(`No campaign found for reply from ${from || 'unknown'}`);
+        console.log(`No campaign found for reply from ${from}`);
         res.json({ success: false, message: "Campaign not found" });
       }
     } catch (error) {
