@@ -93,7 +93,7 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
       }
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (false) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",

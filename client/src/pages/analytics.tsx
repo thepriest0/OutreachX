@@ -11,34 +11,19 @@ import type { DashboardStats } from "@shared/schema";
 
 export default function Analytics() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/auth";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  const { user } = useAuth();
 
   const { data: stats, isLoading: statsLoading } = useQuery<DashboardStats>({
     queryKey: ["/api/dashboard/stats"],
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const { data: insights, isLoading: insightsLoading } = useQuery({
     queryKey: ["/api/insights"],
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
-  if (isLoading) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -49,10 +34,6 @@ export default function Analytics() {
         </div>
       </div>
     );
-  }
-
-  if (!isAuthenticated) {
-    return null;
   }
 
   return (

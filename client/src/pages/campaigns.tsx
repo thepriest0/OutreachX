@@ -16,26 +16,11 @@ export default function Campaigns() {
   const [showEmailGenerator, setShowEmailGenerator] = useState(false);
   
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/auth";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
+  const { user } = useAuth();
 
   const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
     queryKey: ["/api/campaigns"],
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const getStatusColor = (status: string) => {
@@ -59,7 +44,7 @@ export default function Campaigns() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
-  if (isLoading) {
+  if (!user) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">

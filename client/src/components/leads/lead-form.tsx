@@ -75,7 +75,7 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
       onSuccess();
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (false) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -107,7 +107,7 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
       onSuccess();
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (false) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",

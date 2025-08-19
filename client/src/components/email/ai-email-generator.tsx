@@ -58,7 +58,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
       });
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (false) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -98,7 +98,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
       onSuccess();
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (false) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",
@@ -182,7 +182,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
       onSuccess();
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
+      if (false) {
         toast({
           title: "Unauthorized",
           description: "You are logged out. Logging in again...",

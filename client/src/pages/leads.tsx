@@ -29,27 +29,12 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
+  const { user } = useAuth();
   const queryClient = useQueryClient();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Unauthorized",
-        description: "You are logged out. Logging in again...",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/auth";
-      }, 500);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
 
   const { data: leads, isLoading: leadsLoading } = useQuery({
     queryKey: ["/api/leads", searchQuery],
-    enabled: isAuthenticated,
+    enabled: !!user,
   });
 
   const deleteMutation = useMutation({
@@ -64,17 +49,6 @@ export default function Leads() {
       });
     },
     onError: (error) => {
-      if (isUnauthorizedError(error)) {
-        toast({
-          title: "Unauthorized",
-          description: "You are logged out. Logging in again...",
-          variant: "destructive",
-        });
-        setTimeout(() => {
-          window.location.href = "/auth";
-        }, 500);
-        return;
-      }
       toast({
         title: "Error",
         description: "Failed to delete lead",
