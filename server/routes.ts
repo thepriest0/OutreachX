@@ -7,6 +7,9 @@ import { generateEmail } from "./services/gemini";
 import { insertLeadSchema, insertEmailCampaignSchema, insertInsightSchema } from "@shared/schema";
 import { generateColdEmail, generateFollowUpEmail, generateInsights } from "./services/gemini";
 import { parseLeadsFromCSV, validateCSVLeads, convertLeadsToCSV, getCSVTemplate } from "./services/csvHandler";
+import { followUpScheduler } from "./services/followUpScheduler";
+import { emailTrackingService } from "./services/emailTrackingService";
+import { GmailProvider } from "./services/gmailService";
 import multer from "multer";
 
 const upload = multer({ storage: multer.memoryStorage() });
@@ -14,6 +17,96 @@ const upload = multer({ storage: multer.memoryStorage() });
 export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   await setupAuth(app);
+
+  // Start follow-up scheduler
+  followUpScheduler.start();
+
+  // Email tracking routes
+  app.get('/api/email/track-open/:trackingId', async (req, res) => {
+    try {
+      await emailTrackingService.trackEmailOpen(req.params.trackingId);
+      // Return 1x1 transparent pixel
+      const pixel = Buffer.from(
+        'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
+        'base64'
+      );
+      res.writeHead(200, {
+        'Content-Type': 'image/gif',
+        'Content-Length': pixel.length,
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0'
+      });
+      res.end(pixel);
+    } catch (error) {
+      console.error('Error tracking email open:', error);
+      res.status(500).end();
+    }
+  });
+
+  app.get('/api/email/track-click/:trackingId', async (req, res) => {
+    try {
+      const originalUrl = req.query.url as string;
+      if (!originalUrl) {
+        return res.status(400).json({ message: 'Missing URL parameter' });
+      }
+      
+      const redirectUrl = await emailTrackingService.trackEmailClick(req.params.trackingId, originalUrl);
+      res.redirect(302, redirectUrl);
+    } catch (error) {
+      console.error('Error tracking email click:', error);
+      res.status(500).json({ message: 'Tracking failed' });
+    }
+  });
+
+  // Gmail OAuth routes
+  app.get('/api/auth/gmail', async (req, res) => {
+    try {
+      if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET) {
+        return res.status(500).json({ message: 'Gmail OAuth not configured' });
+      }
+
+      const authUrl = await GmailProvider.getAuthUrl({
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        redirectUri: process.env.GMAIL_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/gmail/callback`,
+      });
+
+      res.redirect(authUrl);
+    } catch (error) {
+      console.error('Error generating Gmail auth URL:', error);
+      res.status(500).json({ message: 'Failed to initiate Gmail authentication' });
+    }
+  });
+
+  app.get('/api/auth/gmail/callback', async (req, res) => {
+    try {
+      const code = req.query.code as string;
+      if (!code) {
+        return res.status(400).json({ message: 'Missing authorization code' });
+      }
+
+      const tokens = await GmailProvider.getTokensFromCode(code, {
+        clientId: process.env.GMAIL_CLIENT_ID!,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET!,
+        redirectUri: process.env.GMAIL_REDIRECT_URI || `${req.protocol}://${req.get('host')}/api/auth/gmail/callback`,
+      });
+
+      // In a real app, you'd store these tokens securely for the user
+      // For now, just return them (not secure - for demo only)
+      res.json({
+        message: 'Gmail authentication successful',
+        tokens: {
+          refreshToken: tokens.refreshToken,
+          accessToken: tokens.accessToken,
+        },
+        note: 'Store these tokens as environment variables: GMAIL_REFRESH_TOKEN and GMAIL_ACCESS_TOKEN'
+      });
+    } catch (error) {
+      console.error('Error handling Gmail callback:', error);
+      res.status(500).json({ message: 'Failed to complete Gmail authentication' });
+    }
+  });
 
   // Auth routes
   app.get('/api/auth/user', isAuthenticated, async (req: any, res) => {
@@ -215,6 +308,65 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error("Error updating email campaign:", error);
       res.status(400).json({ message: "Failed to update email campaign" });
+    }
+  });
+
+  app.post('/api/email-campaigns/:id/send', isAuthenticated, async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      const campaign = await storage.getEmailCampaignById(campaignId);
+      
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      if (!campaign.leadId) {
+        return res.status(400).json({ message: "Campaign has no associated lead" });
+      }
+      
+      const result = await emailService.sendCampaignEmail(campaignId, campaign.leadId);
+      
+      if (result.success) {
+        res.json({ message: "Email sent successfully", result });
+      } else {
+        res.status(500).json({ message: "Failed to send email", error: result.error });
+      }
+    } catch (error) {
+      console.error("Error sending campaign:", error);
+      res.status(500).json({ message: "Failed to send campaign" });
+    }
+  });
+
+  app.post('/api/email-campaigns/:id/schedule-followup', isAuthenticated, async (req: any, res) => {
+    try {
+      const campaignId = req.params.id;
+      const { delayDays } = req.body;
+      const userId = req.user.claims.sub;
+      
+      if (!delayDays || delayDays < 1 || delayDays > 30) {
+        return res.status(400).json({ message: "Delay days must be between 1 and 30" });
+      }
+      
+      const followUpId = await followUpScheduler.scheduleFollowUp(campaignId, delayDays, userId);
+      res.json({ message: "Follow-up scheduled successfully", followUpId });
+    } catch (error) {
+      console.error("Error scheduling follow-up:", error);
+      res.status(500).json({ message: "Failed to schedule follow-up" });
+    }
+  });
+
+  app.delete('/api/email-campaigns/:id/cancel-followups', isAuthenticated, async (req, res) => {
+    try {
+      const campaign = await storage.getEmailCampaignById(req.params.id);
+      if (!campaign || !campaign.leadId) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      await followUpScheduler.cancelFollowUpsForLead(campaign.leadId);
+      res.json({ message: "Follow-ups cancelled successfully" });
+    } catch (error) {
+      console.error("Error cancelling follow-ups:", error);
+      res.status(500).json({ message: "Failed to cancel follow-ups" });
     }
   });
 

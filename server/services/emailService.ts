@@ -1,5 +1,7 @@
 import { storage } from "../storage";
 import type { EmailCampaign } from "@shared/schema";
+import { GmailProvider, type GmailConfig } from "./gmailService";
+import { emailTrackingService } from "./emailTrackingService";
 
 // Email service interface
 export interface EmailProvider {
@@ -45,14 +47,7 @@ class MockEmailProvider implements EmailProvider {
 
   async trackOpen(trackingId: string): Promise<void> {
     console.log(`[MOCK EMAIL] Email opened: ${trackingId}`);
-    // Update campaign status
-    const campaign = await storage.getEmailCampaignByTrackingId(trackingId);
-    if (campaign) {
-      await storage.updateEmailCampaign(campaign.id, {
-        status: "opened",
-        // openedAt: new Date() // Will be set by storage layer
-      });
-    }
+    // Update campaign status in storage layer
   }
 
   async trackClick(trackingId: string, url: string): Promise<void> {
@@ -65,7 +60,23 @@ export class EmailService {
   private provider: EmailProvider;
 
   constructor(provider?: EmailProvider) {
-    this.provider = provider || new MockEmailProvider();
+    this.provider = provider || this.createProvider();
+  }
+
+  private createProvider(): EmailProvider {
+    // Check if Gmail credentials are available
+    if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
+      return new GmailProvider({
+        clientId: process.env.GMAIL_CLIENT_ID,
+        clientSecret: process.env.GMAIL_CLIENT_SECRET,
+        redirectUri: process.env.GMAIL_REDIRECT_URI || 'http://localhost:5000/api/auth/gmail/callback',
+        refreshToken: process.env.GMAIL_REFRESH_TOKEN,
+        accessToken: process.env.GMAIL_ACCESS_TOKEN,
+      });
+    }
+    
+    // Fall back to mock provider for development
+    return new MockEmailProvider();
   }
 
   async sendCampaignEmail(campaignId: string, leadId: string): Promise<EmailSendResult> {
@@ -88,18 +99,19 @@ export class EmailService {
       to: lead.email,
       subject: campaign.subject,
       content: trackedContent,
-      fromName: "OutreachX Team", // TODO: Make configurable
-      fromEmail: "outreach@yourcompany.com", // TODO: Make configurable
+      fromName: process.env.FROM_NAME || "OutreachX Team",
+      fromEmail: process.env.FROM_EMAIL || "outreach@yourcompany.com",
       trackingId,
       leadId,
       campaignId
     });
 
     if (result.success) {
-      // Update campaign status
+      // Update campaign with tracking info and sent status
       await storage.updateEmailCampaign(campaignId, {
         status: "sent",
-        // sentAt: new Date() // Will be set by storage layer
+        messageId: result.messageId,
+        trackingId: result.trackingId,
       });
 
       // Update lead last contact date
@@ -111,66 +123,29 @@ export class EmailService {
     return result;
   }
 
-  async scheduleFollowUp(parentCampaignId: string, delay: number): Promise<string> {
-    const parentCampaign = await storage.getEmailCampaignById(parentCampaignId);
-    if (!parentCampaign) {
-      throw new Error("Parent campaign not found");
-    }
+  addEmailTracking(content: string, trackingId?: string): string {
+    if (!trackingId) return content;
 
-    // Create follow-up campaign
-    const followUpCampaign = await storage.createEmailCampaign({
-      leadId: parentCampaign.leadId!,
-      subject: `Re: ${parentCampaign.subject}`,
-      content: await this.generateFollowUpContent(parentCampaign),
-      tone: parentCampaign.tone,
-      isFollowUp: true,
-      followUpSequence: (parentCampaign.followUpSequence || 0) + 1,
-      parentEmailId: parentCampaignId,
-      createdBy: parentCampaign.createdBy!
-    });
-
-    // Schedule sending (in a real app, you'd use a job queue)
-    setTimeout(async () => {
-      if (parentCampaign.leadId) {
-        await this.sendCampaignEmail(followUpCampaign.id, parentCampaign.leadId);
-      }
-    }, delay * 1000);
-
-    return followUpCampaign.id;
-  }
-
-  private addEmailTracking(content: string, trackingId: string): string {
-    // Add tracking pixel
-    const trackingPixel = `<img src="/api/email/track/open/${trackingId}" width="1" height="1" style="display:none;" />`;
+    const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
     
-    // Add tracking to links (simplified implementation)
+    // Add tracking pixel for open tracking
+    const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" />`;
+
+    // Add tracking to links
     const trackedContent = content.replace(
-      /href="([^"]+)"/g,
-      `href="/api/email/track/click/${trackingId}?url=$1"`
+      /<a\s+href="([^"]+)"/g,
+      `<a href="${baseUrl}/api/email/track-click/${trackingId}?url=$1"`
     );
 
     return trackedContent + trackingPixel;
   }
 
-  private async generateFollowUpContent(parentCampaign: EmailCampaign): Promise<string> {
-    // In a real app, this would use AI to generate contextual follow-ups
-    const followUpTemplates = [
-      "Hi there,\n\nI wanted to follow up on my previous email about our design services. I understand you're probably busy, but I'd love to chat for just 5 minutes about how we can help elevate your brand.\n\nWould you be available for a quick call this week?\n\nBest regards",
-      "Hello,\n\nI hope this finds you well. I sent an email last week about how our design team has helped companies like yours increase their conversion rates by 40%.\n\nI'd be happy to share a quick case study that's relevant to your industry. Would that be of interest?\n\nThanks for your time!",
-      "Hi,\n\nI wanted to reach out one more time about our conversation regarding design services. I have some new ideas that could be perfect for your current projects.\n\nWould you be open to a brief 10-minute call to discuss?\n\nBest"
-    ];
-
-    const sequence = parentCampaign.followUpSequence || 0;
-    return followUpTemplates[sequence % followUpTemplates.length];
-  }
-
-  // Email tracking endpoints
   async handleEmailOpen(trackingId: string): Promise<void> {
-    await this.provider.trackOpen(trackingId);
+    await emailTrackingService.trackEmailOpen(trackingId);
   }
 
-  async handleEmailClick(trackingId: string, url: string): Promise<void> {
-    await this.provider.trackClick(trackingId, url);
+  async handleEmailClick(trackingId: string, url: string): Promise<string> {
+    return await emailTrackingService.trackEmailClick(trackingId, url);
   }
 }
 

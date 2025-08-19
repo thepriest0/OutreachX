@@ -14,7 +14,7 @@ import {
   type DashboardStats,
 } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, count, and, gte, sql } from "drizzle-orm";
+import { eq, desc, count, and, gte, sql, lt, isNotNull } from "drizzle-orm";
 
 // Interface for storage operations
 export interface IStorage {
@@ -33,8 +33,12 @@ export interface IStorage {
   // Email campaign operations
   getEmailCampaigns(leadId?: string, limit?: number): Promise<EmailCampaign[]>;
   getEmailCampaignById(id: string): Promise<EmailCampaign | undefined>;
+  getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | undefined>;
   createEmailCampaign(campaign: InsertEmailCampaign & { createdBy: string }): Promise<EmailCampaign>;
   updateEmailCampaign(id: string, campaign: Partial<InsertEmailCampaign>): Promise<EmailCampaign>;
+  getScheduledEmailCampaigns(beforeDate: Date): Promise<EmailCampaign[]>;
+  getRecentEmailReplies(leadId: string, days: number): Promise<EmailCampaign[]>;
+  cancelScheduledFollowUps(leadId: string): Promise<void>;
   
   // Insights operations
   getInsights(type?: string, limit?: number): Promise<Insight[]>;
@@ -115,10 +119,11 @@ export class DatabaseStorage implements IStorage {
 
   // Email campaign operations
   async getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | undefined> {
-    // In a real implementation, you'd store trackingId in the database
-    // For now, extract campaign ID from tracking ID
-    const [campaignId] = trackingId.split('_');
-    return this.getEmailCampaignById(campaignId);
+    const [campaign] = await db
+      .select()
+      .from(emailCampaigns)
+      .where(eq(emailCampaigns.trackingId, trackingId));
+    return campaign;
   }
 
   async getEmailCampaigns(leadId?: string, limit = 50): Promise<EmailCampaign[]> {
@@ -282,6 +287,53 @@ export class DatabaseStorage implements IStorage {
       .where(eq(leads.createdBy, userId))
       .orderBy(desc(leads.updatedAt))
       .limit(limit);
+  }
+
+  async getScheduledEmailCampaigns(beforeDate: Date): Promise<EmailCampaign[]> {
+    return await db
+      .select()
+      .from(emailCampaigns)
+      .where(
+        and(
+          eq(emailCampaigns.status, "draft"),
+          isNotNull(emailCampaigns.scheduledAt),
+          lt(emailCampaigns.scheduledAt, beforeDate)
+        )
+      )
+      .orderBy(emailCampaigns.scheduledAt);
+  }
+
+  async getRecentEmailReplies(leadId: string, days: number): Promise<EmailCampaign[]> {
+    const sinceDate = new Date();
+    sinceDate.setDate(sinceDate.getDate() - days);
+
+    return await db
+      .select()
+      .from(emailCampaigns)
+      .where(
+        and(
+          eq(emailCampaigns.leadId, leadId),
+          eq(emailCampaigns.status, "replied"),
+          gte(emailCampaigns.repliedAt, sinceDate)
+        )
+      );
+  }
+
+  async cancelScheduledFollowUps(leadId: string): Promise<void> {
+    await db
+      .update(emailCampaigns)
+      .set({ 
+        status: "bounced", // Using bounced as cancelled status
+        updatedAt: new Date() 
+      })
+      .where(
+        and(
+          eq(emailCampaigns.leadId, leadId),
+          eq(emailCampaigns.status, "draft"),
+          eq(emailCampaigns.isFollowUp, true),
+          isNotNull(emailCampaigns.scheduledAt)
+        )
+      );
   }
 }
 

@@ -73,6 +73,9 @@ export const emailCampaigns = pgTable("email_campaigns", {
   isFollowUp: boolean("is_follow_up").default(false),
   followUpSequence: integer("follow_up_sequence").default(0),
   parentEmailId: varchar("parent_email_id"),
+  messageId: varchar("message_id"), // For tracking email responses
+  trackingId: varchar("tracking_id"), // For email open/click tracking
+  scheduledAt: timestamp("scheduled_at"), // For follow-up scheduling
   createdBy: varchar("created_by").references(() => users.id),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
@@ -144,9 +147,13 @@ export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).pick
   subject: true,
   content: true,
   tone: true,
+  status: true,
   isFollowUp: true,
   followUpSequence: true,
   parentEmailId: true,
+  messageId: true,
+  trackingId: true,
+  scheduledAt: true,
 });
 
 export const insertInsightSchema = createInsertSchema(insights).pick({
