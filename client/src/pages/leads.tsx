@@ -20,13 +20,16 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import LeadForm from "@/components/leads/lead-form";
 import CSVImport from "@/components/leads/csv-import";
+import AIEmailGenerator from "@/components/email/ai-email-generator";
 import type { Lead } from "@shared/schema";
 
 export default function Leads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
+  const [showAIEmailGenerator, setShowAIEmailGenerator] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [selectedLeadForEmail, setSelectedLeadForEmail] = useState<Lead | null>(null);
   
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
@@ -257,9 +260,21 @@ export default function Leads() {
                               variant="ghost"
                               size="sm"
                               onClick={() => {
+                                setSelectedLeadForEmail(lead);
+                                setShowAIEmailGenerator(true);
+                              }}
+                              title="Generate AI Email"
+                            >
+                              <i className="fas fa-robot text-purple-600"></i>
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => {
                                 setSelectedLead(lead);
                                 setShowLeadForm(true);
                               }}
+                              title="Edit Lead"
                             >
                               <i className="fas fa-edit text-gray-600"></i>
                             </Button>
@@ -268,6 +283,7 @@ export default function Leads() {
                               size="sm"
                               onClick={() => deleteMutation.mutate(lead.id)}
                               disabled={deleteMutation.isPending}
+                              title="Delete Lead"
                             >
                               <i className="fas fa-trash text-red-600"></i>
                             </Button>
@@ -327,6 +343,25 @@ export default function Leads() {
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
               setShowCSVImport(false);
+            }}
+          />
+        )}
+
+        {/* AI Email Generator Modal */}
+        {showAIEmailGenerator && selectedLeadForEmail && (
+          <AIEmailGenerator
+            preselectedLead={selectedLeadForEmail}
+            onClose={() => {
+              setShowAIEmailGenerator(false);
+              setSelectedLeadForEmail(null);
+            }}
+            onSuccess={() => {
+              setShowAIEmailGenerator(false);
+              setSelectedLeadForEmail(null);
+              toast({
+                title: "Success",
+                description: "Email sent successfully!",
+              });
             }}
           />
         )}

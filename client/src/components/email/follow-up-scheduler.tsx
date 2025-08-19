@@ -21,7 +21,8 @@ export default function FollowUpScheduler({ campaignId, leadName, onSuccess }: F
 
   const scheduleFollowUpMutation = useMutation({
     mutationFn: async (data: { delayDays: number }) => {
-      return await apiRequest("POST", `/api/email-campaigns/${campaignId}/schedule-followup`, data);
+      const response = await apiRequest("POST", `/api/email-campaigns/${campaignId}/schedule-followup`, data);
+      return response.json();
     },
     onSuccess: () => {
       toast({
@@ -42,7 +43,8 @@ export default function FollowUpScheduler({ campaignId, leadName, onSuccess }: F
 
   const cancelFollowUpsMutation = useMutation({
     mutationFn: async () => {
-      return await apiRequest("DELETE", `/api/email-campaigns/${campaignId}/cancel-followups`);
+      const response = await apiRequest("DELETE", `/api/email-campaigns/${campaignId}/cancel-followups`);
+      return response.json();
     },
     onSuccess: () => {
       toast({

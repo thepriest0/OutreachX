@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -89,6 +89,7 @@ export default function QuickActions() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [showAIEmailGenerator, setShowAIEmailGenerator] = useState(false);
 
   const [newLeadData, setNewLeadData] = useState<NewLeadFormData>({
     name: "",
@@ -185,7 +186,7 @@ export default function QuickActions() {
         setOpenDialog("new-lead");
         break;
       case "generate-email":
-        setOpenDialog("generate-email");
+        setShowAIEmailGenerator(true);
         break;
       case "schedule-campaign":
         toast({
@@ -464,6 +465,19 @@ export default function QuickActions() {
           </div>
         </DialogContent>
       </Dialog>
+
+      {showAIEmailGenerator && (
+        <AIEmailGenerator
+          onClose={() => setShowAIEmailGenerator(false)}
+          onSuccess={() => {
+            setShowAIEmailGenerator(false);
+            toast({
+              title: "Success",
+              description: "Email sent successfully!",
+            });
+          }}
+        />
+      )}
     </Card>
   );
 }

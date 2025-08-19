@@ -7,6 +7,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { EmailCampaign, Lead } from "@shared/schema";
+import FollowUpScheduler from "@/components/email/follow-up-scheduler";
 
 interface EmailTrackerProps {
   campaignId?: string;
@@ -14,9 +15,10 @@ interface EmailTrackerProps {
 }
 
 export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) {
+  const [selectedLeadId, setSelectedLeadId] = useState<string>("");
+  const [selectedCampaignForFollowUp, setSelectedCampaignForFollowUp] = useState<string | null>(null);
   const { toast } = useToast();
   const queryClient = useQueryClient();
-  const [selectedLead, setSelectedLead] = useState<string>("");
 
   const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
     queryKey: ["/api/email-campaigns"],
@@ -68,27 +70,6 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
     },
   });
 
-  const scheduleFollowUpMutation = useMutation({
-    mutationFn: async ({ campaignId, delay }: { campaignId: string; delay: number }) => {
-      const response = await apiRequest("POST", `/api/campaigns/${campaignId}/schedule-followup`, { delay });
-      return response.json();
-    },
-    onSuccess: () => {
-      toast({
-        title: "Follow-up scheduled!",
-        description: "The follow-up email has been scheduled successfully.",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-    },
-    onError: (error) => {
-      toast({
-        title: "Failed to schedule follow-up",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
-
   const getStatusBadge = (status: string | null) => {
     const statusColors = {
       draft: "secondary",
@@ -99,7 +80,7 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
     } as const;
 
     const color = statusColors[status as keyof typeof statusColors] || "secondary";
-    
+
     return (
       <Badge variant={color}>
         {status || "draft"}
@@ -196,7 +177,7 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
                     <div className="flex space-x-2">
                       {campaign.status === "draft" && leads && (
                         <>
-                          <Select value={selectedLead} onValueChange={setSelectedLead}>
+                          <Select value={selectedLeadId} onValueChange={setSelectedLeadId}>
                             <SelectTrigger className="w-48">
                               <SelectValue placeholder="Select lead" />
                             </SelectTrigger>
@@ -209,11 +190,11 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
                             </SelectContent>
                           </Select>
                           <Button
-                            onClick={() => sendEmailMutation.mutate({ 
-                              campaignId: campaign.id, 
-                              leadId: selectedLead 
+                            onClick={() => sendEmailMutation.mutate({
+                              campaignId: campaign.id,
+                              leadId: selectedLeadId
                             })}
-                            disabled={!selectedLead || sendEmailMutation.isPending}
+                            disabled={!selectedLeadId || sendEmailMutation.isPending}
                             size="sm"
                           >
                             {sendEmailMutation.isPending ? "Sending..." : "Send Email"}
@@ -224,24 +205,23 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
                       {(campaign.status === "sent" || campaign.status === "opened") && (
                         <>
                           <Button
+                            variant="outline"
+                            size="sm"
                             onClick={() => markRepliedMutation.mutate({ campaignId: campaign.id })}
                             disabled={markRepliedMutation.isPending}
-                            size="sm"
-                            variant="outline"
                           >
-                            {markRepliedMutation.isPending ? "Marking..." : "Mark as Replied"}
+                            <i className="fas fa-reply mr-2"></i>
+                            Mark as Replied
                           </Button>
-                          {!campaign.isFollowUp && (
+
+                          {campaign.status === 'sent' && !campaign.repliedAt && (
                             <Button
-                              onClick={() => scheduleFollowUpMutation.mutate({ 
-                                campaignId: campaign.id, 
-                                delay: 86400 // 24 hours
-                              })}
-                              disabled={scheduleFollowUpMutation.isPending}
-                              size="sm"
                               variant="outline"
+                              size="sm"
+                              onClick={() => setSelectedCampaignForFollowUp(campaign.id)}
                             >
-                              {scheduleFollowUpMutation.isPending ? "Scheduling..." : "Schedule Follow-up"}
+                              <i className="fas fa-clock mr-2"></i>
+                              Schedule Follow-up
                             </Button>
                           )}
                         </>
@@ -264,6 +244,33 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
           </div>
         </CardContent>
       </Card>
+
+      {/* Follow-up Scheduler Modal */}
+      {selectedCampaignForFollowUp && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+            <div className="flex items-center justify-between mb-4">
+              <h3 className="text-lg font-semibold">Schedule Follow-up</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setSelectedCampaignForFollowUp(null)}
+              >
+                <i className="fas fa-times"></i>
+              </Button>
+            </div>
+
+            <FollowUpScheduler
+              campaignId={selectedCampaignForFollowUp}
+              leadName={campaigns?.find(c => c.id === selectedCampaignForFollowUp)?.lead?.name || "Lead"}
+              onSuccess={() => {
+                setSelectedCampaignForFollowUp(null);
+                queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+              }}
+            />
+          </div>
+        </div>
+      )}
     </div>
   );
 }
