@@ -56,8 +56,10 @@ export default function SetupPage({ onSetupComplete }: SetupPageProps) {
       const res = await apiRequest("POST", "/api/setup-admin", data);
       return await res.json();
     },
-    onSuccess: () => {
-      queryClient.setQueryData(["/api/user"], setupMutation.data);
+    onSuccess: (userData) => {
+      // Set both user data and setup status in cache
+      queryClient.setQueryData(["/api/user"], userData);
+      queryClient.setQueryData(["/api/setup-needed"], { setupNeeded: false });
       toast({
         title: "Setup complete",
         description: "Head admin account created successfully. You are now logged in.",
