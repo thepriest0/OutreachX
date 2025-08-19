@@ -30,15 +30,18 @@ async function comparePasswords(supplied: string, stored: string) {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'your-secret-key-change-this-in-production',
+    secret: process.env.SESSION_SECRET || 'dev-session-secret-key-12345',
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,
+    name: 'outreach.sid',
     cookie: {
-      secure: false, // Set to true in production with HTTPS
+      secure: false,
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
+      sameSite: 'lax'
     },
+    rolling: true
   };
 
   app.set("trust proxy", 1);
