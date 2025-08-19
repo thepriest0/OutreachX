@@ -50,6 +50,7 @@ export class EmailTrackingService {
         // Cancel any scheduled follow-ups for this lead
         if (campaign.leadId) {
           await storage.cancelScheduledFollowUps(campaign.leadId);
+          console.log(`Cancelled all follow-ups for lead ${campaign.leadId} due to reply`);
         }
         
         console.log(`Email replied: Campaign ${campaign.id}`);
@@ -58,6 +59,38 @@ export class EmailTrackingService {
       }
     } catch (error) {
       console.error('Error marking email as replied:', error);
+    }
+  }
+
+  async trackEmailOpen(trackingId: string): Promise<void> {
+    try {
+      const [campaignId] = trackingId.split('_');
+      
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'opened',
+        openedAt: new Date(),
+      });
+      
+      console.log(`Email opened: Campaign ${campaignId}`);
+    } catch (error) {
+      console.error('Error tracking email open:', error);
+    }
+  }
+
+  async trackEmailClick(trackingId: string, originalUrl: string): Promise<string> {
+    try {
+      const [campaignId] = trackingId.split('_');
+      
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'clicked',
+        clickedAt: new Date(),
+      });
+      
+      console.log(`Email link clicked: Campaign ${campaignId}`);
+      return originalUrl;
+    } catch (error) {
+      console.error('Error tracking email click:', error);
+      return originalUrl;
     }
   }
 }

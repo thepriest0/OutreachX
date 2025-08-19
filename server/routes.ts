@@ -360,6 +360,44 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  app.post('/api/email-campaigns/:id/mark-replied', requireAuth, async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      const campaign = await storage.getEmailCampaignById(campaignId);
+      
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'replied',
+        repliedAt: new Date(),
+      });
+      
+      // Cancel any scheduled follow-ups for this lead
+      if (campaign.leadId) {
+        await followUpScheduler.cancelFollowUpsForLead(campaign.leadId);
+      }
+      
+      res.json({ message: "Campaign marked as replied successfully" });
+    } catch (error) {
+      console.error("Error marking campaign as replied:", error);
+      res.status(500).json({ message: "Failed to mark campaign as replied" });
+    }
+  });
+
+  app.get('/api/leads/:leadId/follow-ups', requireAuth, async (req, res) => {
+    try {
+      const leadId = req.params.leadId;
+      const followUps = await storage.getFollowUpCampaignsForLead(leadId);
+      
+      res.json(followUps);
+    } catch (error) {
+      console.error("Error getting follow-ups:", error);
+      res.status(500).json({ message: "Failed to get follow-ups" });
+    }
+  });
+
   // AI email generation routes
   app.post('/api/ai/generate-email', requireAuth, async (req, res) => {
     try {

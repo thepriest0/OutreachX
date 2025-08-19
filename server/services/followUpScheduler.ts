@@ -19,8 +19,8 @@ export class FollowUpScheduler {
   start(): void {
     if (this.isRunning) return;
 
-    // Run every hour to check for scheduled follow-ups
-    cron.schedule('0 * * * *', async () => {
+    // Run every 5 minutes to check for scheduled follow-ups
+    cron.schedule('*/5 * * * *', async () => {
       await this.processScheduledFollowUps();
     });
 
@@ -46,6 +46,17 @@ export class FollowUpScheduler {
     const lead = await storage.getLeadById(parentCampaign.leadId);
     if (!lead) {
       throw new Error('Lead not found');
+    }
+
+    // Check if we already have 3 follow-ups for this lead
+    const existingFollowUps = await storage.getFollowUpCampaignsForLead(parentCampaign.leadId);
+    if (existingFollowUps.length >= 3) {
+      throw new Error('Maximum of 3 follow-ups per lead already reached');
+    }
+
+    // Check if parent campaign was already replied to
+    if (parentCampaign.status === 'replied' || parentCampaign.repliedAt) {
+      throw new Error('Cannot schedule follow-up for a campaign that has been replied to');
     }
 
     // Generate follow-up email content
@@ -76,7 +87,7 @@ export class FollowUpScheduler {
       createdBy: userId,
     });
 
-    console.log(`Follow-up scheduled for ${scheduledAt.toISOString()}`);
+    console.log(`Follow-up #${followUpCampaign.followUpSequence} scheduled for ${scheduledAt.toISOString()}`);
     return followUpCampaign.id;
   }
 

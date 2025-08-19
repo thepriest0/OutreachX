@@ -147,10 +147,11 @@ export default function FollowUpScheduler({ campaignId, leadName, onSuccess }: F
           </Button>
         </div>
 
-        <div className="text-xs text-muted-foreground">
+        <div className="text-xs text-muted-foreground space-y-1">
           <p>• Follow-ups will be sent automatically if no reply is received</p>
           <p>• Follow-ups are cancelled when the lead replies to any email</p>
-          <p>• Maximum 3 follow-ups per lead</p>
+          <p>• Maximum 3 follow-ups per lead allowed</p>
+          <p>• Each follow-up references the previous email content</p>
         </div>
       </CardContent>
     </Card>
