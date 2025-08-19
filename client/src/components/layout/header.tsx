@@ -13,6 +13,7 @@ import { Badge } from "@/components/ui/badge";
 import { Bell, Search, Plus, LogOut, User, Settings, Moon, Sun } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { useState } from "react";
+import { useLocation } from "wouter";
 
 interface HeaderProps {
   title: string;
@@ -23,6 +24,7 @@ interface HeaderProps {
 export default function Header({ title, subtitle, actions }: HeaderProps) {
   const { user } = useAuth();
   const [theme, setTheme] = useState<"light" | "dark">("light");
+  const [, setLocation] = useLocation();
 
   const toggleTheme = () => {
     const newTheme = theme === "light" ? "dark" : "light";
@@ -76,6 +78,7 @@ export default function Header({ title, subtitle, actions }: HeaderProps) {
             size="sm"
             className="hidden sm:flex items-center space-x-2 bg-primary text-primary-foreground hover:bg-primary/90 border-primary"
             data-testid="button-new-lead"
+            onClick={() => setLocation('/leads')}
           >
             <Plus className="h-4 w-4" />
             <span>New Lead</span>
