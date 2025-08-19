@@ -422,6 +422,20 @@ export class DatabaseStorage implements IStorage {
       .where(eq(emailCampaigns.id, campaignId));
   }
 
+  async deleteEmailCampaign(id: string): Promise<void> {
+    await db
+      .delete(emailCampaigns)
+      .where(eq(emailCampaigns.id, id));
+  }
+
+  async getEmailCampaignsByUser(userId: string): Promise<EmailCampaign[]> {
+    return await db
+      .select()
+      .from(emailCampaigns)
+      .where(eq(emailCampaigns.createdBy, userId))
+      .orderBy(desc(emailCampaigns.createdAt));
+  }
+
   async getFollowUpCampaignsForLead(leadId: string): Promise<EmailCampaign[]> {
     return await db
       .select()

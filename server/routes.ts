@@ -345,6 +345,35 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Add campaigns routes (alias for email-campaigns)
+  app.get('/api/campaigns', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const campaigns = await storage.getEmailCampaignsByUser(userId);
+      res.json(campaigns);
+    } catch (error) {
+      console.error("Error fetching campaigns:", error);
+      res.status(500).json({ message: "Failed to fetch campaigns" });
+    }
+  });
+
+  app.delete('/api/campaigns/:id', requireAuth, async (req, res) => {
+    try {
+      const campaignId = req.params.id;
+      const campaign = await storage.getEmailCampaignById(campaignId);
+      
+      if (!campaign) {
+        return res.status(404).json({ message: "Campaign not found" });
+      }
+      
+      await storage.deleteEmailCampaign(campaignId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting campaign:", error);
+      res.status(500).json({ message: "Failed to delete campaign" });
+    }
+  });
+
   app.delete('/api/email-campaigns/:id/cancel-followups', requireAuth, async (req, res) => {
     try {
       const campaign = await storage.getEmailCampaignById(req.params.id);
