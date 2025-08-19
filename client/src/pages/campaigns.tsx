@@ -15,6 +15,7 @@ import type { EmailCampaign } from "@shared/schema";
 
 export default function Campaigns() {
   const [showEmailGenerator, setShowEmailGenerator] = useState(false);
+  const [selectedCampaignForFollowUp, setSelectedCampaignForFollowUp] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
@@ -219,7 +220,12 @@ export default function Campaigns() {
                         )}
                         
                         {campaign.status === 'sent' && (
-                          <Button variant="outline" size="sm">
+                          <Button 
+                            variant="outline" 
+                            size="sm"
+                            onClick={() => setSelectedCampaignForFollowUp(campaign.id)}
+                            data-testid={`button-followup-${campaign.id}`}
+                          >
                             <i className="fas fa-clock mr-1"></i>
                             Schedule Follow-up
                           </Button>
@@ -260,9 +266,40 @@ export default function Campaigns() {
             onClose={() => setShowEmailGenerator(false)}
             onSuccess={() => {
               setShowEmailGenerator(false);
-              // Optionally refresh campaigns
+              queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
             }}
           />
+        )}
+
+        {/* Follow-up Scheduler Modal */}
+        {selectedCampaignForFollowUp && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="text-lg font-semibold">Schedule Follow-up</h3>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => setSelectedCampaignForFollowUp(null)}
+                >
+                  <i className="fas fa-times"></i>
+                </Button>
+              </div>
+              
+              <FollowUpScheduler
+                campaignId={selectedCampaignForFollowUp}
+                leadName="Lead" 
+                onSuccess={() => {
+                  setSelectedCampaignForFollowUp(null);
+                  queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+                  toast({
+                    title: "Follow-up Scheduled",
+                    description: "Your follow-up email has been scheduled successfully!",
+                  });
+                }}
+              />
+            </div>
+          </div>
         )}
       </main>
     </div>
