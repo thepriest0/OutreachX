@@ -11,6 +11,7 @@ import { followUpScheduler } from "./services/followUpScheduler";
 import { emailTrackingService } from "./services/emailTrackingService";
 import { GmailProvider } from "./services/gmailService";
 import multer from "multer";
+import { google } from 'googleapis';
 
 const upload = multer({ storage: multer.memoryStorage() });
 
@@ -474,6 +475,79 @@ export async function registerRoutes(app: Express): Promise<Server> {
       console.error("Error scheduling follow-up:", error);
       res.status(500).json({ message: "Failed to schedule follow-up" });
     }
+  });
+
+  // Gmail OAuth routes
+  app.get('/api/auth/gmail', isAuthenticated, (req, res) => {
+    const oauth2Client = new google.auth.OAuth2(
+      process.env.GMAIL_CLIENT_ID,
+      process.env.GMAIL_CLIENT_SECRET,
+      `${req.protocol}://${req.get('host')}/api/auth/gmail/callback`
+    );
+
+    const authUrl = oauth2Client.generateAuthUrl({
+      access_type: 'offline',
+      scope: ['https://www.googleapis.com/auth/gmail.send'],
+      prompt: 'consent'
+    });
+
+    res.redirect(authUrl);
+  });
+
+  app.get('/api/auth/gmail/callback', isAuthenticated, async (req, res) => {
+    try {
+      const { code } = req.query;
+      if (!code) {
+        return res.status(400).send('Authorization code missing');
+      }
+
+      const oauth2Client = new google.auth.OAuth2(
+        process.env.GMAIL_CLIENT_ID,
+        process.env.GMAIL_CLIENT_SECRET,
+        `${req.protocol}://${req.get('host')}/api/auth/gmail/callback`
+      );
+
+      const { tokens } = await oauth2Client.getToken(code as string);
+      
+      // In a production app, you'd store these tokens securely in the database
+      // For now, we'll log them so you can add them as environment variables
+      console.log('=== GMAIL OAUTH TOKENS ===');
+      console.log('GMAIL_ACCESS_TOKEN:', tokens.access_token);
+      console.log('GMAIL_REFRESH_TOKEN:', tokens.refresh_token);
+      console.log('=== ADD THESE TO YOUR SECRETS ===');
+
+      res.send(`
+        <html>
+          <body style="font-family: Arial, sans-serif; max-width: 600px; margin: 50px auto; padding: 20px;">
+            <h2>Gmail Connected Successfully!</h2>
+            <p>Your Gmail account has been authorized. Please add these tokens to your environment secrets:</p>
+            <div style="background: #f5f5f5; padding: 15px; border-radius: 5px; font-family: monospace; word-break: break-all;">
+              <p><strong>GMAIL_ACCESS_TOKEN:</strong><br/>${tokens.access_token}</p>
+              <p><strong>GMAIL_REFRESH_TOKEN:</strong><br/>${tokens.refresh_token}</p>
+            </div>
+            <p>After adding these secrets, your emails will be sent through Gmail instead of the mock service.</p>
+            <p><a href="/integrations">← Back to Integrations</a></p>
+          </body>
+        </html>
+      `);
+    } catch (error) {
+      console.error('Gmail OAuth error:', error);
+      res.status(500).send('Failed to authorize Gmail account');
+    }
+  });
+
+  // Integration status route
+  app.get('/api/integrations/status', isAuthenticated, async (req, res) => {
+    res.json({
+      gmail: {
+        connected: !!(process.env.GMAIL_REFRESH_TOKEN && process.env.GMAIL_ACCESS_TOKEN),
+        email: process.env.FROM_EMAIL || null
+      },
+      sendgrid: {
+        connected: !!process.env.SENDGRID_API_KEY,
+        verified: true
+      }
+    });
   });
 
   // Insights routes
