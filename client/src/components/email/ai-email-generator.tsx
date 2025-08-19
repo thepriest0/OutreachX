@@ -307,7 +307,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
                   onClick={() => setSelectedTone(tone.value)}
                   className={`p-4 h-auto flex-col items-start ${
                     selectedTone === tone.value
-                      ? "bg-primary-500 hover:bg-primary-600 text-white"
+                      ? "bg-blue-600 hover:bg-blue-700 text-white"
                       : "border-gray-300 hover:border-gray-400"
                   }`}
                 >
@@ -324,7 +324,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
               <Button
                 onClick={handleGenerate}
                 disabled={!selectedLeadId || generateMutation.isPending}
-                className="bg-secondary-500 hover:bg-secondary-600 text-white"
+                className="bg-purple-600 hover:bg-purple-700 text-white"
                 size="lg"
               >
                 {generateMutation.isPending ? (
@@ -440,7 +440,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
                 </Button>
 
                 <Button
-                  className="bg-primary-500 hover:bg-primary-600"
+                  className="bg-green-600 hover:bg-green-700 text-white"
                   onClick={handleSendEmail}
                   disabled={saveMutation.isPending || sendEmailMutation.isPending}
                 >
