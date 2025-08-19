@@ -123,6 +123,7 @@ export default function Header({ title, subtitle, actions }: HeaderProps) {
             size="icon"
             onClick={toggleTheme}
             data-testid="button-theme-toggle"
+            className="text-foreground hover:bg-accent hover:text-accent-foreground border-0"
           >
             {theme === "light" ? (
               <Moon className="h-4 w-4" />

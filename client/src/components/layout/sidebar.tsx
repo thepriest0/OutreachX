@@ -93,7 +93,7 @@ export default function Sidebar() {
               </div>
             </div>
           )}
-          
+
           <Button
             variant="ghost"
             size="icon"
@@ -116,7 +116,7 @@ export default function Sidebar() {
           {navigation.map((item) => {
             const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
             const Icon = item.icon;
-            
+
             return (
               <Link 
                 key={item.name} 
@@ -136,7 +136,7 @@ export default function Sidebar() {
                   collapsed ? "h-5 w-5" : "h-4 w-4 mr-3",
                   "group-hover:scale-110"
                 )} />
-                
+
                 {!collapsed && (
                   <div className="flex-1 min-w-0">
                     <div className="font-medium">{item.name}</div>
@@ -151,7 +151,7 @@ export default function Sidebar() {
         {!collapsed && (
           <>
             <Separator className="mx-4 my-4" />
-            
+
             {/* Quick Actions */}
             <div className="px-4">
               <h3 className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">
@@ -160,7 +160,7 @@ export default function Sidebar() {
               <div className="space-y-2">
                 {quickActions.map((action) => {
                   const Icon = action.icon;
-                  
+
                   return (
                     <button
                       key={action.name}
@@ -193,7 +193,7 @@ export default function Sidebar() {
             </div>
 
             <Separator className="mx-4 my-4" />
-            
+
             {/* Status */}
             <div className="px-4">
               <div className="flex items-center space-x-2 text-xs text-muted-foreground">

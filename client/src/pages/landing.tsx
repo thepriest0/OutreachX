@@ -26,7 +26,7 @@ export default function Landing() {
             <Button 
               onClick={() => window.location.href = '/api/login'}
               size="lg"
-              className="bg-primary-500 hover:bg-primary-600 text-white px-8 py-3 text-lg font-medium"
+              className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg font-medium shadow-lg"
             >
               Get Started
             </Button>

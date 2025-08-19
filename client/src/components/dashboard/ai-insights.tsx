@@ -41,14 +41,14 @@ const impactColors = {
 
 function InsightCard({ insight }: { insight: AIInsight }) {
   const Icon = insightIcons[insight.type];
-  
+
   return (
     <div className="p-4 rounded-lg border bg-card/50 hover:bg-card transition-colors">
       <div className="flex items-start space-x-3">
         <div className="p-2 rounded-lg bg-primary/10">
           <Icon className="h-4 w-4 text-primary" />
         </div>
-        
+
         <div className="flex-1 min-w-0">
           <div className="flex items-center space-x-2 mb-1">
             <h4 className="font-medium text-sm">{insight.title}</h4>
@@ -56,11 +56,11 @@ function InsightCard({ insight }: { insight: AIInsight }) {
               {insight.impact}
             </Badge>
           </div>
-          
+
           <p className="text-sm text-muted-foreground mb-2 leading-relaxed">
             {insight.description}
           </p>
-          
+
           <div className="flex items-center justify-between">
             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
               <div className="flex items-center space-x-1">
@@ -73,7 +73,7 @@ function InsightCard({ insight }: { insight: AIInsight }) {
                 <span>{new Date(insight.createdAt).toLocaleDateString()}</span>
               </div>
             </div>
-            
+
             {insight.action && (
               <Button 
                 size="sm" 
@@ -255,7 +255,7 @@ export default function AIInsights() {
         {insights.map((insight) => (
           <InsightCard key={insight.id} insight={insight} />
         ))}
-        
+
         {insights.length > 3 && (
           <div className="pt-2 border-t">
             <Button 

@@ -162,6 +162,15 @@
     @apply bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent;
   }
   
+  /* Button visibility fixes */
+  .btn-visible {
+    @apply opacity-100 transition-opacity duration-200;
+  }
+  
+  .btn-invisible {
+    @apply opacity-0 pointer-events-none;
+  }
+  
   /* Spacing utilities */
   .space-y-8 > * + * { margin-top: 2rem; }
   .space-y-12 > * + * { margin-top: 3rem; }

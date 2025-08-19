@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -22,17 +22,18 @@ import {
 } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { 
-  Plus, 
-  Zap, 
-  Calendar, 
-  Upload, 
+import {
+  Plus,
+  Zap,
+  Calendar,
+  Upload,
   Send,
   Sparkles,
   Clock,
   FileText,
   Mail
 } from "lucide-react";
+import { Link } from "wouter";
 
 const quickActionButtons = [
   {
@@ -88,7 +89,7 @@ export default function QuickActions() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState<string | null>(null);
-  
+
   const [newLeadData, setNewLeadData] = useState<NewLeadFormData>({
     name: "",
     email: "",
@@ -111,12 +112,12 @@ export default function QuickActions() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to create lead");
       }
-      
+
       return response.json();
     },
     onSuccess: () => {
@@ -150,14 +151,14 @@ export default function QuickActions() {
       const response = await fetch("/api/ai/generate-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(data),
+        body: JSON.JSON.stringify(data),
       });
-      
+
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Failed to generate email");
       }
-      
+
       return response.json();
     },
     onSuccess: (data) => {
@@ -206,7 +207,7 @@ export default function QuickActions() {
   const handleFileUpload = async (event: Event) => {
     const target = event.target as HTMLInputElement;
     const file = target.files?.[0];
-    
+
     if (!file) return;
 
     const formData = new FormData();
@@ -226,7 +227,7 @@ export default function QuickActions() {
       const result = await response.json();
       queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
       queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-      
+
       toast({
         title: "Import Successful",
         description: result.message,
@@ -397,7 +398,7 @@ export default function QuickActions() {
             <Button variant="outline" onClick={() => setOpenDialog(null)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleCreateLead}
               disabled={createLeadMutation.isPending}
               data-testid="button-create-lead"
@@ -452,7 +453,7 @@ export default function QuickActions() {
             <Button variant="outline" onClick={() => setOpenDialog(null)}>
               Cancel
             </Button>
-            <Button 
+            <Button
               onClick={handleGenerateEmail}
               disabled={generateEmailMutation.isPending}
               className="bg-purple-500 hover:bg-purple-600"
