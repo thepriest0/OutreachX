@@ -35,13 +35,13 @@ function Router() {
 
   return (
     <Switch>
-      <ProtectedRoute path="/" component={Dashboard} />
+      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/leads" component={Leads} />
       <ProtectedRoute path="/campaigns" component={Campaigns} />
       <ProtectedRoute path="/analytics" component={Analytics} />
       <ProtectedRoute path="/integrations" component={IntegrationPage} />
-      <ProtectedRoute path="/admin" component={AdminPage} />
-      <Route path="/auth" component={AuthPage} />
+      <ProtectedRoute path="/" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>
   );

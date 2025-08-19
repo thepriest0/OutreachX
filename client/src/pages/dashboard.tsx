@@ -68,29 +68,11 @@ function DashboardSkeleton() {
 
 export default function Dashboard() {
   const { toast } = useToast();
-  const { isAuthenticated, isLoading } = useAuth();
-
-  // Redirect to login if not authenticated
-  useEffect(() => {
-    if (!isLoading && !isAuthenticated) {
-      toast({
-        title: "Authentication Required",
-        description: "Please log in to access the dashboard.",
-        variant: "destructive",
-      });
-      setTimeout(() => {
-        window.location.href = "/api/login";
-      }, 2000);
-      return;
-    }
-  }, [isAuthenticated, isLoading, toast]);
-
-  if (isLoading) {
+  const { user } = useAuth();
+  
+  // Dashboard is now protected by ProtectedRoute, so user should always exist
+  if (!user) {
     return <LoadingSkeleton />;
-  }
-
-  if (!isAuthenticated) {
-    return <LoadingSkeleton />; // Will redirect via useEffect
   }
 
   return (
