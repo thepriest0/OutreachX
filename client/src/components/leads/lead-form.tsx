@@ -82,7 +82,7 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }
@@ -114,7 +114,7 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
           variant: "destructive",
         });
         setTimeout(() => {
-          window.location.href = "/api/login";
+          window.location.href = "/auth";
         }, 500);
         return;
       }

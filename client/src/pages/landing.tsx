@@ -24,7 +24,7 @@ export default function Landing() {
             </p>
             
             <Button 
-              onClick={() => window.location.href = '/api/login'}
+              onClick={() => window.location.href = '/auth'}
               size="lg"
               className="bg-primary text-primary-foreground hover:bg-primary/90 px-8 py-3 text-lg font-medium shadow-lg"
             >
@@ -129,7 +129,7 @@ export default function Landing() {
                 Join design studios already using OutreachX to generate more leads and close more deals.
               </p>
               <Button 
-                onClick={() => window.location.href = '/api/login'}
+                onClick={() => window.location.href = '/auth'}
                 size="lg"
                 className="bg-white text-primary-700 hover:bg-gray-50 px-8 py-3 text-lg font-medium"
               >
