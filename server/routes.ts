@@ -407,6 +407,51 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Email reply webhook (for Gmail integration)
+  app.post('/api/email/webhook/reply', async (req, res) => {
+    try {
+      const { messageId, from, subject, threadId } = req.body;
+      
+      // Find campaign by message ID or thread ID
+      const campaigns = await storage.getEmailCampaigns();
+      const campaign = campaigns.find(c => 
+        c.messageId === messageId || 
+        c.messageId === threadId ||
+        (c.trackingId && subject.includes(c.trackingId))
+      );
+      
+      if (campaign) {
+        await emailTrackingService.markEmailReplied(campaign.messageId || campaign.id);
+        console.log(`Email reply detected: Campaign ${campaign.id} from ${from}`);
+        res.json({ success: true, message: "Reply tracked successfully" });
+      } else {
+        console.log(`No campaign found for reply from ${from}`);
+        res.json({ success: false, message: "Campaign not found" });
+      }
+    } catch (error) {
+      console.error('Error processing email reply webhook:', error);
+      res.status(500).json({ error: 'Failed to process reply webhook' });
+    }
+  });
+
+  // Manual reply marking endpoint
+  app.post('/api/campaigns/:campaignId/mark-replied', async (req, res) => {
+    try {
+      const { campaignId } = req.params;
+      const campaign = await storage.getEmailCampaignById(campaignId);
+      
+      if (!campaign) {
+        return res.status(404).json({ error: "Campaign not found" });
+      }
+
+      await emailTrackingService.markEmailReplied(campaign.messageId || campaign.id);
+      res.json({ success: true, message: "Campaign marked as replied" });
+    } catch (error) {
+      console.error("Error marking campaign as replied:", error);
+      res.status(500).json({ error: "Failed to mark as replied" });
+    }
+  });
+
   // Email campaign tracking routes
   app.get('/api/email/track/open/:trackingId', async (req, res) => {
     try {

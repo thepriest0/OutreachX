@@ -47,6 +47,27 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
     },
   });
 
+  const markRepliedMutation = useMutation({
+    mutationFn: async ({ campaignId }: { campaignId: string }) => {
+      const response = await apiRequest("POST", `/api/campaigns/${campaignId}/mark-replied`);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Marked as replied!",
+        description: "The campaign has been marked as replied.",
+      });
+      queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+    },
+    onError: (error) => {
+      toast({
+        title: "Failed to mark as replied",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const scheduleFollowUpMutation = useMutation({
     mutationFn: async ({ campaignId, delay }: { campaignId: string; delay: number }) => {
       const response = await apiRequest("POST", `/api/campaigns/${campaignId}/schedule-followup`, { delay });
@@ -200,18 +221,30 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
                         </>
                       )}
 
-                      {campaign.status === "sent" && !campaign.isFollowUp && (
-                        <Button
-                          onClick={() => scheduleFollowUpMutation.mutate({ 
-                            campaignId: campaign.id, 
-                            delay: 86400 // 24 hours
-                          })}
-                          disabled={scheduleFollowUpMutation.isPending}
-                          size="sm"
-                          variant="outline"
-                        >
-                          {scheduleFollowUpMutation.isPending ? "Scheduling..." : "Schedule Follow-up"}
-                        </Button>
+                      {(campaign.status === "sent" || campaign.status === "opened") && (
+                        <>
+                          <Button
+                            onClick={() => markRepliedMutation.mutate({ campaignId: campaign.id })}
+                            disabled={markRepliedMutation.isPending}
+                            size="sm"
+                            variant="outline"
+                          >
+                            {markRepliedMutation.isPending ? "Marking..." : "Mark as Replied"}
+                          </Button>
+                          {!campaign.isFollowUp && (
+                            <Button
+                              onClick={() => scheduleFollowUpMutation.mutate({ 
+                                campaignId: campaign.id, 
+                                delay: 86400 // 24 hours
+                              })}
+                              disabled={scheduleFollowUpMutation.isPending}
+                              size="sm"
+                              variant="outline"
+                            >
+                              {scheduleFollowUpMutation.isPending ? "Scheduling..." : "Schedule Follow-up"}
+                            </Button>
+                          )}
+                        </>
                       )}
                     </div>
                   </div>

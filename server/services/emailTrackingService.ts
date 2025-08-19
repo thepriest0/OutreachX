@@ -32,13 +32,19 @@ export class EmailTrackingService {
 
   async markEmailReplied(messageId: string): Promise<void> {
     try {
-      // Find campaign by message ID
+      // Find campaign by message ID or campaign ID
       const campaigns = await storage.getEmailCampaigns();
-      const campaign = campaigns.find(c => c.messageId === messageId);
+      let campaign = campaigns.find(c => c.messageId === messageId);
+      
+      // If not found by messageId, try by campaign ID
+      if (!campaign) {
+        campaign = campaigns.find(c => c.id === messageId);
+      }
       
       if (campaign) {
         await storage.updateEmailCampaign(campaign.id, {
           status: 'replied',
+          repliedAt: new Date(),
         });
         
         // Cancel any scheduled follow-ups for this lead
@@ -47,6 +53,8 @@ export class EmailTrackingService {
         }
         
         console.log(`Email replied: Campaign ${campaign.id}`);
+      } else {
+        console.log(`No campaign found for messageId: ${messageId}`);
       }
     } catch (error) {
       console.error('Error marking email as replied:', error);
