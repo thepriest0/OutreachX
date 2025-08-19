@@ -13,6 +13,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
 import AIEmailGenerator from "@/components/email/ai-email-generator";
 import FollowUpScheduler from "@/components/email/follow-up-scheduler";
+import EmailTracker from "@/components/email/email-tracker";
 import { Search, Filter, Plus, Trash2, Edit, Send, Clock, Eye, MoreHorizontal, Mail } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 import type { EmailCampaign, Lead } from "@shared/schema";
@@ -239,7 +240,10 @@ export default function Campaigns() {
             </div>
           </div>
 
-          {/* Campaigns List */}
+          {/* Email Tracking Dashboard */}
+          <EmailTracker />
+
+          {/* Campaigns Grid */}
           {campaignsLoading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
