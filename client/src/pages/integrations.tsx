@@ -104,14 +104,22 @@ export default function Integrations() {
                         <p className="text-sm text-gray-600 mb-4">
                           Connect your Gmail account to send professional emails with proper deliverability.
                         </p>
-                        <Button 
-                          onClick={handleConnectGmail}
-                          className="w-full bg-red-500 hover:bg-red-600"
-                          data-testid="button-connect-gmail"
-                        >
-                          <i className="fab fa-google mr-2"></i>
-                          Connect Gmail Account
-                        </Button>
+                        <div className="space-y-3">
+                          <Button 
+                            onClick={handleConnectGmail}
+                            className="w-full bg-red-500 hover:bg-red-600"
+                            data-testid="button-connect-gmail"
+                          >
+                            <i className="fab fa-google mr-2"></i>
+                            Connect Gmail Account
+                          </Button>
+                          <div className="text-xs text-gray-500 p-3 bg-gray-50 rounded border">
+                            <p className="font-medium mb-1">Alternative setup:</p>
+                            <p>1. Add these redirect URIs to your Google Cloud Console:</p>
+                            <p className="font-mono text-xs">http://localhost:5000/api/auth/gmail/callback</p>
+                            <p className="font-mono text-xs">{window.location.origin}/api/auth/gmail/callback</p>
+                          </div>
+                        </div>
                       </div>
                     )}
                   </div>

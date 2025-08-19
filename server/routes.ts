@@ -479,10 +479,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
 
   // Gmail OAuth routes
   app.get('/api/auth/gmail', isAuthenticated, (req, res) => {
+    const redirectUri = process.env.NODE_ENV === 'production' 
+      ? 'https://your-domain.replit.app/api/auth/gmail/callback'
+      : 'http://localhost:5000/api/auth/gmail/callback';
+
     const oauth2Client = new google.auth.OAuth2(
       process.env.GMAIL_CLIENT_ID,
       process.env.GMAIL_CLIENT_SECRET,
-      `${req.protocol}://${req.get('host')}/api/auth/gmail/callback`
+      redirectUri
     );
 
     const authUrl = oauth2Client.generateAuthUrl({
@@ -494,17 +498,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
     res.redirect(authUrl);
   });
 
-  app.get('/api/auth/gmail/callback', isAuthenticated, async (req, res) => {
+  app.get('/api/auth/gmail/callback', async (req, res) => {
     try {
       const { code } = req.query;
       if (!code) {
         return res.status(400).send('Authorization code missing');
       }
 
+      const redirectUri = process.env.NODE_ENV === 'production' 
+        ? 'https://your-domain.replit.app/api/auth/gmail/callback'
+        : 'http://localhost:5000/api/auth/gmail/callback';
+
       const oauth2Client = new google.auth.OAuth2(
         process.env.GMAIL_CLIENT_ID,
         process.env.GMAIL_CLIENT_SECRET,
-        `${req.protocol}://${req.get('host')}/api/auth/gmail/callback`
+        redirectUri
       );
 
       const { tokens } = await oauth2Client.getToken(code as string);
