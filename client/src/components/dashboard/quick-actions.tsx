@@ -33,7 +33,7 @@ import {
   FileText,
   Mail
 } from "lucide-react";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 
 const quickActionButtons = [
   {
@@ -89,6 +89,7 @@ export default function QuickActions() {
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const [openDialog, setOpenDialog] = useState<string | null>(null);
+  const [, setLocation] = useLocation();
 
   const [newLeadData, setNewLeadData] = useState<NewLeadFormData>({
     name: "",
@@ -151,7 +152,7 @@ export default function QuickActions() {
       const response = await fetch("/api/ai/generate-email", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.JSON.stringify(data),
+        body: JSON.stringify(data),
       });
 
       if (!response.ok) {
@@ -188,10 +189,8 @@ export default function QuickActions() {
         setOpenDialog("generate-email");
         break;
       case "schedule-campaign":
-        toast({
-          title: "Coming Soon",
-          description: "Campaign scheduling feature will be available soon!",
-        });
+        // Navigate to campaigns page where users can schedule follow-ups
+        setLocation("/campaigns");
         break;
       case "import-leads":
         // Trigger file input

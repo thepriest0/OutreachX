@@ -49,7 +49,7 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
 
   const markRepliedMutation = useMutation({
     mutationFn: async ({ campaignId }: { campaignId: string }) => {
-      const response = await apiRequest("POST", `/api/campaigns/${campaignId}/mark-replied`);
+      const response = await apiRequest("POST", `/api/email-campaigns/${campaignId}/mark-replied`);
       return response.json();
     },
     onSuccess: () => {
@@ -70,7 +70,7 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
 
   const scheduleFollowUpMutation = useMutation({
     mutationFn: async ({ campaignId, delay }: { campaignId: string; delay: number }) => {
-      const response = await apiRequest("POST", `/api/campaigns/${campaignId}/schedule-followup`, { delay });
+      const response = await apiRequest("POST", `/api/email-campaigns/${campaignId}/schedule-followup`, { delayDays: Math.ceil(delay / 86400) });
       return response.json();
     },
     onSuccess: () => {

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import Sidebar from "@/components/layout/sidebar";
@@ -17,6 +17,7 @@ export default function Campaigns() {
   
   const { toast } = useToast();
   const { user } = useAuth();
+  const queryClient = useQueryClient();
 
   const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
     queryKey: ["/api/campaigns"],
@@ -159,6 +160,24 @@ export default function Campaigns() {
                           <i className="fas fa-edit mr-1"></i>
                           Edit
                         </Button>
+                        {campaign.status === 'sent' && !campaign.isFollowUp && (
+                          <Button 
+                            variant="ghost" 
+                            size="sm"
+                            onClick={() => {
+                              // Open follow-up scheduler dialog
+                              setShowEmailGenerator(false);
+                              // You could add a state for showing follow-up scheduler here
+                              toast({
+                                title: "Follow-up Scheduler",
+                                description: "Follow-up scheduling will be available in the detailed view",
+                              });
+                            }}
+                          >
+                            <i className="fas fa-clock mr-1"></i>
+                            Schedule
+                          </Button>
+                        )}
                       </div>
                     </div>
                   </CardContent>
