@@ -48,6 +48,12 @@ export default function Sidebar() {
       current: location === "/analytics",
     },
     {
+      name: "Integrations",
+      href: "/integrations",
+      icon: "fas fa-plug",
+      current: location === "/integrations",
+    },
+    {
       name: "Settings",
       href: "#",
       icon: "fas fa-cog",

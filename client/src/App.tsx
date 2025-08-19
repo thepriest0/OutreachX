@@ -10,6 +10,7 @@ import Dashboard from "@/pages/dashboard";
 import Leads from "@/pages/leads";
 import Campaigns from "@/pages/campaigns";
 import Analytics from "@/pages/analytics";
+import IntegrationPage from "@/pages/integration";
 
 function Router() {
   const { isAuthenticated, isLoading } = useAuth();
@@ -24,6 +25,7 @@ function Router() {
           <Route path="/leads" component={Leads} />
           <Route path="/campaigns" component={Campaigns} />
           <Route path="/analytics" component={Analytics} />
+          <Route path="/integrations" component={IntegrationPage} />
         </>
       )}
       <Route component={NotFound} />

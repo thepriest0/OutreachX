@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import AIEmailGenerator from "@/components/email/ai-email-generator";
+import FollowUpScheduler from "@/components/email/follow-up-scheduler";
 import EmailTracker from "@/components/email/email-tracker";
 import type { EmailCampaign } from "@shared/schema";
 

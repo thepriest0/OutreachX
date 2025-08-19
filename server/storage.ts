@@ -118,12 +118,12 @@ export class DatabaseStorage implements IStorage {
   }
 
   // Email campaign operations
-  async getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | undefined> {
+  async getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | null> {
     const [campaign] = await db
       .select()
       .from(emailCampaigns)
       .where(eq(emailCampaigns.trackingId, trackingId));
-    return campaign;
+    return campaign || null;
   }
 
   async getEmailCampaigns(leadId?: string, limit = 50): Promise<EmailCampaign[]> {
