@@ -19,7 +19,7 @@ export default function EmailTracker({ campaignId, leadId }: EmailTrackerProps) 
   const [selectedLead, setSelectedLead] = useState<string>("");
 
   const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
-    queryKey: ["/api/campaigns"],
+    queryKey: ["/api/email-campaigns"],
   });
 
   const { data: leads } = useQuery<Lead[]>({
