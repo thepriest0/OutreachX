@@ -20,6 +20,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import LeadForm from "@/components/leads/lead-form";
 import CSVImport from "@/components/leads/csv-import";
+import { Edit, Trash2, Search, Plus, Upload, Download } from "lucide-react";
 import type { Lead } from "@shared/schema";
 
 export default function Leads() {
@@ -118,7 +119,7 @@ export default function Leads() {
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <i className="fas fa-users text-white text-2xl animate-pulse"></i>
+            <Search className="h-8 w-8 text-white animate-pulse" />
           </div>
           <p className="text-gray-600">Loading leads...</p>
         </div>
@@ -154,22 +155,25 @@ export default function Leads() {
                   <Button
                     variant="outline"
                     onClick={() => setShowCSVImport(true)}
+                    data-testid="button-import-csv"
                   >
-                    <i className="fas fa-upload mr-2"></i>
+                    <Upload className="h-4 w-4 mr-2" />
                     Import CSV
                   </Button>
                   <Button
                     variant="outline"
                     onClick={handleExport}
+                    data-testid="button-export-csv"
                   >
-                    <i className="fas fa-download mr-2"></i>
+                    <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
                   <Button
                     onClick={() => setShowLeadForm(true)}
                     className="bg-blue-600 hover:bg-blue-700 text-white"
+                    data-testid="button-add-lead"
                   >
-                    <i className="fas fa-plus mr-2"></i>
+                    <Plus className="h-4 w-4 mr-2" />
                     Add Lead
                   </Button>
                 </div>
@@ -223,25 +227,29 @@ export default function Leads() {
                             : "Never"
                           }
                         </TableCell>
-                        <TableCell>
+                        <TableCell className="p-4 align-middle [&:has([role=checkbox])]:pr-0 bg-[#b8484800]">
                           <div className="flex items-center space-x-2">
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="h-8 w-8 p-0 hover:bg-gray-100"
                               onClick={() => {
                                 setSelectedLead(lead);
                                 setShowLeadForm(true);
                               }}
+                              data-testid={`button-edit-${lead.id}`}
                             >
-                              <i className="fas fa-edit text-gray-600"></i>
+                              <Edit className="h-4 w-4 text-gray-600" />
                             </Button>
                             <Button
                               variant="ghost"
                               size="sm"
+                              className="h-8 w-8 p-0 hover:bg-red-100"
                               onClick={() => deleteMutation.mutate(lead.id)}
                               disabled={deleteMutation.isPending}
+                              data-testid={`button-delete-${lead.id}`}
                             >
-                              <i className="fas fa-trash text-red-600"></i>
+                              <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
                           </div>
                         </TableCell>
@@ -252,7 +260,7 @@ export default function Leads() {
               ) : (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <i className="fas fa-users text-gray-400 text-2xl"></i>
+                    <Search className="h-8 w-8 text-gray-400" />
                   </div>
                   <h3 className="text-lg font-medium text-gray-900 mb-2">No leads found</h3>
                   <p className="text-gray-500 mb-4">
@@ -265,8 +273,9 @@ export default function Leads() {
                     <Button
                       onClick={() => setShowLeadForm(true)}
                       className="bg-blue-600 hover:bg-blue-700 text-white"
+                      data-testid="button-add-first-lead"
                     >
-                      <i className="fas fa-plus mr-2"></i>
+                      <Plus className="h-4 w-4 mr-2" />
                       Add Your First Lead
                     </Button>
                   )}
