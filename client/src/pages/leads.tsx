@@ -117,7 +117,7 @@ export default function Leads() {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="w-16 h-16 bg-primary-500 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <i className="fas fa-users text-white text-2xl animate-pulse"></i>
           </div>
           <p className="text-gray-600">Loading leads...</p>
@@ -178,7 +178,7 @@ export default function Leads() {
               {/* Leads Table */}
               {leadsLoading ? (
                 <div className="text-center py-8">
-                  <div className="w-8 h-8 border-4 border-primary-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+                  <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                   <p className="text-gray-600">Loading leads...</p>
                 </div>
               ) : leads && leads.length > 0 ? (
@@ -264,7 +264,7 @@ export default function Leads() {
                   {!searchQuery && (
                     <Button
                       onClick={() => setShowLeadForm(true)}
-                      className="bg-primary-500 hover:bg-primary-600"
+                      className="bg-blue-600 hover:bg-blue-700 text-white"
                     >
                       <i className="fas fa-plus mr-2"></i>
                       Add Your First Lead
