@@ -1,8 +1,7 @@
 import { useState, useEffect } from "react";
-import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/useAuth";
 import { useToast } from "@/hooks/use-toast";
-import { apiRequest } from "@/lib/queryClient";
 import Sidebar from "@/components/layout/sidebar";
 import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
@@ -15,11 +14,9 @@ import type { EmailCampaign } from "@shared/schema";
 
 export default function Campaigns() {
   const [showEmailGenerator, setShowEmailGenerator] = useState(false);
-  const [selectedCampaignForFollowUp, setSelectedCampaignForFollowUp] = useState<string | null>(null);
   
   const { toast } = useToast();
   const { isAuthenticated, isLoading } = useAuth();
-  const queryClient = useQueryClient();
 
   // Redirect to login if not authenticated
   useEffect(() => {
@@ -37,29 +34,8 @@ export default function Campaigns() {
   }, [isAuthenticated, isLoading, toast]);
 
   const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
-    queryKey: ["/api/email-campaigns"],
+    queryKey: ["/api/campaigns"],
     enabled: isAuthenticated,
-  });
-
-  // Send email mutation
-  const sendEmailMutation = useMutation({
-    mutationFn: async (campaignId: string) => {
-      return await apiRequest("POST", `/api/email-campaigns/${campaignId}/send`);
-    },
-    onSuccess: (data, campaignId) => {
-      toast({
-        title: "Success",
-        description: "Email sent successfully!",
-      });
-      queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
-    },
-    onError: (error: any) => {
-      toast({
-        title: "Error",
-        description: error.message || "Failed to send email",
-        variant: "destructive",
-      });
-    },
   });
 
   const getStatusColor = (status: string) => {
@@ -197,39 +173,6 @@ export default function Campaigns() {
                           <i className="fas fa-eye mr-1"></i>
                           View
                         </Button>
-                        
-                        {campaign.status === 'draft' && campaign.leadId && (
-                          <Button 
-                            size="sm"
-                            onClick={() => sendEmailMutation.mutate(campaign.id)}
-                            disabled={sendEmailMutation.isPending}
-                            data-testid={`button-send-${campaign.id}`}
-                          >
-                            {sendEmailMutation.isPending ? (
-                              <>
-                                <i className="fas fa-spinner fa-spin mr-1"></i>
-                                Sending...
-                              </>
-                            ) : (
-                              <>
-                                <i className="fas fa-paper-plane mr-1"></i>
-                                Send
-                              </>
-                            )}
-                          </Button>
-                        )}
-                        
-                        {campaign.status === 'sent' && (
-                          <Button 
-                            variant="outline" 
-                            size="sm"
-                            onClick={() => setSelectedCampaignForFollowUp(campaign.id)}
-                            data-testid={`button-followup-${campaign.id}`}
-                          >
-                            <i className="fas fa-clock mr-1"></i>
-                            Schedule Follow-up
-                          </Button>
-                        )}
                         <Button variant="ghost" size="sm">
                           <i className="fas fa-edit mr-1"></i>
                           Edit
@@ -266,40 +209,9 @@ export default function Campaigns() {
             onClose={() => setShowEmailGenerator(false)}
             onSuccess={() => {
               setShowEmailGenerator(false);
-              queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
+              // Optionally refresh campaigns
             }}
           />
-        )}
-
-        {/* Follow-up Scheduler Modal */}
-        {selectedCampaignForFollowUp && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-            <div className="bg-white rounded-lg p-6 max-w-md w-full mx-4">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold">Schedule Follow-up</h3>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  onClick={() => setSelectedCampaignForFollowUp(null)}
-                >
-                  <i className="fas fa-times"></i>
-                </Button>
-              </div>
-              
-              <FollowUpScheduler
-                campaignId={selectedCampaignForFollowUp}
-                leadName="Lead" 
-                onSuccess={() => {
-                  setSelectedCampaignForFollowUp(null);
-                  queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
-                  toast({
-                    title: "Follow-up Scheduled",
-                    description: "Your follow-up email has been scheduled successfully!",
-                  });
-                }}
-              />
-            </div>
-          </div>
         )}
       </main>
     </div>
