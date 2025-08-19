@@ -516,6 +516,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Dashboard statistics routes
+  app.get('/api/dashboard/performance', isAuthenticated, async (req: any, res) => {
+    try {
+      const userId = req.user.claims.sub;
+      const performance = await storage.getPerformanceData(userId);
+      res.json(performance);
+    } catch (error) {
+      console.error("Error fetching performance data:", error);
+      res.status(500).json({ message: "Failed to fetch performance data" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

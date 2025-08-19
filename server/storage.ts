@@ -47,6 +47,7 @@ export interface IStorage {
   // Dashboard operations
   getDashboardStats(userId: string): Promise<DashboardStats>;
   getRecentLeads(userId: string, limit?: number): Promise<Lead[]>;
+  getPerformanceData(userId: string): Promise<any>;
 }
 
 export class DatabaseStorage implements IStorage {
@@ -334,6 +335,86 @@ export class DatabaseStorage implements IStorage {
           isNotNull(emailCampaigns.scheduledAt)
         )
       );
+  }
+
+  async getPerformanceData(userId: string): Promise<any> {
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+
+    // Get emails sent over time
+    const emailsSent = await db
+      .select({
+        date: sql<string>`date(${emailCampaigns.sentAt})`,
+        count: count(),
+      })
+      .from(emailCampaigns)
+      .where(
+        and(
+          eq(emailCampaigns.createdBy, userId),
+          eq(emailCampaigns.status, "sent"),
+          gte(emailCampaigns.sentAt, thirtyDaysAgo)
+        )
+      )
+      .groupBy(sql`date(${emailCampaigns.sentAt})`)
+      .orderBy(sql`date(${emailCampaigns.sentAt})`);
+
+    // Get response rates
+    const responseRates = await db
+      .select({
+        date: sql<string>`date(${emailCampaigns.sentAt})`,
+        totalSent: sql<number>`count(*)`,
+        totalReplies: sql<number>`sum(case when ${emailCampaigns.status} = 'replied' then 1 else 0 end)`,
+      })
+      .from(emailCampaigns)
+      .where(
+        and(
+          eq(emailCampaigns.createdBy, userId),
+          gte(emailCampaigns.sentAt, thirtyDaysAgo)
+        )
+      )
+      .groupBy(sql`date(${emailCampaigns.sentAt})`)
+      .orderBy(sql`date(${emailCampaigns.sentAt})`);
+
+    // Calculate response rates
+    const responseRatesData = responseRates.map(row => ({
+      date: row.date,
+      rate: row.totalSent > 0 ? Math.round((row.totalReplies / row.totalSent) * 100) : 0
+    }));
+
+    // Get leads by status
+    const leadsByStatus = await db
+      .select({
+        status: leads.status,
+        count: count(),
+      })
+      .from(leads)
+      .where(eq(leads.createdBy, userId))
+      .groupBy(leads.status);
+
+    const statusColors = {
+      new: "#3b82f6",
+      contacted: "#f59e0b", 
+      replied: "#8b5cf6",
+      qualified: "#10b981",
+      closed: "#6b7280",
+      follow_up_scheduled: "#ef4444"
+    };
+
+    const leadsByStatusData = leadsByStatus.map(row => ({
+      status: row.status || 'new',
+      count: row.count,
+      color: statusColors[row.status as keyof typeof statusColors] || statusColors.new
+    }));
+
+    return {
+      emailsSent: emailsSent.map(row => ({
+        date: row.date,
+        count: row.count
+      })),
+      responseRates: responseRatesData,
+      leadsByStatus: leadsByStatusData,
+      monthlyTrends: [] // Placeholder for more complex trends analysis
+    };
   }
 }
 
