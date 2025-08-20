@@ -20,15 +20,15 @@ const statCards = [
     title: "Total Leads",
     icon: Users,
     description: "Active prospects",
-    format: (value: number) => value.toLocaleString(),
+    format: (value: number) => (value ?? 0).toLocaleString(),
     growthKey: "leadsGrowth" as keyof DashboardStats
   },
   {
-    key: "emailsSent" as keyof DashboardStats,
+    key: "totalSent" as keyof DashboardStats,
     title: "Emails Sent",
     icon: Mail,
     description: "This month",
-    format: (value: number) => value.toLocaleString(),
+    format: (value: number) => (value ?? 0).toLocaleString(),
     growthKey: "emailsGrowth" as keyof DashboardStats
   },
   {
@@ -36,15 +36,15 @@ const statCards = [
     title: "Response Rate",
     icon: Target,
     description: "Email replies",
-    format: (value: number) => `${value}%`,
+    format: (value: number) => `${(value ?? 0).toFixed(1)}%`,
     growthKey: "responseChange" as keyof DashboardStats
   },
   {
-    key: "followupsScheduled" as keyof DashboardStats,
+    key: "totalReplies" as keyof DashboardStats,
     title: "Follow-ups",
     icon: Calendar,
     description: "Scheduled",
-    format: (value: number) => value.toLocaleString(),
+    format: (value: number) => (value ?? 0).toLocaleString(),
     growthKey: "followupsGrowth" as keyof DashboardStats
   }
 ];
@@ -64,8 +64,8 @@ function StatCard({
   description: string;
   format: (value: number) => string;
 }) {
-  const isPositive = growth > 0;
-  const isNeutral = growth === 0;
+  const isPositive = (growth ?? 0) > 0;
+  const isNeutral = (growth ?? 0) === 0;
   
   return (
     <Card className="card-hover">
@@ -76,7 +76,7 @@ function StatCard({
         <Icon className="h-4 w-4 text-muted-foreground" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{format(value)}</div>
+        <div className="text-2xl font-bold">{format(value ?? 0)}</div>
         <div className="flex items-center space-x-2 mt-1">
           <CardDescription className="text-xs">
             {description}
@@ -95,7 +95,7 @@ function StatCard({
               ) : (
                 <ArrowDownRight className="h-3 w-3 mr-1" />
               )}
-              {Math.abs(growth)}%
+              {Math.abs(growth ?? 0)}%
             </Badge>
           )}
         </div>
