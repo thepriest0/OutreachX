@@ -22,10 +22,5 @@
       "src": "/(.*)",
       "dest": "/dist/public/$1"
     }
-  ],
-  "functions": {
-    "api/index.js": {
-      "maxDuration": 30
-    }
-  }
+  ]
 }
