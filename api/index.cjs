@@ -77,10 +77,41 @@ function createBasicApp() {
     res.json({ 
       totalLeads: 0, 
       totalCampaigns: 0, 
-      openRate: 0, 
-      replyRate: 0,
+      openRate: 0.0, 
+      replyRate: 0.0,
+      responseRate: 0.0,
+      conversionRate: 0.0,
+      totalOpens: 0,
+      totalReplies: 0,
+      totalSent: 0,
       message: 'Demo data - database not connected in basic mode'
     });
+  });
+
+  // Dashboard performance endpoint
+  app.get('/api/dashboard/performance', (req, res) => {
+    res.json({
+      chartData: [
+        { date: '2024-01-01', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-02', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-03', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-04', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-05', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-06', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-07', opens: 0, replies: 0, sent: 0 }
+      ],
+      message: 'Demo chart data - database not connected in basic mode'
+    });
+  });
+
+  // Dashboard recent leads endpoint
+  app.get('/api/dashboard/recent-leads', (req, res) => {
+    res.json([]);
+  });
+
+  // Insights endpoint
+  app.get('/api/insights', (req, res) => {
+    res.json([]);
   });
 
   // Leads endpoints

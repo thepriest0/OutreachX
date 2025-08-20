@@ -1,5 +1,20 @@
 // Manual server implementation for Vercel when compiled version fails
-const express = require('express');
+const  // Dashboard stats
+  app.get('/api/dashboard/stats', async (req, res) => {
+    // TODO: Connect to actual database
+    res.json({
+      totalLeads: 0,
+      totalCampaigns: 0,
+      openRate: 0.0,
+      replyRate: 0.0,
+      responseRate: 0.0,
+      conversionRate: 0.0,
+      totalOpens: 0,
+      totalReplies: 0,
+      totalSent: 0,
+      message: 'Demo data - database connection needed for real stats'
+    });
+  });require('express');
 const cors = require('cors');
 
 async function createManualApp() {
@@ -93,8 +108,16 @@ async function createManualApp() {
 
   app.get('/api/dashboard/performance', async (req, res) => {
     res.json({
-      chartData: [],
-      message: 'Performance data requires database connection'
+      chartData: [
+        { date: '2024-01-01', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-02', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-03', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-04', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-05', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-06', opens: 0, replies: 0, sent: 0 },
+        { date: '2024-01-07', opens: 0, replies: 0, sent: 0 }
+      ],
+      message: 'Demo chart data - database connection needed for real performance data'
     });
   });
 
