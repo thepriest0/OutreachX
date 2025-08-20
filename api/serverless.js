@@ -1,4 +1,4 @@
-const express = require('express');
+import express from 'express';
 
 // Import routes using dynamic import since it's ESM
 let app;
@@ -14,7 +14,7 @@ async function getApp() {
   return app;
 }
 
-module.exports = async (req, res) => {
+export default async function handler(req, res) {
   const app = await getApp();
   return app(req, res);
-};
+}
