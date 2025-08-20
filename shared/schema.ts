@@ -1,6 +1,7 @@
 import { sql } from "drizzle-orm";
 import {
   index,
+  json,
   jsonb,
   pgTable,
   timestamp,
@@ -15,21 +16,17 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Session storage table.
-export const sessions = pgTable(
-  "sessions",
-  {
-    sid: varchar("sid").primaryKey(),
-    sess: jsonb("sess").notNull(),
-    expire: timestamp("expire").notNull(),
-  },
-  (table) => [index("IDX_session_expire").on(table.expire)]
-);
+// Session storage table for connect-pg-simple
+export const session = pgTable("session", {
+  sid: varchar("sid").primaryKey(),
+  sess: json("sess").notNull(),
+  expire: timestamp("expire").notNull(),
+});
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["head_admin", "admin", "founder", "strategist", "designer"]);
 export const leadStatusEnum = pgEnum("lead_status", ["new", "contacted", "replied", "follow_up_scheduled", "qualified", "closed"]);
-export const emailStatusEnum = pgEnum("email_status", ["draft", "sent", "opened", "replied", "bounced"]);
+export const emailStatusEnum = pgEnum("email_status", ["draft", "sent", "opened", "clicked", "replied", "bounced"]);
 export const emailToneEnum = pgEnum("email_tone", ["professional", "casual", "direct"]);
 
 // User storage table.
@@ -71,6 +68,7 @@ export const emailCampaigns = pgTable("email_campaigns", {
   status: emailStatusEnum("status").default("draft"),
   sentAt: timestamp("sent_at"),
   openedAt: timestamp("opened_at"),
+  clickedAt: timestamp("clicked_at"),
   repliedAt: timestamp("replied_at"),
   isFollowUp: boolean("is_follow_up").default(false),
   followUpSequence: integer("follow_up_sequence").default(0),

@@ -171,7 +171,7 @@ export function setupAuth(app: Express) {
   });
 
   // Admin routes for user management
-  app.get("/api/admin/users", requireRole(['head_admin', 'admin']), async (req, res) => {
+  app.get("/api/admin/users", requireRole(['head_admin']), async (req, res) => {
     try {
       const users = await storage.getAllUsers();
       const safeUsers = users.map(user => ({
@@ -191,7 +191,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/admin/users", requireRole(['head_admin', 'admin']), async (req, res) => {
+  app.post("/api/admin/users", requireRole(['head_admin']), async (req, res) => {
     try {
       const { username, email, password, firstName, lastName, role } = req.body;
       
@@ -231,7 +231,7 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.put("/api/admin/users/:id", requireRole(['head_admin', 'admin']), async (req, res) => {
+  app.put("/api/admin/users/:id", requireRole(['head_admin']), async (req, res) => {
     try {
       const { id } = req.params;
       const { username, email, firstName, lastName, role } = req.body;

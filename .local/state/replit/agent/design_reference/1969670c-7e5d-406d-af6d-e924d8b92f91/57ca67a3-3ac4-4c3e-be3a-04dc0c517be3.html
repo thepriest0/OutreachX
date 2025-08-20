@@ -1,0 +1,619 @@
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OutreachX - AI-Powered Lead & Outreach Dashboard</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    fontFamily: {
+                        'sans': ['Inter', 'system-ui', 'sans-serif'],
+                    },
+                    colors: {
+                        primary: {
+                            50: '#eff6ff',
+                            500: '#3b82f6',
+                            600: '#2563eb',
+                            700: '#1d4ed8',
+                        },
+                        secondary: {
+                            500: '#6366f1',
+                            600: '#5b21b6',
+                        }
+                    }
+                }
+            }
+        };
+    </script>
+</head>
+<body class="bg-gray-50 font-sans">
+    <!-- @COMPONENT: MainLayout -->
+    <div class="flex h-screen bg-gray-50">
+        <!-- @COMPONENT: Sidebar -->
+        <aside class="w-64 bg-white shadow-sm border-r border-gray-200 flex flex-col">
+            <!-- Logo and Company Name -->
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <div class="w-8 h-8 bg-primary-500 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-rocket text-white text-sm"></i>
+                    </div>
+                    <div>
+                        <h1 class="text-lg font-bold text-gray-900">OutreachX</h1>
+                        <p class="text-xs text-gray-500">AI-Powered Outreach</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Menu -->
+            <nav class="flex-1 p-4 space-y-1">
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg bg-primary-50 text-primary-700 font-medium">
+                    <i class="fas fa-chart-line w-5"></i>
+                    <span>Dashboard</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-users w-5"></i>
+                    <span>Leads</span>
+                    <span class="ml-auto bg-gray-200 text-gray-600 text-xs px-2 py-0.5 rounded-full" data-bind="leads.count">1,247</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-envelope w-5"></i>
+                    <span>Email Campaigns</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-robot w-5"></i>
+                    <span>AI Email Generator</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-chart-bar w-5"></i>
+                    <span>Analytics</span>
+                </a>
+                <a href="#" class="flex items-center space-x-3 px-3 py-2 rounded-lg text-gray-700 hover:bg-gray-50 transition-colors">
+                    <i class="fas fa-cog w-5"></i>
+                    <span>Settings</span>
+                </a>
+            </nav>
+
+            <!-- User Profile -->
+            <div class="p-4 border-t border-gray-200">
+                <div class="flex items-center space-x-3">
+                    <!-- Profile photo placeholder with colorful background -->
+                    <div class="w-8 h-8 bg-gradient-to-br from-purple-400 to-pink-400 rounded-full flex items-center justify-center">
+                        <span class="text-white text-sm font-medium" data-bind="user.initials">JD</span>
+                    </div>
+                    <div class="flex-1 min-w-0">
+                        <p class="text-sm font-medium text-gray-900 truncate" data-bind="user.name">John Doe</p>
+                        <p class="text-xs text-gray-500" data-bind="user.role">Founder</p>
+                    </div>
+                    <button class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-ellipsis-v"></i>
+                    </button>
+                </div>
+            </div>
+        </aside>
+        <!-- @END_COMPONENT: Sidebar -->
+
+        <!-- @COMPONENT: MainContent -->
+        <main class="flex-1 overflow-auto">
+            <!-- Header -->
+            <header class="bg-white border-b border-gray-200 px-6 py-4">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <h2 class="text-2xl font-bold text-gray-900">Dashboard</h2>
+                        <p class="text-gray-600">Welcome back! Here's your outreach overview.</p>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <!-- AI Insights Toggle -->
+                        <button class="inline-flex items-center px-4 py-2 border border-gray-300 rounded-lg text-sm font-medium text-gray-700 bg-white hover:bg-gray-50 transition-colors">
+                            <i class="fas fa-brain mr-2 text-secondary-500"></i>
+                            AI Insights
+                        </button>
+                        <!-- Email Integration Status -->
+                        <div class="flex items-center space-x-2">
+                            <div class="w-2 h-2 bg-green-500 rounded-full"></div>
+                            <span class="text-sm text-gray-600">Gmail Connected</span>
+                        </div>
+                        <!-- Quick Actions -->
+                        <button class="inline-flex items-center px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 transition-colors font-medium">
+                            <i class="fas fa-plus mr-2"></i>
+                            Add Lead
+                        </button>
+                    </div>
+                </div>
+            </header>
+
+            <!-- Dashboard Content -->
+            <div class="p-6 space-y-6">
+                <!-- Stats Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <!-- Total Leads Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Total Leads</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1" data-bind="stats.totalLeads">1,247</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                    <span data-bind="stats.leadsGrowth">+12%</span> this month
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-users text-blue-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Emails Sent Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Emails Sent</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1" data-bind="stats.emailsSent">2,851</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                    <span data-bind="stats.emailsGrowth">+18%</span> this week
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-green-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-paper-plane text-green-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Response Rate Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Response Rate</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1" data-bind="stats.responseRate">24.3%</p>
+                                <p class="text-yellow-600 text-sm mt-1">
+                                    <i class="fas fa-minus mr-1"></i>
+                                    <span data-bind="stats.responseChange">-2%</span> from last week
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-yellow-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-reply text-yellow-600"></i>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Follow-ups Scheduled Card -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-gray-600 text-sm font-medium">Follow-ups Scheduled</p>
+                                <p class="text-3xl font-bold text-gray-900 mt-1" data-bind="stats.followupsScheduled">428</p>
+                                <p class="text-green-600 text-sm mt-1">
+                                    <i class="fas fa-arrow-up mr-1"></i>
+                                    <span data-bind="stats.followupsGrowth">+8%</span> this week
+                                </p>
+                            </div>
+                            <div class="w-12 h-12 bg-purple-100 rounded-lg flex items-center justify-center">
+                                <i class="fas fa-clock text-purple-600"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- AI Insights Section -->
+                <div class="bg-gradient-to-r from-secondary-500 to-purple-600 rounded-xl p-6 text-white">
+                    <div class="flex items-start justify-between">
+                        <div class="flex-1">
+                            <div class="flex items-center mb-3">
+                                <i class="fas fa-brain mr-3 text-lg"></i>
+                                <h3 class="text-lg font-semibold">AI-Generated Insights</h3>
+                            </div>
+                            <!-- AI Generated Insight Content -->
+                            <p class="text-white/90 mb-4" data-bind="ai.insights">
+                                Follow-up emails increased response rates by 20% this week. Tuesday and Wednesday show the highest open rates. Consider personalizing subject lines for better engagement.
+                            </p>
+                            <button class="inline-flex items-center text-white hover:text-white/80 font-medium">
+                                View Detailed Analysis
+                                <i class="fas fa-arrow-right ml-2"></i>
+                            </button>
+                        </div>
+                        <div class="ml-6">
+                            <div class="w-16 h-16 bg-white/20 rounded-xl flex items-center justify-center">
+                                <i class="fas fa-chart-line text-2xl"></i>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Recent Activity and Quick Actions Grid -->
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <!-- Recent Leads Table -->
+                    <div class="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-200">
+                        <div class="p-6 border-b border-gray-200">
+                            <div class="flex items-center justify-between">
+                                <h3 class="text-lg font-semibold text-gray-900">Recent Leads</h3>
+                                <button class="text-primary-600 hover:text-primary-700 font-medium text-sm">
+                                    View All
+                                </button>
+                            </div>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table class="w-full">
+                                <thead class="bg-gray-50">
+                                    <tr>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Lead</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Company</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Last Contact</th>
+                                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody class="bg-white divide-y divide-gray-200">
+                                    <!-- @MAP: recentLeads.map(lead => ( -->
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                                    <span class="text-white text-xs font-medium">SK</span>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium text-gray-900" data-bind="lead.name">Sarah Kim</p>
+                                                    <p class="text-xs text-gray-500" data-bind="lead.role">Marketing Director</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <p class="text-sm text-gray-900" data-bind="lead.company">TechStartup Inc.</p>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-yellow-100 text-yellow-800" data-bind="lead.status">Follow-up Scheduled</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500" data-bind="lead.lastContact">2 days ago</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary-600 hover:text-primary-900 mr-3">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="text-gray-600 hover:text-gray-900">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-gradient-to-br from-green-400 to-teal-500 rounded-full flex items-center justify-center">
+                                                    <span class="text-white text-xs font-medium">MJ</span>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium text-gray-900">Michael Johnson</p>
+                                                    <p class="text-xs text-gray-500">CEO</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <p class="text-sm text-gray-900">Digital Agency Pro</p>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-green-100 text-green-800">Replied</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">1 hour ago</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary-600 hover:text-primary-900 mr-3">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="text-gray-600 hover:text-gray-900">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+
+                                    <tr data-mock="true">
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <div class="flex items-center">
+                                                <div class="w-8 h-8 bg-gradient-to-br from-red-400 to-pink-500 rounded-full flex items-center justify-center">
+                                                    <span class="text-white text-xs font-medium">EC</span>
+                                                </div>
+                                                <div class="ml-3">
+                                                    <p class="text-sm font-medium text-gray-900">Emily Chen</p>
+                                                    <p class="text-xs text-gray-500">VP Design</p>
+                                                </div>
+                                            </div>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <p class="text-sm text-gray-900">FinTech Solutions</p>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap">
+                                            <span class="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-blue-100 text-blue-800">Email Sent</span>
+                                        </td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">3 days ago</td>
+                                        <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                            <button class="text-primary-600 hover:text-primary-900 mr-3">
+                                                <i class="fas fa-envelope"></i>
+                                            </button>
+                                            <button class="text-gray-600 hover:text-gray-900">
+                                                <i class="fas fa-edit"></i>
+                                            </button>
+                                        </td>
+                                    </tr>
+                                    <!-- @END_MAP )) -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Quick Actions Panel -->
+                    <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                        <h3 class="text-lg font-semibold text-gray-900 mb-6">Quick Actions</h3>
+                        
+                        <div class="space-y-4">
+                            <!-- Import Leads -->
+                            <button class="w-full flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-primary-300 hover:bg-primary-50 transition-colors group">
+                                <div class="w-10 h-10 bg-blue-100 rounded-lg flex items-center justify-center group-hover:bg-primary-200">
+                                    <i class="fas fa-upload text-blue-600 group-hover:text-primary-600"></i>
+                                </div>
+                                <div class="ml-3 text-left">
+                                    <p class="font-medium text-gray-900">Import CSV</p>
+                                    <p class="text-sm text-gray-500">Bulk upload leads</p>
+                                </div>
+                            </button>
+
+                            <!-- Generate AI Email -->
+                            <button class="w-full flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-secondary-300 hover:bg-purple-50 transition-colors group">
+                                <div class="w-10 h-10 bg-purple-100 rounded-lg flex items-center justify-center group-hover:bg-purple-200">
+                                    <i class="fas fa-robot text-purple-600"></i>
+                                </div>
+                                <div class="ml-3 text-left">
+                                    <p class="font-medium text-gray-900">AI Email Generator</p>
+                                    <p class="text-sm text-gray-500">Create with Gemini AI</p>
+                                </div>
+                            </button>
+
+                            <!-- Schedule Follow-up -->
+                            <button class="w-full flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-green-300 hover:bg-green-50 transition-colors group">
+                                <div class="w-10 h-10 bg-green-100 rounded-lg flex items-center justify-center group-hover:bg-green-200">
+                                    <i class="fas fa-calendar-plus text-green-600"></i>
+                                </div>
+                                <div class="ml-3 text-left">
+                                    <p class="font-medium text-gray-900">Schedule Follow-up</p>
+                                    <p class="text-sm text-gray-500">Automate sequences</p>
+                                </div>
+                            </button>
+
+                            <!-- View Analytics -->
+                            <button class="w-full flex items-center p-4 border-2 border-dashed border-gray-300 rounded-lg hover:border-yellow-300 hover:bg-yellow-50 transition-colors group">
+                                <div class="w-10 h-10 bg-yellow-100 rounded-lg flex items-center justify-center group-hover:bg-yellow-200">
+                                    <i class="fas fa-chart-bar text-yellow-600"></i>
+                                </div>
+                                <div class="ml-3 text-left">
+                                    <p class="font-medium text-gray-900">View Analytics</p>
+                                    <p class="text-sm text-gray-500">Detailed reports</p>
+                                </div>
+                            </button>
+                        </div>
+
+                        <!-- Email Integration Status -->
+                        <div class="mt-6 pt-6 border-t border-gray-200">
+                            <h4 class="font-medium text-gray-900 mb-3">Email Integration</h4>
+                            <div class="space-y-2">
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fab fa-google mr-2 text-red-500"></i>
+                                        <span class="text-sm text-gray-700">Gmail</span>
+                                    </div>
+                                    <span class="text-xs bg-green-100 text-green-800 px-2 py-1 rounded-full">Connected</span>
+                                </div>
+                                <div class="flex items-center justify-between">
+                                    <div class="flex items-center">
+                                        <i class="fab fa-microsoft mr-2 text-blue-500"></i>
+                                        <span class="text-sm text-gray-700">Outlook</span>
+                                    </div>
+                                    <button class="text-xs text-primary-600 hover:text-primary-700 font-medium">Connect</button>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Email Campaign Performance Chart -->
+                <div class="bg-white rounded-xl shadow-sm border border-gray-200 p-6">
+                    <div class="flex items-center justify-between mb-6">
+                        <h3 class="text-lg font-semibold text-gray-900">Email Campaign Performance</h3>
+                        <div class="flex items-center space-x-2">
+                            <select class="text-sm border border-gray-300 rounded-lg px-3 py-1 bg-white">
+                                <option>Last 7 days</option>
+                                <option>Last 30 days</option>
+                                <option>Last 90 days</option>
+                            </select>
+                        </div>
+                    </div>
+                    
+                    <!-- Chart Placeholder with Visual Bars -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">Email Sent</span>
+                            <span class="font-medium" data-bind="chart.emailsSent">2,851</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-blue-500 h-2 rounded-full" style="width: 85%"></div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">Opened</span>
+                            <span class="font-medium" data-bind="chart.opened">1,926</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-green-500 h-2 rounded-full" style="width: 68%"></div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">Replied</span>
+                            <span class="font-medium" data-bind="chart.replied">693</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-yellow-500 h-2 rounded-full" style="width: 24%"></div>
+                        </div>
+                        
+                        <div class="flex items-center justify-between text-sm">
+                            <span class="text-gray-600">Follow-ups Sent</span>
+                            <span class="font-medium" data-bind="chart.followups">428</span>
+                        </div>
+                        <div class="w-full bg-gray-200 rounded-full h-2">
+                            <div class="bg-purple-500 h-2 rounded-full" style="width: 15%"></div>
+                        </div>
+                    </div>
+
+                    <!-- Performance Metrics -->
+                    <div class="grid grid-cols-3 gap-6 mt-6 pt-6 border-t border-gray-200">
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900" data-bind="metrics.openRate">67.5%</p>
+                            <p class="text-sm text-gray-500">Open Rate</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900" data-bind="metrics.clickRate">24.3%</p>
+                            <p class="text-sm text-gray-500">Response Rate</p>
+                        </div>
+                        <div class="text-center">
+                            <p class="text-2xl font-bold text-gray-900" data-bind="metrics.conversionRate">8.7%</p>
+                            <p class="text-sm text-gray-500">Conversion Rate</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </main>
+        <!-- @END_COMPONENT: MainContent -->
+    </div>
+    <!-- @END_COMPONENT: MainLayout -->
+
+    <!-- @COMPONENT: Modal for AI Email Generator (Hidden by default) -->
+    <div id="aiEmailModal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 hidden" data-mock="true">
+        <div class="bg-white rounded-xl shadow-xl max-w-2xl w-full mx-4 max-h-screen overflow-y-auto">
+            <div class="p-6 border-b border-gray-200">
+                <div class="flex items-center justify-between">
+                    <h3 class="text-lg font-semibold text-gray-900">AI Email Generator</h3>
+                    <button class="text-gray-400 hover:text-gray-600">
+                        <i class="fas fa-times"></i>
+                    </button>
+                </div>
+            </div>
+            
+            <div class="p-6 space-y-6">
+                <!-- Lead Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Select Lead</label>
+                    <select class="w-full border border-gray-300 rounded-lg px-3 py-2">
+                        <option data-mock="true">Sarah Kim - TechStartup Inc.</option>
+                        <option data-mock="true">Michael Johnson - Digital Agency Pro</option>
+                        <option data-mock="true">Emily Chen - FinTech Solutions</option>
+                    </select>
+                </div>
+
+                <!-- Tone Selection -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Email Tone</label>
+                    <div class="grid grid-cols-3 gap-3">
+                        <button class="p-3 border-2 border-primary-500 bg-primary-50 text-primary-700 rounded-lg font-medium">
+                            Professional
+                        </button>
+                        <button class="p-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400">
+                            Casual
+                        </button>
+                        <button class="p-3 border-2 border-gray-300 text-gray-700 rounded-lg font-medium hover:border-gray-400">
+                            Direct
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Generated Email Preview -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Generated Email</label>
+                    <div class="border border-gray-300 rounded-lg p-4 bg-gray-50 min-h-64">
+                        <p class="text-sm text-gray-600 mb-4" data-mock="true">
+                            <strong>Subject:</strong> Transforming TechStartup Inc.'s brand with strategic design
+                        </p>
+                        <div class="text-sm text-gray-800 space-y-2" data-mock="true">
+                            <p>Hi Sarah,</p>
+                            <p>I noticed TechStartup Inc.'s rapid growth in the fintech space and was impressed by your recent product launch. As Marketing Director, you likely understand the impact that exceptional design can have on user engagement and conversion rates.</p>
+                            <p>Our design studio has helped similar companies increase their conversion rates by 40% through strategic UI/UX improvements and cohesive branding. I'd love to show you some relevant case studies.</p>
+                            <p>Would you be open to a 15-minute call this week to discuss how we could help TechStartup Inc. stand out in the competitive fintech market?</p>
+                            <p>Best regards,<br>John Doe</p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex items-center justify-between pt-4 border-t border-gray-200">
+                    <button class="text-gray-600 hover:text-gray-800 font-medium">
+                        <i class="fas fa-sync-alt mr-2"></i>
+                        Regenerate
+                    </button>
+                    <div class="flex space-x-3">
+                        <button class="px-4 py-2 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 font-medium">
+                            Save Draft
+                        </button>
+                        <button class="px-4 py-2 bg-primary-500 text-white rounded-lg hover:bg-primary-600 font-medium">
+                            Send Email
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <!-- @END_COMPONENT: Modal -->
+
+    <script>
+        // TODO: Implement actual functionality for dashboard interactions
+        // TODO: Integrate with Google Gemini API for email generation
+        // TODO: Implement OAuth integration for Gmail/Outlook
+        // TODO: Add real-time updates for email status tracking
+        // TODO: Implement CSV import/export functionality
+        // TODO: Add role-based access control
+
+        (function() {
+            // Simple UI interactions for demo purposes
+            
+            // Modal handling
+            const modal = document.getElementById('aiEmailModal');
+            const showModalBtns = document.querySelectorAll('[data-show-modal]');
+            const hideModalBtns = modal?.querySelectorAll('[data-hide-modal], .fa-times');
+
+            showModalBtns?.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal?.classList.remove('hidden');
+                });
+            });
+
+            hideModalBtns?.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    modal?.classList.add('hidden');
+                });
+            });
+
+            // Close modal on backdrop click
+            modal?.addEventListener('click', (e) => {
+                if (e.target === modal) {
+                    modal.classList.add('hidden');
+                }
+            });
+
+            // Tone selection
+            const toneButtons = document.querySelectorAll('[data-tone]');
+            toneButtons?.forEach(btn => {
+                btn.addEventListener('click', () => {
+                    toneButtons.forEach(b => {
+                        b.className = b.className.replace(/border-primary-500|bg-primary-50|text-primary-700/, 'border-gray-300 text-gray-700');
+                    });
+                    btn.className = btn.className.replace(/border-gray-300|text-gray-700/, '') + ' border-primary-500 bg-primary-50 text-primary-700';
+                });
+            });
+
+            // Simulated real-time updates
+            function simulateRealTimeUpdates() {
+                // This would be replaced with actual WebSocket or polling logic
+                console.log('Simulating real-time dashboard updates...');
+            }
+
+            // Initialize dashboard
+            simulateRealTimeUpdates();
+        })();
+    </script>
+</body>
+</html>

@@ -46,9 +46,7 @@ export default function Campaigns() {
   // Delete campaign mutation
   const deleteCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      return apiRequest(`/api/campaigns/${campaignId}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/campaigns/${campaignId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
@@ -62,8 +60,13 @@ export default function Campaigns() {
   // Send campaign mutation
   const sendCampaignMutation = useMutation({
     mutationFn: async (campaignId: string) => {
-      return apiRequest(`/api/campaigns/${campaignId}/send`, {
-        method: "POST",
+      // Get the campaign to find the leadId
+      const campaign = campaigns?.find(c => c.id === campaignId);
+      if (!campaign) {
+        throw new Error("Campaign not found");
+      }
+      return apiRequest("POST", `/api/campaigns/${campaignId}/send`, {
+        leadId: campaign.leadId
       });
     },
     onSuccess: () => {
@@ -72,6 +75,20 @@ export default function Campaigns() {
     },
     onError: () => {
       toast({ title: "Failed to send campaign", variant: "destructive" });
+    },
+  });
+
+  // Mark as replied mutation
+  const markRepliedMutation = useMutation({
+    mutationFn: async (campaignId: string) => {
+      return apiRequest("POST", `/api/email-campaigns/${campaignId}/mark-replied`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      toast({ title: "Marked as replied!" });
+    },
+    onError: () => {
+      toast({ title: "Failed to mark as replied", variant: "destructive" });
     },
   });
 
@@ -164,15 +181,6 @@ export default function Campaigns() {
               )}
             </div>
             <div className="flex items-center space-x-2">
-              <Button
-                variant="outline"
-                onClick={() => setShowLeadSelector(true)}
-                className="flex items-center space-x-2"
-                data-testid="button-select-leads"
-              >
-                <Plus className="h-4 w-4" />
-                <span>Send to Multiple Leads</span>
-              </Button>
               <Button
                 onClick={() => setShowEmailGenerator(true)}
                 className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center space-x-2"
@@ -282,8 +290,8 @@ export default function Campaigns() {
                                 {campaign.subject}
                               </h3>
                               <div className="flex items-center space-x-3 mb-3">
-                                <Badge className={getStatusColor(campaign.status)}>
-                                  {formatStatus(campaign.status)}
+                                <Badge className={getStatusColor(campaign.status || 'draft')}>
+                                  {formatStatus(campaign.status || 'draft')}
                                 </Badge>
                                 {campaign.isFollowUp && (
                                   <Badge variant="outline">
@@ -294,15 +302,35 @@ export default function Campaigns() {
                                   {campaign.tone.charAt(0).toUpperCase() + campaign.tone.slice(1)} tone
                                 </span>
                               </div>
+                              
+                              {/* Recipient Information */}
+                              {campaign.leadId && (
+                                <div className="flex items-center space-x-2 mb-3">
+                                  <span className="text-sm font-medium text-gray-700">To:</span>
+                                  {(() => {
+                                    const lead = leads?.find(l => l.id === campaign.leadId);
+                                    return lead ? (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-900">{lead.name}</span>
+                                        <span className="text-sm text-gray-500">({lead.email})</span>
+                                        {lead.company && (
+                                          <span className="text-sm text-gray-500">at {lead.company}</span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-gray-500">Unknown recipient</span>
+                                    );
+                                  })()}
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex items-center space-x-2 ml-4">
-                              <Button variant="ghost" size="sm" data-testid={`button-view-${campaign.id}`}>
+                              <Button variant="ghost" size="sm" data-testid={`button-view-${campaign.id}`} onClick={() => setEditingCampaign(campaign)}> 
                                 <Eye className="h-4 w-4 mr-1" />
                                 View
                               </Button>
-                              
-                              {campaign.status === 'draft' ? (
+                              {campaign.status === 'draft' && (
                                 <>
                                   <Button 
                                     variant="ghost" 
@@ -322,24 +350,43 @@ export default function Campaigns() {
                                     <Send className="h-4 w-4 mr-1" />
                                     Send
                                   </Button>
-                                </>
-                              ) : (
-                                <>
-                                  {campaign.status === 'sent' && !campaign.isFollowUp && (
+                                  {campaign.isFollowUp && (
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
-                                      onClick={() => {
-                                        setSelectedCampaignForSchedule(campaign);
-                                        setShowFollowUpScheduler(true);
-                                      }}
-                                      data-testid={`button-schedule-${campaign.id}`}
+                                      onClick={() => sendCampaignMutation.mutate(campaign.id)}
+                                      data-testid={`button-send-followup-${campaign.id}`}
                                     >
-                                      <Clock className="h-4 w-4 mr-1" />
-                                      Follow-up
+                                      <Send className="h-4 w-4 mr-1" />
+                                      Send Follow-up
                                     </Button>
                                   )}
                                 </>
+                              )}
+                              {(campaign.status === 'sent' || campaign.status === 'opened') && !campaign.isFollowUp && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => {
+                                    setSelectedCampaignForSchedule(campaign);
+                                    setShowFollowUpScheduler(true);
+                                  }}
+                                  data-testid={`button-schedule-${campaign.id}`}
+                                >
+                                  <Clock className="h-4 w-4 mr-1" />
+                                  Schedule Follow-up
+                                </Button>
+                              )}
+                              {(campaign.status === 'sent' || campaign.status === 'opened') && (
+                                <Button 
+                                  variant="ghost" 
+                                  size="sm"
+                                  onClick={() => markRepliedMutation.mutate(campaign.id)}
+                                  data-testid={`button-mark-replied-${campaign.id}`}
+                                >
+                                  <Edit className="h-4 w-4 mr-1" />
+                                  Mark as Replied
+                                </Button>
                               )}
                               
                               <AlertDialog>
@@ -520,6 +567,7 @@ export default function Campaigns() {
                 </div>
                 <AIEmailGenerator
                   leads={selectedLeads}
+                  onClose={() => setShowEmailGenerator(false)}
                   onSuccess={() => {
                     setShowEmailGenerator(false);
                     setSelectedLeads([]);
@@ -549,15 +597,97 @@ export default function Campaigns() {
                 </div>
                 <FollowUpScheduler
                   campaignId={selectedCampaignForSchedule.id}
-                  leadName={selectedCampaignForSchedule.lead?.name || 'Lead'}
-                  leadCompany={selectedCampaignForSchedule.lead?.company || 'Company'}
-                  leadRole={selectedCampaignForSchedule.lead?.role || 'Decision Maker'}
+                  leadName={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.name || 'Lead'}
+                  leadCompany={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.company || 'Company'}
+                  leadRole={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.role || 'Decision Maker'}
                   originalTone={selectedCampaignForSchedule.tone || 'professional'}
                   onSuccess={() => {
                     setShowFollowUpScheduler(false);
                     setSelectedCampaignForSchedule(null);
                   }}
                 />
+              </div>
+            </div>
+          </div>
+        )}
+
+        {/* Edit/View Campaign Modal */}
+        {editingCampaign && (
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
+              <div className="p-6">
+                <div className="flex justify-between items-center mb-4">
+                  <h2 className="text-xl font-semibold">Campaign Details</h2>
+                  <Button
+                    variant="ghost"
+                    onClick={() => setEditingCampaign(null)}
+                  >
+                    ×
+                  </Button>
+                </div>
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Subject</label>
+                    <div className="p-3 bg-gray-50 rounded border">
+                      {editingCampaign.subject}
+                    </div>
+                  </div>
+                  
+                  {/* Recipient Information */}
+                  {editingCampaign.leadId && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Recipient</label>
+                      <div className="p-3 bg-gray-50 rounded border">
+                        {(() => {
+                          const lead = leads?.find(l => l.id === editingCampaign.leadId);
+                          return lead ? (
+                            <div className="space-y-1">
+                              <div className="font-medium text-gray-900">{lead.name}</div>
+                              <div className="text-sm text-gray-600">{lead.email}</div>
+                              {lead.company && (
+                                <div className="text-sm text-gray-500">{lead.company}</div>
+                              )}
+                              {lead.role && (
+                                <div className="text-sm text-gray-500">{lead.role}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">Unknown recipient</span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Content</label>
+                    <div className="p-3 bg-gray-50 rounded border min-h-[200px] whitespace-pre-wrap">
+                      {editingCampaign.content}
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Status</label>
+                      <Badge className={getStatusColor(editingCampaign.status || 'draft')}>
+                        {formatStatus(editingCampaign.status || 'draft')}
+                      </Badge>
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Tone</label>
+                      <div className="p-2 bg-gray-50 rounded border">
+                        {editingCampaign.tone}
+                      </div>
+                    </div>
+                  </div>
+                  {editingCampaign.sentAt && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Sent At</label>
+                      <div className="p-2 bg-gray-50 rounded border">
+                        {new Date(editingCampaign.sentAt).toLocaleString()}
+                      </div>
+                    </div>
+                  )}
+                </div>
               </div>
             </div>
           </div>

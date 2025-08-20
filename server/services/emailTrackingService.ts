@@ -3,13 +3,13 @@ import { storage } from "../storage";
 export class EmailTrackingService {
   async trackEmailOpen(trackingId: string): Promise<void> {
     try {
-      const campaign = await storage.getEmailCampaignByTrackingId(trackingId);
-      if (campaign && campaign.status === 'sent') {
-        await storage.updateEmailCampaign(campaign.id, {
-          status: 'opened',
-        });
-        console.log(`Email opened: Campaign ${campaign.id}`);
-      }
+      const [campaignId] = trackingId.split('_');
+      
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'opened',
+      });
+      
+      console.log(`Email opened: Campaign ${campaignId}`);
     } catch (error) {
       console.error('Error tracking email open:', error);
     }
@@ -17,12 +17,13 @@ export class EmailTrackingService {
 
   async trackEmailClick(trackingId: string, originalUrl: string): Promise<string> {
     try {
-      const campaign = await storage.getEmailCampaignByTrackingId(trackingId);
-      if (campaign) {
-        // For now, we don't update status on click since we already track opens
-        // In the future, you could add a separate clicks tracking table
-        console.log(`Email link clicked: Campaign ${campaign.id} -> ${originalUrl}`);
-      }
+      const [campaignId] = trackingId.split('_');
+      
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'clicked',
+      });
+      
+      console.log(`Email link clicked: Campaign ${campaignId}`);
       return originalUrl;
     } catch (error) {
       console.error('Error tracking email click:', error);
@@ -59,38 +60,6 @@ export class EmailTrackingService {
       }
     } catch (error) {
       console.error('Error marking email as replied:', error);
-    }
-  }
-
-  async trackEmailOpen(trackingId: string): Promise<void> {
-    try {
-      const [campaignId] = trackingId.split('_');
-      
-      await storage.updateEmailCampaign(campaignId, {
-        status: 'opened',
-        openedAt: new Date(),
-      });
-      
-      console.log(`Email opened: Campaign ${campaignId}`);
-    } catch (error) {
-      console.error('Error tracking email open:', error);
-    }
-  }
-
-  async trackEmailClick(trackingId: string, originalUrl: string): Promise<string> {
-    try {
-      const [campaignId] = trackingId.split('_');
-      
-      await storage.updateEmailCampaign(campaignId, {
-        status: 'clicked',
-        clickedAt: new Date(),
-      });
-      
-      console.log(`Email link clicked: Campaign ${campaignId}`);
-      return originalUrl;
-    } catch (error) {
-      console.error('Error tracking email click:', error);
-      return originalUrl;
     }
   }
 }

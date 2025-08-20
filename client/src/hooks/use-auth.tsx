@@ -12,6 +12,7 @@ interface User {
   email?: string;
   firstName?: string;
   lastName?: string;
+  profileImageUrl?: string;
   role?: string;
 }
 
@@ -21,6 +22,7 @@ interface AuthContextType {
   user: User | null;
   isLoading: boolean;
   isAuthenticated: boolean;
+  setupNeeded: boolean;
   error: Error | null;
   loginMutation: any;
   logoutMutation: any;
@@ -31,10 +33,32 @@ const AuthContext = createContext<AuthContextType | undefined>(undefined);
 export function AuthProvider({ children }: { children: ReactNode }) {
   const { toast } = useToast();
 
+  // Check if setup is needed
+  const {
+    data: setupData,
+    isLoading: setupLoading,
+  } = useQuery({
+    queryKey: ["/api/setup-needed"],
+    queryFn: async () => {
+      try {
+        const response = await apiRequest("GET", "/api/setup-needed");
+        if (!response.ok) {
+          throw new Error("Failed to check setup status");
+        }
+        return response.json();
+      } catch (error) {
+        console.error("Setup check error:", error);
+        return { setupNeeded: false };
+      }
+    },
+    retry: false,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
+
   const {
     data: user,
     error,
-    isLoading,
+    isLoading: userLoading,
   } = useQuery({
     queryKey: ["/api/user"],
     queryFn: async () => {
@@ -54,6 +78,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     },
     retry: false,
     staleTime: 5 * 60 * 1000, // 5 minutes
+    enabled: !setupData?.setupNeeded, // Only fetch user if setup is not needed
   });
 
   const loginMutation = useMutation({
@@ -84,6 +109,8 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     onSuccess: () => {
       queryClient.setQueryData(["/api/user"], null);
       queryClient.clear();
+      // Redirect to auth page after logout
+      window.location.href = "/auth";
       toast({
         title: "Success",
         description: "Logged out successfully",
@@ -100,8 +127,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const value: AuthContextType = {
     user: user || null,
-    isLoading,
+    isLoading: setupLoading || userLoading,
     isAuthenticated: !!user,
+    setupNeeded: setupData?.setupNeeded || false,
     error: error as Error | null,
     loginMutation,
     logoutMutation,

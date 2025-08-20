@@ -22,7 +22,7 @@ interface HeaderProps {
 }
 
 export default function Header({ title, subtitle, actions }: HeaderProps) {
-  const { user } = useAuth();
+  const { user, logoutMutation } = useAuth();
   const [theme, setTheme] = useState<"light" | "dark">("light");
   const [, setLocation] = useLocation();
 
@@ -33,7 +33,7 @@ export default function Header({ title, subtitle, actions }: HeaderProps) {
   };
 
   const handleLogout = () => {
-    window.location.href = "/api/logout";
+    logoutMutation.mutate();
   };
 
   const getUserInitials = () => {

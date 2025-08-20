@@ -3,12 +3,12 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, requireRole } from "./auth";
 import { emailService } from "./services/emailService";
-import { generateEmail } from "./services/gemini";
 import { insertLeadSchema, insertEmailCampaignSchema, insertInsightSchema } from "@shared/schema";
 import { generateColdEmail, generateFollowUpEmail, generateInsights } from "./services/gemini";
 import { parseLeadsFromCSV, validateCSVLeads, convertLeadsToCSV, getCSVTemplate } from "./services/csvHandler";
 import { followUpScheduler } from "./services/followUpScheduler";
 import { emailTrackingService } from "./services/emailTrackingService";
+import { emailReplyTracker } from "./services/emailReplyTracker";
 import { GmailProvider } from "./services/gmailService";
 import multer from "multer";
 
@@ -21,9 +21,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Start follow-up scheduler
   followUpScheduler.start();
 
+  // Start email reply tracker if Gmail credentials are available
+  if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
+    emailReplyTracker.start();
+    console.log('🔄 Email reply tracker started');
+  } else {
+    console.log('⚠️ Email reply tracker not started - Gmail credentials not configured');
+  }
+
   // Email tracking routes
   app.get('/api/email/track-open/:trackingId', async (req, res) => {
     try {
+      console.log(`📧 TRACKING: Email open request for trackingId: ${req.params.trackingId}`);
       await emailTrackingService.trackEmailOpen(req.params.trackingId);
       // Return 1x1 transparent pixel
       const pixel = Buffer.from(
@@ -105,6 +114,62 @@ export async function registerRoutes(app: Express): Promise<Server> {
     } catch (error) {
       console.error('Error handling Gmail callback:', error);
       res.status(500).json({ message: 'Failed to complete Gmail authentication' });
+    }
+  });
+
+  // Email reply tracker testing endpoint
+  app.post('/api/email/check-replies', requireAuth, async (req, res) => {
+    try {
+      if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET || !process.env.GMAIL_REFRESH_TOKEN) {
+        return res.status(400).json({ 
+          message: 'Gmail credentials not configured. Reply tracking is disabled.' 
+        });
+      }
+
+      await emailReplyTracker.checkNow();
+      res.json({ 
+        success: true,
+        message: 'Reply check completed successfully' 
+      });
+    } catch (error) {
+      console.error('Error checking replies:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to check for replies',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Debug endpoint to manually test email open tracking
+  app.post('/api/email/test-tracking/:campaignId', requireAuth, async (req, res) => {
+    try {
+      const campaignId = req.params.campaignId;
+      
+      // Find a tracking ID for this campaign (simulate open tracking)
+      const campaign = await storage.getEmailCampaignById(campaignId);
+      if (!campaign) {
+        return res.status(404).json({ message: 'Campaign not found' });
+      }
+
+      // Update campaign as opened
+      await storage.updateEmailCampaign(campaignId, {
+        status: 'opened',
+        openedAt: new Date(),
+      });
+
+      res.json({ 
+        success: true,
+        message: `Campaign ${campaignId} manually marked as opened`,
+        campaign: campaign
+      });
+    } catch (error) {
+      console.error('Error in test tracking:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to test tracking',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
     }
   });
 
@@ -435,10 +500,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/email-campaigns/:id/update-followups', requireAuth, async (req, res) => {
+  app.post('/api/email-campaigns/:id/update-followups', requireAuth, async (req: any, res) => {
     try {
       const { schedules } = req.body;
-      const userId = req.user.id;
+      const userId = req.user?.id;
       const parentCampaign = await storage.getEmailCampaignById(req.params.id);
       
       if (!parentCampaign || !parentCampaign.leadId) {
@@ -674,7 +739,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const { id } = req.params;
       const { delay } = req.body; // delay in seconds
       
-      const followUpId = await emailService.scheduleFollowUp(id, delay || 86400); // Default 24 hours
+      const followUpId = await followUpScheduler.scheduleFollowUp(id, delay || 86400, req.user?.id || 'anonymous'); // Default 24 hours
       
       res.json({ success: true, followUpCampaignId: followUpId });
     } catch (error) {

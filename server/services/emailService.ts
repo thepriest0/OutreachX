@@ -19,6 +19,7 @@ export interface EmailSendParams {
   trackingId?: string;
   leadId?: string;
   campaignId?: string;
+  messageId?: string;
 }
 
 export interface EmailSendResult {
@@ -66,6 +67,7 @@ export class EmailService {
   private createProvider(): EmailProvider {
     // Check if Gmail credentials are available
     if (process.env.GMAIL_CLIENT_ID && process.env.GMAIL_CLIENT_SECRET && process.env.GMAIL_REFRESH_TOKEN) {
+      console.log('📧 Using Gmail provider for email sending');
       return new GmailProvider({
         clientId: process.env.GMAIL_CLIENT_ID,
         clientSecret: process.env.GMAIL_CLIENT_SECRET,
@@ -76,6 +78,7 @@ export class EmailService {
     }
     
     // Fall back to mock provider for development
+    console.log('📧 Using Mock provider for email sending (tracking will not work)');
     return new MockEmailProvider();
   }
 
@@ -91,6 +94,8 @@ export class EmailService {
     }
 
     const trackingId = `${campaignId}_${Date.now()}`;
+    // Generate unique Message-ID for reply tracking
+    const messageId = `<${campaignId}.${Date.now()}@outreachx.com>`;
 
     // Add tracking pixels and links to email content
     const trackedContent = this.addEmailTracking(campaign.content, trackingId);
@@ -103,15 +108,17 @@ export class EmailService {
       fromEmail: process.env.FROM_EMAIL || "outreach@yourcompany.com",
       trackingId,
       leadId,
-      campaignId
+      campaignId,
+      messageId
     });
 
     if (result.success) {
       // Update campaign with tracking info and sent status
       await storage.updateEmailCampaign(campaignId, {
         status: "sent",
-        messageId: result.messageId,
+        messageId: messageId, // Use our generated messageId for reply tracking
         trackingId: result.trackingId,
+        sentAt: new Date()
       });
 
       // Update lead last contact date
@@ -124,19 +131,27 @@ export class EmailService {
   }
 
   addEmailTracking(content: string, trackingId?: string): string {
-    if (!trackingId) return content;
-
-    const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+    // Convert newlines to HTML breaks for proper formatting
+    let formattedContent = content.replace(/\n/g, '<br>');
     
-    // Add tracking pixel for open tracking
-    const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" />`;
+    if (!trackingId) return formattedContent;
+
+    // Use Vercel URL in production, localhost in development
+    const baseUrl = process.env.VERCEL_URL 
+      ? `https://${process.env.VERCEL_URL}` 
+      : (process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000');
+    
+    // Add invisible tracking pixel for open tracking
+    const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" alt="" />`;
 
     // Add tracking to links
-    const trackedContent = content.replace(
+    const trackedContent = formattedContent.replace(
       /<a\s+href="([^"]+)"/g,
       `<a href="${baseUrl}/api/email/track-click/${trackingId}?url=$1"`
     );
 
+    console.log(`Adding tracking pixel: ${baseUrl}/api/email/track-open/${trackingId}`);
+    
     return trackedContent + trackingPixel;
   }
 

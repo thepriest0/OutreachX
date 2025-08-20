@@ -12,6 +12,7 @@ import SetupPage from "@/pages/setup-page";
 import Dashboard from "@/pages/dashboard";
 import Leads from "@/pages/leads";
 import Campaigns from "@/pages/campaigns";
+import Users from "@/pages/users";
 import Analytics from "@/pages/analytics";
 import IntegrationPage from "@/pages/integration";
 
@@ -39,6 +40,7 @@ function Router() {
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/leads" component={Leads} />
       <ProtectedRoute path="/campaigns" component={Campaigns} />
+      <ProtectedRoute path="/users" component={Users} />
       <ProtectedRoute path="/analytics" component={Analytics} />
       <ProtectedRoute path="/integrations" component={IntegrationPage} />
       <ProtectedRoute path="/" component={Dashboard} />

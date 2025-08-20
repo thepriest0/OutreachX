@@ -6,6 +6,10 @@ import { isUnauthorizedError } from "@/lib/authUtils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Checkbox } from "@/components/ui/checkbox";
+import { Input } from "@/components/ui/input";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command";
 import {
   Dialog,
   DialogContent,
@@ -16,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Check, ChevronsUpDown, X } from "lucide-react";
 import type { Lead } from "@shared/schema";
 import type { EmailGenerationRequest, EmailGenerationResponse } from "@/types";
 
@@ -23,24 +28,36 @@ interface AIEmailGeneratorProps {
   onClose: () => void;
   onSuccess: () => void;
   preselectedLead?: Lead;
+  leads?: Lead[];
 }
 
-export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }: AIEmailGeneratorProps) {
-  const [selectedLeadId, setSelectedLeadId] = useState<string>(preselectedLead?.id || "");
+export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, leads: preselectedLeads }: AIEmailGeneratorProps) {
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>(preselectedLead ? [preselectedLead.id] : []);
   const [selectedTone, setSelectedTone] = useState<"professional" | "casual" | "direct">("professional");
   const [generatedEmail, setGeneratedEmail] = useState<EmailGenerationResponse | null>(null);
   const [editedContent, setEditedContent] = useState("");
   const [editedSubject, setEditedSubject] = useState("");
+  const [leadSelectorOpen, setLeadSelectorOpen] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
 
   const { toast } = useToast();
 
   // Fetch leads for selection
-  const { data: leads } = useQuery({
+  const { data: fetchedLeads } = useQuery<Lead[]>({
     queryKey: ["/api/leads"],
-    enabled: !preselectedLead,
+    enabled: !preselectedLead && (!preselectedLeads || preselectedLeads.length === 0),
   });
 
-  const selectedLead = preselectedLead || (leads?.find((lead: Lead) => lead.id === selectedLeadId));
+  const availableLeads: Lead[] = (preselectedLeads && preselectedLeads.length > 0) ? preselectedLeads : (fetchedLeads || []);
+  const selectedLeads = availableLeads.filter((lead: Lead) => selectedLeadIds.includes(lead.id));
+  const primaryLead = selectedLeads[0]; // Use first selected lead for generation
+
+  // Filter leads based on search term
+  const filteredLeads = availableLeads.filter((lead: Lead) =>
+    lead.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    lead.company.toLowerCase().includes(searchTerm.toLowerCase())
+  );
 
   // Generate email mutation
   const generateMutation = useMutation({
@@ -77,23 +94,26 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
     },
   });
 
-  // Save email campaign mutation
+  // Save email campaigns for multiple leads mutation
   const saveMutation = useMutation({
     mutationFn: async (emailData: { subject: string; content: string }) => {
-      const response = await apiRequest("POST", "/api/email-campaigns", {
-        leadId: selectedLeadId,
-        subject: emailData.subject,
-        content: emailData.content,
-        tone: selectedTone,
-        isFollowUp: false,
-        followUpSequence: 0,
-      });
-      return response.json();
+      // Create campaigns for all selected leads
+      const promises = selectedLeadIds.map(leadId => 
+        apiRequest("POST", "/api/email-campaigns", {
+          leadId: leadId,
+          subject: emailData.subject,
+          content: emailData.content,
+          tone: selectedTone,
+          isFollowUp: false,
+          followUpSequence: 0,
+        })
+      );
+      return Promise.all(promises);
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Email campaign saved successfully",
+        description: `Email campaigns created for ${selectedLeadIds.length} lead(s)`,
       });
       onSuccess();
     },
@@ -111,24 +131,24 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
       }
       toast({
         title: "Error",
-        description: "Failed to save email campaign",
+        description: "Failed to save email campaigns",
         variant: "destructive",
       });
     },
   });
 
   const handleGenerate = () => {
-    if (!selectedLeadId) {
+    if (selectedLeadIds.length === 0) {
       toast({
         title: "Error",
-        description: "Please select a lead first",
+        description: "Please select at least one lead first",
         variant: "destructive",
       });
       return;
     }
 
     generateMutation.mutate({
-      leadId: selectedLeadId,
+      leadId: primaryLead.id,
       tone: selectedTone,
       isFollowUp: false,
     });
@@ -154,30 +174,37 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
     });
   };
 
-  // Send email mutation
+  // Send email mutation for multiple leads
   const sendEmailMutation = useMutation({
     mutationFn: async () => {
-      // First save the campaign
-      const response = await apiRequest("POST", "/api/email-campaigns", {
-        leadId: selectedLeadId,
-        subject: editedSubject,
-        content: editedContent,
-        tone: selectedTone,
-        isFollowUp: false,
-        followUpSequence: 0,
-      });
-      const campaignData = await response.json();
+      // First create campaigns for all selected leads
+      const campaignPromises = selectedLeadIds.map(leadId => 
+        apiRequest("POST", "/api/email-campaigns", {
+          leadId: leadId,
+          subject: editedSubject,
+          content: editedContent,
+          tone: selectedTone,
+          isFollowUp: false,
+          followUpSequence: 0,
+        })
+      );
+      
+      const campaignResponses = await Promise.all(campaignPromises);
+      const campaigns = await Promise.all(campaignResponses.map(r => r.json()));
 
-      // Then send the email
-      const sendResponse = await apiRequest("POST", `/api/campaigns/${campaignData.id}/send`, {
-        leadId: selectedLeadId,
-      });
-      return sendResponse.json();
+      // Then send all the emails
+      const sendPromises = campaigns.map(campaign => 
+        apiRequest("POST", `/api/campaigns/${campaign.id}/send`, {
+          leadId: campaign.leadId
+        })
+      );
+      
+      return Promise.all(sendPromises);
     },
     onSuccess: () => {
       toast({
         title: "Success",
-        description: "Email sent successfully!",
+        description: `Emails sent successfully to ${selectedLeadIds.length} lead(s)!`,
       });
       onSuccess();
     },
@@ -211,10 +238,10 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
       return;
     }
 
-    if (!selectedLeadId) {
+    if (selectedLeadIds.length === 0) {
       toast({
         title: "Error",
-        description: "Please select a lead first",
+        description: "Please select at least one lead first",
         variant: "destructive",
       });
       return;
@@ -256,40 +283,121 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
 
         <div className="space-y-6">
           {/* Lead Selection */}
-          {!preselectedLead && (
+          {!preselectedLead && (!preselectedLeads || preselectedLeads.length === 0) && (
             <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Select Lead</label>
-              <Select value={selectedLeadId} onValueChange={setSelectedLeadId}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Choose a lead to generate email for" />
-                </SelectTrigger>
-                <SelectContent>
-                  {leads?.map((lead: Lead) => (
-                    <SelectItem key={lead.id} value={lead.id}>
-                      {lead.name} - {lead.company}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <label className="text-sm font-medium text-gray-700">Select Leads</label>
+              <Popover open={leadSelectorOpen} onOpenChange={setLeadSelectorOpen}>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    role="combobox"
+                    aria-expanded={leadSelectorOpen}
+                    className="w-full justify-between h-auto min-h-[40px] p-3"
+                  >
+                    <div className="flex flex-wrap gap-1">
+                      {selectedLeads.length === 0 ? (
+                        <span className="text-gray-500">Select leads...</span>
+                      ) : (
+                        <>
+                          {selectedLeads.slice(0, 2).map((lead: Lead) => (
+                            <Badge key={lead.id} variant="secondary" className="mr-1">
+                              {lead.name}
+                              <X
+                                className="ml-1 h-3 w-3 cursor-pointer"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
+                                }}
+                              />
+                            </Badge>
+                          ))}
+                          {selectedLeads.length > 2 && (
+                            <Badge variant="secondary">
+                              +{selectedLeads.length - 2} more
+                            </Badge>
+                          )}
+                        </>
+                      )}
+                    </div>
+                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-[400px] p-0">
+                  <Command>
+                    <CommandInput 
+                      placeholder="Search leads..." 
+                      value={searchTerm}
+                      onValueChange={setSearchTerm}
+                    />
+                    <CommandList>
+                      <CommandEmpty>No leads found.</CommandEmpty>
+                      <CommandGroup>
+                        {filteredLeads.map((lead: Lead) => (
+                          <CommandItem
+                            key={lead.id}
+                            value={lead.id}
+                            onSelect={() => {
+                              const isSelected = selectedLeadIds.includes(lead.id);
+                              if (isSelected) {
+                                setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
+                              } else {
+                                setSelectedLeadIds([...selectedLeadIds, lead.id]);
+                              }
+                            }}
+                            className="flex items-center space-x-2 cursor-pointer"
+                          >
+                            <Checkbox
+                              checked={selectedLeadIds.includes(lead.id)}
+                              onChange={() => {}} // Handled by parent onSelect
+                            />
+                            <div className="flex-1">
+                              <div className="font-medium text-sm">{lead.name}</div>
+                              <div className="text-xs text-gray-500">
+                                {lead.company} • {lead.email}
+                              </div>
+                            </div>
+                            {selectedLeadIds.includes(lead.id) && (
+                              <Check className="h-4 w-4 text-primary" />
+                            )}
+                          </CommandItem>
+                        ))}
+                      </CommandGroup>
+                    </CommandList>
+                  </Command>
+                </PopoverContent>
+              </Popover>
+              {selectedLeads.length > 0 && (
+                <p className="text-sm text-gray-600">
+                  {selectedLeads.length} lead(s) selected
+                </p>
+              )}
             </div>
           )}
 
-          {/* Selected Lead Info */}
-          {selectedLead && (
+          {/* Selected Leads Info */}
+          {selectedLeads.length > 0 && (
             <Card className="border-blue-200 bg-blue-50">
               <CardContent className="p-4">
-                <div className="flex items-center space-x-3">
-                  <div className="w-10 h-10 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                    <span className="text-white text-sm font-medium">
-                      {selectedLead.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                    </span>
+                <div className="space-y-3">
+                  <div className="flex items-center justify-between">
+                    <span className="font-medium text-gray-900">Selected Leads ({selectedLeads.length})</span>
                   </div>
-                  <div>
-                    <p className="font-medium text-gray-900">{selectedLead.name}</p>
-                    <p className="text-sm text-gray-600">
-                      {selectedLead.role || 'Contact'} at {selectedLead.company}
-                    </p>
-                    <p className="text-xs text-gray-500">{selectedLead.email}</p>
+                  <div className="space-y-2">
+                    {selectedLeads.map((lead: Lead) => (
+                      <div key={lead.id} className="flex items-center space-x-3">
+                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                          <span className="text-white text-xs font-medium">
+                            {lead.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                          </span>
+                        </div>
+                        <div>
+                          <p className="font-medium text-sm text-gray-900">{lead.name}</p>
+                          <p className="text-xs text-gray-600">
+                            {lead.role || 'Contact'} at {lead.company}
+                          </p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
               </CardContent>
@@ -323,7 +431,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
             <div className="text-center">
               <Button
                 onClick={handleGenerate}
-                disabled={!selectedLeadId || generateMutation.isPending}
+                disabled={selectedLeadIds.length === 0 || generateMutation.isPending}
                 className="bg-purple-600 hover:bg-purple-700 text-white"
                 size="lg"
               >
@@ -379,7 +487,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead }
                 <CardContent className="p-4">
                   <div className="space-y-3">
                     <div className="text-sm text-gray-600">
-                      <strong>To:</strong> {selectedLead?.email}
+                      <strong>To:</strong> {selectedLeads.map(lead => lead.email).join(', ')}
                     </div>
                     <div className="text-sm text-gray-600">
                       <strong>Subject:</strong> {editedSubject}

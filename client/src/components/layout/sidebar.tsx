@@ -4,9 +4,12 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
+import { useAuth } from "@/hooks/use-auth";
 import { 
   LayoutDashboard, 
   Users, 
+  UserCog,
+  Contact,
   Mail, 
   BarChart3, 
   Settings,
@@ -28,7 +31,7 @@ const navigation = [
   {
     name: "Leads",
     href: "/leads",
-    icon: Users,
+    icon: Contact,
     description: "Manage contacts"
   },
   {
@@ -36,6 +39,13 @@ const navigation = [
     href: "/campaigns",
     icon: Mail,
     description: "Email outreach"
+  },
+  {
+    name: "Users",
+    href: "/users",
+    icon: UserCog,
+    description: "Team management",
+    adminOnly: true
   },
   {
     name: "Analytics",
@@ -73,6 +83,13 @@ const quickActions = [
 export default function Sidebar() {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
+  const { user } = useAuth();
+  
+  // Filter navigation items based on user role
+  const canManageUsers = user?.role === "head_admin";
+  const filteredNavigation = navigation.filter(item => 
+    !item.adminOnly || canManageUsers
+  );
 
   return (
     <div className={cn(
@@ -113,7 +130,7 @@ export default function Sidebar() {
       {/* Navigation */}
       <div className="flex-1 overflow-y-auto py-4">
         <nav className="px-2 space-y-1">
-          {navigation.map((item) => {
+          {filteredNavigation.map((item) => {
             const isActive = location === item.href || (item.href !== "/" && location.startsWith(item.href));
             const Icon = item.icon;
 

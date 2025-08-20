@@ -16,8 +16,7 @@ import {
 } from "@shared/schema";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
-import { pool } from "./db";
-import { db } from "./db";
+import { db, pool } from "./db";
 import { eq, desc, count, and, gte, sql, lt, isNotNull } from "drizzle-orm";
 
 const PostgresSessionStore = connectPg(session);
@@ -25,7 +24,7 @@ const PostgresSessionStore = connectPg(session);
 // Interface for storage operations
 export interface IStorage {
   // Session store
-  sessionStore: session.SessionStore;
+  sessionStore: any;
   
   // User operations
   getUser(id: string): Promise<User | undefined>;
@@ -33,6 +32,7 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   updateUser(id: string, user: Partial<InsertUser>): Promise<User>;
+  updateUserRole(id: string, role: string): Promise<User>;
   deleteUser(id: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
   getUserCount(): Promise<number>;
@@ -54,6 +54,8 @@ export interface IStorage {
   updateEmailCampaign(id: string, campaign: Partial<InsertEmailCampaign>): Promise<EmailCampaign>;
   getScheduledEmailCampaigns(beforeDate: Date): Promise<EmailCampaign[]>;
   getRecentEmailReplies(leadId: string, days: number): Promise<EmailCampaign[]>;
+  getSentCampaignsWithoutReplies(): Promise<EmailCampaign[]>;
+  getEmailCampaignByReplyMessageId(messageId: string): Promise<EmailCampaign | undefined>;
   cancelScheduledFollowUps(leadId: string): Promise<void>;
   
   // Insights operations
@@ -67,12 +69,12 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  sessionStore: session.SessionStore;
+  sessionStore: any;
 
   constructor() {
     this.sessionStore = new PostgresSessionStore({ 
       pool, 
-      createTableIfMissing: false 
+      createTableIfMissing: false
     });
   }
 
@@ -101,6 +103,15 @@ export class DatabaseStorage implements IStorage {
     const [user] = await db
       .update(users)
       .set({ ...userData, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return user;
+  }
+
+  async updateUserRole(id: string, role: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ role: role as any, updatedAt: new Date() })
       .where(eq(users.id, id))
       .returning();
     return user;
@@ -136,10 +147,10 @@ export class DatabaseStorage implements IStorage {
 
   // Lead operations
   async getLeads(userId: string, limit = 50): Promise<Lead[]> {
+    // All users can see all leads
     return await db
       .select()
       .from(leads)
-      .where(eq(leads.createdBy, userId))
       .orderBy(desc(leads.createdAt))
       .limit(limit);
   }
@@ -168,20 +179,18 @@ export class DatabaseStorage implements IStorage {
   }
 
   async searchLeads(query: string, userId: string): Promise<Lead[]> {
+    // All users can search all leads
     return await db
       .select()
       .from(leads)
       .where(
-        and(
-          eq(leads.createdBy, userId),
-          sql`(${leads.name} ILIKE ${`%${query}%`} OR ${leads.company} ILIKE ${`%${query}%`} OR ${leads.email} ILIKE ${`%${query}%`})`
-        )
+        sql`(${leads.name} ILIKE ${`%${query}%`} OR ${leads.company} ILIKE ${`%${query}%`} OR ${leads.email} ILIKE ${`%${query}%`})`
       )
       .orderBy(desc(leads.createdAt));
   }
 
   // Email campaign operations
-  async getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | null> {
+  async getEmailCampaignByTrackingId(trackingId: string): Promise<EmailCampaign | undefined> {
     const [campaign] = await db
       .select()
       .from(emailCampaigns)
@@ -271,17 +280,15 @@ export class DatabaseStorage implements IStorage {
     const oneMonthAgo = new Date();
     oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
 
-    // Get total leads
+    // All users can see organization-wide stats
     const [totalLeadsResult] = await db
       .select({ count: count() })
-      .from(leads)
-      .where(eq(leads.createdBy, userId));
+      .from(leads);
 
-    // Get emails sent
+    // Get emails sent (all emails)
     const [emailsSentResult] = await db
       .select({ count: count() })
-      .from(emailCampaigns)
-      .where(eq(emailCampaigns.createdBy, userId));
+      .from(emailCampaigns);
 
     // Get replied emails for response rate
     const [repliedEmailsResult] = await db
@@ -344,10 +351,10 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getRecentLeads(userId: string, limit = 5): Promise<Lead[]> {
+    // All users can see all recent leads
     return await db
       .select()
       .from(leads)
-      .where(eq(leads.createdBy, userId))
       .orderBy(desc(leads.updatedAt))
       .limit(limit);
   }
@@ -412,6 +419,43 @@ export class DatabaseStorage implements IStorage {
       .orderBy(emailCampaigns.followUpSequence);
   }
 
+  // Reply tracking methods
+  async getSentCampaignsWithoutReplies(): Promise<any[]> {
+    return await db
+      .select({
+        id: emailCampaigns.id,
+        leadId: emailCampaigns.leadId,
+        subject: emailCampaigns.subject,
+        messageId: emailCampaigns.messageId,
+        sentAt: emailCampaigns.sentAt,
+        status: emailCampaigns.status,
+        lead: {
+          id: leads.id,
+          email: leads.email,
+          name: leads.name,
+        }
+      })
+      .from(emailCampaigns)
+      .leftJoin(leads, eq(emailCampaigns.leadId, leads.id))
+      .where(
+        and(
+          eq(emailCampaigns.status, 'sent'),
+          isNotNull(emailCampaigns.messageId),
+          isNotNull(emailCampaigns.sentAt)
+        )
+      );
+  }
+
+  async getEmailCampaignByReplyMessageId(messageId: string): Promise<EmailCampaign | undefined> {
+    // This is a simple check to avoid duplicate processing
+    // In a more sophisticated system, you might store reply message IDs
+    const [campaign] = await db
+      .select()
+      .from(emailCampaigns)
+      .where(eq(emailCampaigns.messageId, messageId));
+    return campaign;
+  }
+
   async updateFollowUpCampaign(campaignId: string, updates: Partial<EmailCampaign>): Promise<void> {
     await db
       .update(emailCampaigns)
@@ -429,24 +473,11 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getEmailCampaignsByUser(userId: string): Promise<EmailCampaign[]> {
+    // All users can see all campaigns
     return await db
       .select()
       .from(emailCampaigns)
-      .where(eq(emailCampaigns.createdBy, userId))
       .orderBy(desc(emailCampaigns.createdAt));
-  }
-
-  async getFollowUpCampaignsForLead(leadId: string): Promise<EmailCampaign[]> {
-    return await db
-      .select()
-      .from(emailCampaigns)
-      .where(
-        and(
-          eq(emailCampaigns.leadId, leadId),
-          eq(emailCampaigns.isFollowUp, true)
-        )
-      )
-      .orderBy(emailCampaigns.followUpSequence);
   }
 
   async getPerformanceData(userId: string): Promise<any> {
