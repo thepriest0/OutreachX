@@ -1,7 +1,7 @@
 import cron from 'node-cron';
-import { storage } from '../storage';
-import { emailService } from './emailService';
-import { generateFollowUpEmail } from './gemini';
+import { storage } from '../storage.js';
+import { emailService } from './emailService.js';
+import { generateFollowUpEmail } from './gemini.js';
 
 export class FollowUpScheduler {
   private static instance: FollowUpScheduler;

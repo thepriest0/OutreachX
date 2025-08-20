@@ -1,5 +1,5 @@
 import { google } from 'googleapis';
-import type { EmailProvider, EmailSendParams, EmailSendResult } from './emailService';
+import type { EmailProvider, EmailSendParams, EmailSendResult } from './emailService.js';
 
 export interface GmailConfig {
   clientId: string;

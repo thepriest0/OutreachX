@@ -1,7 +1,7 @@
-import { storage } from "../storage";
+import { storage } from "../storage.js";
 import type { EmailCampaign } from "@shared/schema";
-import { GmailProvider, type GmailConfig } from "./gmailService";
-import { emailTrackingService } from "./emailTrackingService";
+import { GmailProvider, type GmailConfig } from "./gmailService.js";
+import { emailTrackingService } from "./emailTrackingService.js";
 
 // Email service interface
 export interface EmailProvider {
