@@ -70,7 +70,9 @@ function createApp() {
   });
 
   app.get('/api/dashboard/recent-leads', (req, res) => {
-    res.json([]);
+    res.json({
+      leads: []
+    });
   });
 
   app.get('/api/dashboard/performance', (req, res) => {
@@ -93,7 +95,9 @@ function createApp() {
 
   // LEADS
   app.get('/api/leads', (req, res) => {
-    res.json([]);
+    res.json({
+      leads: []
+    });
   });
 
   app.post('/api/leads', (req, res) => {
@@ -106,7 +110,9 @@ function createApp() {
 
   // EMAIL CAMPAIGNS
   app.get('/api/email-campaigns', (req, res) => {
-    res.json([]);
+    res.json({
+      campaigns: []
+    });
   });
 
   app.post('/api/email-campaigns', (req, res) => {
