@@ -7,9 +7,17 @@
       "config": {
         "distDir": "dist/public"
       }
+    },
+    {
+      "src": "api/serverless.js",
+      "use": "@vercel/node"
     }
   ],
   "routes": [
+    {
+      "src": "/api/(.*)",
+      "dest": "/api/serverless.js"
+    },
     {
       "src": "/(.*)",
       "dest": "/dist/public/$1"
