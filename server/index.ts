@@ -120,3 +120,8 @@ app.use((req, res, next) => {
     log(`serving on port ${port}`);
   });
 })();
+
+// Export for CommonJS compatibility (for Vercel)
+if (typeof module !== 'undefined' && module.exports) {
+  module.exports = { createApp };
+}

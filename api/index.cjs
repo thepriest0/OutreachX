@@ -1,91 +1,117 @@
 // Vercel serverless function entry point
 const express = require('express');
 const cors = require('cors');
+const path = require('path');
 
 let app = null;
 
-// Initialize a working app with essential endpoints
-function initializeApp() {
+// Initialize the full app with all server functionality
+async function initializeApp() {
   if (app) return app;
   
-  app = express();
-  
-  // Configure CORS
-  app.use(cors({
-    origin: true, // Allow all origins for now
-    credentials: true
-  }));
+  try {
+    // Try to import the compiled server
+    const serverPath = path.join(__dirname, '../dist/server/index.js');
+    
+    // Since the compiled server is ES modules, we need to use dynamic import
+    const { createApp } = await import(serverPath);
+    
+    console.log('✅ Successfully loaded full server functionality');
+    app = await createApp();
+    
+    return app;
+  } catch (error) {
+    console.error('❌ Failed to load compiled server, trying alternative approach:', error);
+    
+    try {
+      // Alternative: try to manually recreate the server functionality
+      const { createManualApp } = require('./manual-server.cjs');
+      app = await createManualApp();
+      console.log('✅ Successfully loaded manual server implementation');
+      return app;
+    } catch (manualError) {
+      console.error('❌ Manual server also failed:', manualError);
+      
+      // Final fallback: basic app
+      console.log('⚠️ Using basic fallback server');
+      app = createBasicApp();
+      return app;
+    }
+  }
+}
 
-  app.use(express.json());
+// Create a basic app as final fallback
+function createBasicApp() {
+  const app = express();
   
-  // Health check endpoint
+  app.use(cors({ origin: true, credentials: true }));
+  app.use(express.json());
+  app.use(express.urlencoded({ extended: false }));
+  
+  // Serve static files
+  app.use(express.static(path.join(__dirname, '../dist/public')));
+  
+  // Health check
   app.get('/api/health', (req, res) => {
     res.json({ 
       status: 'ok', 
       timestamp: new Date().toISOString(),
-      message: 'OutreachX API is running on Vercel!'
+      message: 'Basic server running - some features may be limited'
     });
   });
 
-  // User endpoint
+  // User endpoints
   app.get('/api/user', (req, res) => {
     res.json({ 
       authenticated: false,
-      message: 'Authentication not implemented in serverless version'
+      message: 'Authentication not available in basic mode'
     });
   });
 
-  // Setup check endpoint
   app.get('/api/setup-needed', (req, res) => {
-    res.json({ 
-      setupNeeded: false,
-      message: 'Setup completed'
-    });
+    res.json({ setupNeeded: false });
   });
 
-  // Dashboard stats endpoint
+  // Dashboard stats
   app.get('/api/dashboard/stats', (req, res) => {
     res.json({ 
       totalLeads: 0, 
       totalCampaigns: 0, 
       openRate: 0, 
       replyRate: 0,
-      message: 'Demo data - connect to database for real stats'
+      message: 'Demo data - database not connected in basic mode'
     });
   });
 
-  // Leads endpoint
+  // Leads endpoints
   app.get('/api/leads', (req, res) => {
     res.json([]);
   });
 
   app.post('/api/leads', (req, res) => {
     res.json({ 
-      success: true, 
-      message: 'Lead creation not implemented in serverless version' 
+      success: false, 
+      message: 'Lead creation requires full server mode' 
     });
   });
 
-  // Email campaigns endpoint
+  // Email campaigns
   app.get('/api/email-campaigns', (req, res) => {
     res.json([]);
   });
 
   app.post('/api/email-campaigns', (req, res) => {
     res.json({ 
-      success: true, 
-      message: 'Campaign creation not implemented in serverless version' 
+      success: false, 
+      message: 'Campaign creation requires full server mode' 
     });
   });
 
-  // Email tracking endpoint - MOST IMPORTANT for your use case
+  // CRITICAL: Email tracking endpoint
   app.get('/api/email/track-open/:trackingId', (req, res) => {
     try {
       console.log(`📧 EMAIL OPENED: trackingId=${req.params.trackingId}`);
-      console.log(`📧 User-Agent: ${req.headers['user-agent']}`);
-      console.log(`📧 IP: ${req.ip || req.connection.remoteAddress}`);
       
-      // Return 1x1 transparent pixel
       const pixel = Buffer.from(
         'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
         'base64'
@@ -105,20 +131,9 @@ function initializeApp() {
     }
   });
 
-  // Reply webhook endpoint (for future Gmail integration)
-  app.post('/api/email/reply-webhook', (req, res) => {
-    console.log('📧 REPLY WEBHOOK received:', req.body);
-    res.json({ success: true, message: 'Reply webhook received' });
-  });
-
-  // Catch-all for unimplemented API routes
-  app.all('/api/*', (req, res) => {
-    res.status(501).json({ 
-      error: 'API endpoint not fully implemented in serverless version',
-      endpoint: req.path,
-      method: req.method,
-      message: 'This is a simplified version for email tracking. For full functionality, use local development.'
-    });
+  // Catch-all for SPA routing
+  app.get('*', (req, res) => {
+    res.sendFile(path.join(__dirname, '../dist/public/index.html'));
   });
   
   return app;
@@ -127,9 +142,7 @@ function initializeApp() {
 // Export handler for Vercel
 module.exports = async (req, res) => {
   try {
-    const app = initializeApp();
-    
-    // Handle the request using Express
+    const app = await initializeApp();
     app(req, res);
   } catch (error) {
     console.error('Serverless function error:', error);
