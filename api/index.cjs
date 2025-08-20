@@ -59,14 +59,13 @@ function createApp() {
   app.get('/api/dashboard/stats', (req, res) => {
     res.json({
       totalLeads: 0,
-      totalCampaigns: 0,
-      openRate: 0.0,
-      replyRate: 0.0,
+      totalSent: 0,
       responseRate: 0.0,
-      conversionRate: 0.0,
-      totalOpens: 0,
       totalReplies: 0,
-      totalSent: 0
+      leadsGrowth: 0.0,
+      emailsGrowth: 0.0,
+      responseChange: 0.0,
+      followupsGrowth: 0.0
     });
   });
 
