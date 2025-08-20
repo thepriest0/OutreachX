@@ -1,7 +1,6 @@
 import { sql } from "drizzle-orm";
 import {
   index,
-  json,
   jsonb,
   pgTable,
   timestamp,
@@ -16,12 +15,16 @@ import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 import { relations } from "drizzle-orm";
 
-// Session storage table for connect-pg-simple
-export const session = pgTable("session", {
-  sid: varchar("sid").primaryKey(),
-  sess: json("sess").notNull(),
-  expire: timestamp("expire").notNull(),
-});
+// Session storage table.
+export const sessions = pgTable(
+  "sessions",
+  {
+    sid: varchar("sid").primaryKey(),
+    sess: jsonb("sess").notNull(),
+    expire: timestamp("expire").notNull(),
+  },
+  (table) => [index("IDX_session_expire").on(table.expire)]
+);
 
 // Enums
 export const userRoleEnum = pgEnum("user_role", ["head_admin", "admin", "founder", "strategist", "designer"]);

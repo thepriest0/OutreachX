@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage.js";
 import { setupAuth, requireAuth, requireRole } from "./auth.js";
 import { emailService } from "./services/emailService.js";
-import { insertLeadSchema, insertEmailCampaignSchema, insertInsightSchema } from "@shared/schema";
+import { insertLeadSchema, insertEmailCampaignSchema, insertInsightSchema } from "../shared/schema.js";
 import { generateColdEmail, generateFollowUpEmail, generateInsights } from "./services/gemini.js";
 import { parseLeadsFromCSV, validateCSVLeads, convertLeadsToCSV, getCSVTemplate } from "./services/csvHandler.js";
 import { followUpScheduler } from "./services/followUpScheduler.js";
