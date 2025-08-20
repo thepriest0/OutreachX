@@ -302,6 +302,27 @@ export default function Campaigns() {
                                   {campaign.tone.charAt(0).toUpperCase() + campaign.tone.slice(1)} tone
                                 </span>
                               </div>
+                              
+                              {/* Recipient Information */}
+                              {campaign.leadId && (
+                                <div className="flex items-center space-x-2 mb-3">
+                                  <span className="text-sm font-medium text-gray-700">To:</span>
+                                  {(() => {
+                                    const lead = leads?.find(l => l.id === campaign.leadId);
+                                    return lead ? (
+                                      <div className="flex items-center space-x-2">
+                                        <span className="text-sm text-gray-900">{lead.name}</span>
+                                        <span className="text-sm text-gray-500">({lead.email})</span>
+                                        {lead.company && (
+                                          <span className="text-sm text-gray-500">at {lead.company}</span>
+                                        )}
+                                      </div>
+                                    ) : (
+                                      <span className="text-sm text-gray-500">Unknown recipient</span>
+                                    );
+                                  })()}
+                                </div>
+                              )}
                             </div>
                             
                             <div className="flex items-center space-x-2 ml-4">
@@ -342,7 +363,7 @@ export default function Campaigns() {
                                   )}
                                 </>
                               )}
-                              {campaign.status === 'sent' && !campaign.isFollowUp && (
+                              {(campaign.status === 'sent' || campaign.status === 'opened') && !campaign.isFollowUp && (
                                 <Button 
                                   variant="ghost" 
                                   size="sm"
@@ -611,6 +632,33 @@ export default function Campaigns() {
                       {editingCampaign.subject}
                     </div>
                   </div>
+                  
+                  {/* Recipient Information */}
+                  {editingCampaign.leadId && (
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Recipient</label>
+                      <div className="p-3 bg-gray-50 rounded border">
+                        {(() => {
+                          const lead = leads?.find(l => l.id === editingCampaign.leadId);
+                          return lead ? (
+                            <div className="space-y-1">
+                              <div className="font-medium text-gray-900">{lead.name}</div>
+                              <div className="text-sm text-gray-600">{lead.email}</div>
+                              {lead.company && (
+                                <div className="text-sm text-gray-500">{lead.company}</div>
+                              )}
+                              {lead.role && (
+                                <div className="text-sm text-gray-500">{lead.role}</div>
+                              )}
+                            </div>
+                          ) : (
+                            <span className="text-gray-500">Unknown recipient</span>
+                          );
+                        })()}
+                      </div>
+                    </div>
+                  )}
+                  
                   <div>
                     <label className="block text-sm font-medium mb-1">Content</label>
                     <div className="p-3 bg-gray-50 rounded border min-h-[200px] whitespace-pre-wrap">

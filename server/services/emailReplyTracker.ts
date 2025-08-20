@@ -1,5 +1,5 @@
-import { storage } from "../storage.js";
-import { GmailProvider } from "./gmailService.js";
+import { storage } from "../storage";
+import { GmailProvider } from "./gmailService";
 
 interface EmailReply {
   messageId: string;

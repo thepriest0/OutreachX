@@ -1,6 +1,6 @@
 import { parse } from 'csv-parse/sync';
 import { stringify } from 'csv-stringify/sync';
-import type { Lead, InsertLead } from '../../shared/schema.js';
+import type { Lead, InsertLead } from '@shared/schema';
 
 export interface CSVLead {
   name: string;

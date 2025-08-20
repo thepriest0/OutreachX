@@ -1,7 +1,7 @@
-import { storage } from "../storage.js";
-import type { EmailCampaign } from "../../shared/schema.js";
-import { GmailProvider, type GmailConfig } from "./gmailService.js";
-import { emailTrackingService } from "./emailTrackingService.js";
+import { storage } from "../storage";
+import type { EmailCampaign } from "@shared/schema";
+import { GmailProvider, type GmailConfig } from "./gmailService";
+import { emailTrackingService } from "./emailTrackingService";
 
 // Email service interface
 export interface EmailProvider {
@@ -136,10 +136,7 @@ export class EmailService {
     
     if (!trackingId) return formattedContent;
 
-    // Use Vercel URL in production, localhost in development
-    const baseUrl = process.env.VERCEL_URL 
-      ? `https://${process.env.VERCEL_URL}` 
-      : (process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000');
+    const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
     
     // Add invisible tracking pixel for open tracking
     const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" alt="" />`;

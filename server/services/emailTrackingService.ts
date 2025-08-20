@@ -1,4 +1,4 @@
-import { storage } from "../storage.js";
+import { storage } from "../storage";
 
 export class EmailTrackingService {
   async trackEmailOpen(trackingId: string): Promise<void> {
