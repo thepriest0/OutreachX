@@ -428,9 +428,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.post('/api/email-campaigns/:id/generate-followup', requireAuth, async (req, res) => {
+  app.post('/api/email-campaigns/:id/generate-followup', requireAuth, async (req: any, res) => {
     try {
       const { sequence, tone, delayDays } = req.body;
+      const currentUser = req.user;
       const campaign = await storage.getEmailCampaignById(req.params.id);
       
       if (!campaign || !campaign.leadId) {
@@ -442,6 +443,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Lead not found" });
       }
 
+      // Create sender name from user's first and last name
+      const senderName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.username;
+      const senderCompany = "Nydl Studio";
+
       const followUpEmail = await generateFollowUpEmail({
         name: lead.name,
         role: lead.role || 'Decision Maker',
@@ -450,6 +455,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         isFollowUp: true,
         previousEmailContent: campaign.content,
         followUpSequence: sequence,
+        senderName,
+        senderCompany
       });
 
       res.json(followUpEmail);
@@ -553,14 +560,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // AI email generation routes
-  app.post('/api/ai/generate-email', requireAuth, async (req, res) => {
+  app.post('/api/ai/generate-email', requireAuth, async (req: any, res) => {
     try {
       const { leadId, tone, isFollowUp, parentEmailId } = req.body;
+      const currentUser = req.user;
       
       const lead = await storage.getLeadById(leadId);
       if (!lead) {
         return res.status(404).json({ message: "Lead not found" });
       }
+
+      // Create sender name from user's first and last name
+      const senderName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.username;
+      const senderCompany = "Nydl Studio";
 
       let generatedEmail;
       if (isFollowUp && parentEmailId) {
@@ -571,14 +583,18 @@ export async function registerRoutes(app: Express): Promise<Server> {
           company: lead.company,
           tone,
           isFollowUp: true,
-          previousEmailContent: parentEmail?.content || ''
+          previousEmailContent: parentEmail?.content || '',
+          senderName,
+          senderCompany
         });
       } else {
         generatedEmail = await generateColdEmail({
           name: lead.name,
           role: lead.role || 'Decision Maker',
           company: lead.company,
-          tone
+          tone,
+          senderName,
+          senderCompany
         });
       }
 

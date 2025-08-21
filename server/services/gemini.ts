@@ -11,6 +11,8 @@ export interface EmailGenerationRequest {
   tone: 'professional' | 'casual' | 'direct';
   isFollowUp?: boolean;
   previousEmailContent?: string;
+  senderName: string;
+  senderCompany: string;
 }
 
 export interface EmailGenerationResponse {
@@ -19,11 +21,19 @@ export interface EmailGenerationResponse {
 }
 
 export async function generateColdEmail(request: EmailGenerationRequest): Promise<EmailGenerationResponse> {
-  const { name, role, company, tone } = request;
+  const { name, role, company, tone, senderName, senderCompany } = request;
 
   const prompt = `Write a cold outreach email to ${name}, who is a ${role} at ${company}. 
-Tone: ${tone}. The sender is a UI/UX and branding design studio. 
-Make it short, personalized, and with a clear call-to-action to book a call.
+Tone: ${tone}. 
+
+SENDER INFORMATION:
+- Your name is: ${senderName}
+- Your company is: ${senderCompany}
+- You are from a UI/UX and branding design studio
+
+Make the email short, personalized, and with a clear call-to-action to book a call.
+Use the sender's real name (${senderName}) and company name (${senderCompany}) in the email content naturally.
+Do not use placeholders - use the actual names provided.
 
 Format the response as JSON with 'subject' and 'content' fields.`;
 
@@ -64,6 +74,8 @@ export async function generateFollowUpEmail({
   isFollowUp = false,
   previousEmailContent,
   followUpSequence = 1,
+  senderName,
+  senderCompany,
 }: {
   name: string;
   role: string;
@@ -72,6 +84,8 @@ export async function generateFollowUpEmail({
   isFollowUp?: boolean;
   previousEmailContent?: string;
   followUpSequence?: number;
+  senderName: string;
+  senderCompany: string;
 }): Promise<EmailGenerationResponse> {
   const sequenceContext = {
     1: "This is the first follow-up. Gently remind them of your previous email and add additional value or a different angle.",
@@ -85,6 +99,11 @@ export async function generateFollowUpEmail({
 This is follow-up #${followUpSequence} to the previous email content:
 ${previousEmailContent}
 
+SENDER INFORMATION:
+- Your name is: ${senderName}
+- Your company is: ${senderCompany}
+- You are from a UI/UX and branding design studio
+
 ${sequenceGuidance}
 
 The follow-up should:
@@ -94,6 +113,8 @@ The follow-up should:
 - Keep the same ${tone} tone
 - Be concise and compelling
 - Include a clear call-to-action
+- Use the sender's real name (${senderName}) and company name (${senderCompany}) naturally
+- Do not use placeholders - use the actual names provided
 
 Return as JSON with "subject" and "content" fields.`;
 

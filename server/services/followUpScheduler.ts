@@ -48,6 +48,12 @@ export class FollowUpScheduler {
       throw new Error('Lead not found');
     }
 
+    // Get user information for personalization
+    const user = await storage.getUser(userId);
+    if (!user) {
+      throw new Error('User not found');
+    }
+
     // Check if we already have 3 follow-ups for this lead
     const existingFollowUps = await storage.getFollowUpCampaignsForLead(parentCampaign.leadId);
     if (existingFollowUps.length >= 3) {
@@ -59,6 +65,10 @@ export class FollowUpScheduler {
       throw new Error('Cannot schedule follow-up for a campaign that has been replied to');
     }
 
+    // Create sender name from user's first and last name
+    const senderName = `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username;
+    const senderCompany = "Nydl Studio";
+
     // Generate follow-up email content
     const followUpEmail = await generateFollowUpEmail({
       name: lead.name,
@@ -67,6 +77,8 @@ export class FollowUpScheduler {
       tone: parentCampaign.tone,
       isFollowUp: true,
       previousEmailContent: parentCampaign.content,
+      senderName,
+      senderCompany
     });
 
     // Calculate scheduled time
