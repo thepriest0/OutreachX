@@ -29,6 +29,8 @@ async function comparePasswords(supplied: string, stored: string) {
 }
 
 export function setupAuth(app: Express) {
+  const isProduction = process.env.NODE_ENV === 'production';
+  
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'dev-session-secret-key-12345',
     resave: false,
@@ -36,10 +38,10 @@ export function setupAuth(app: Express) {
     store: storage.sessionStore,
     name: 'outreach.sid',
     cookie: {
-      secure: false,
+      secure: isProduction, // HTTPS required in production
       httpOnly: true,
       maxAge: 1000 * 60 * 60 * 24 * 7, // 7 days
-      sameSite: 'lax'
+      sameSite: 'lax' // Keep lax for better compatibility
     },
     rolling: true
   };
@@ -128,21 +130,48 @@ export function setupAuth(app: Express) {
   });
 
   // Login route
-  app.post("/api/login", passport.authenticate("local"), (req, res) => {
-    if (req.user) {
-      res.status(200).json({
-        id: req.user.id,
-        username: req.user.username,
-        email: req.user.email,
-        firstName: req.user.firstName,
-        lastName: req.user.lastName,
-        role: req.user.role,
-        createdAt: req.user.createdAt,
-        updatedAt: req.user.updatedAt,
+  app.post("/api/login", (req, res, next) => {
+    console.log('🔐 LOGIN ATTEMPT:', { 
+      username: req.body.username,
+      hasPassword: !!req.body.password,
+      sessionID: req.sessionID 
+    });
+    
+    passport.authenticate("local", (err: any, user: any, info: any) => {
+      if (err) {
+        console.error('🔐 LOGIN ERROR:', err);
+        return res.status(500).json({ message: "Internal server error" });
+      }
+      
+      if (!user) {
+        console.log('🔐 LOGIN FAILED:', info?.message || 'Invalid credentials');
+        return res.status(401).json({ message: info?.message || "Invalid username or password" });
+      }
+      
+      req.login(user, (loginErr) => {
+        if (loginErr) {
+          console.error('🔐 SESSION LOGIN ERROR:', loginErr);
+          return res.status(500).json({ message: "Failed to establish session" });
+        }
+        
+        console.log('🔐 LOGIN SUCCESS:', { 
+          userId: user.id, 
+          username: user.username,
+          sessionID: req.sessionID 
+        });
+        
+        res.status(200).json({
+          id: user.id,
+          username: user.username,
+          email: user.email,
+          firstName: user.firstName,
+          lastName: user.lastName,
+          role: user.role,
+          createdAt: user.createdAt,
+          updatedAt: user.updatedAt,
+        });
       });
-    } else {
-      res.status(401).json({ message: "Authentication failed" });
-    }
+    })(req, res, next);
   });
 
   // Logout route
@@ -167,6 +196,19 @@ export function setupAuth(app: Express) {
       role: req.user.role,
       createdAt: req.user.createdAt,
       updatedAt: req.user.updatedAt,
+    });
+  });
+
+  // Session debug endpoint
+  app.get("/api/session-debug", (req, res) => {
+    res.json({
+      sessionID: req.sessionID,
+      isAuthenticated: req.isAuthenticated(),
+      user: req.user || null,
+      session: {
+        cookie: req.session.cookie,
+        passport: (req.session as any).passport || null
+      }
     });
   });
 
