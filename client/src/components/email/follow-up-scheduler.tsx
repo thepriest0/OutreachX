@@ -108,11 +108,15 @@ export default function FollowUpScheduler({
 
   const generateEmailMutation = useMutation({
     mutationFn: async (data: { sequence: number; tone: string; delayDays: number }) => {
-      return await apiRequest("POST", `/api/email-campaigns/${campaignId}/generate-followup`, data);
+      const response = await apiRequest("POST", `/api/email-campaigns/${campaignId}/generate-followup`, data);
+      return await response.json();
     },
     onSuccess: (response, variables) => {
       const { sequence } = variables;
       const index = sequence - 1;
+      
+      console.log('AI Generated Email Response:', response);
+      
       setSchedules(prev => {
         const newSchedules = [...prev];
         newSchedules[index] = {
