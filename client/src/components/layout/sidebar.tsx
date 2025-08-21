@@ -13,6 +13,7 @@ import {
   Mail, 
   BarChart3, 
   Settings,
+  User,
   Zap,
   TrendingUp,
   Send,
@@ -58,6 +59,12 @@ const navigation = [
     href: "/integrations",
     icon: Settings,
     description: "Email & tools"
+  },
+  {
+    name: "Profile",
+    href: "/profile",
+    icon: User,
+    description: "Account settings"
   }
 ];
 

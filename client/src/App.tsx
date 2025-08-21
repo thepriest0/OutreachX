@@ -15,8 +15,7 @@ import Campaigns from "@/pages/campaigns";
 import Users from "@/pages/users";
 import Analytics from "@/pages/analytics";
 import IntegrationPage from "@/pages/integration";
-import Profile from "@/pages/profile";
-import Settings from "@/pages/settings";
+import ProfilePage from "@/pages/profile";
 
 function Router() {
   const { setupNeeded, isLoading } = useAuth();
@@ -45,8 +44,7 @@ function Router() {
       <ProtectedRoute path="/users" component={Users} />
       <ProtectedRoute path="/analytics" component={Analytics} />
       <ProtectedRoute path="/integrations" component={IntegrationPage} />
-      <ProtectedRoute path="/profile" component={Profile} />
-      <ProtectedRoute path="/settings" component={Settings} />
+      <ProtectedRoute path="/profile" component={ProfilePage} />
       <ProtectedRoute path="/" component={Dashboard} />
       <Route component={NotFound} />
     </Switch>

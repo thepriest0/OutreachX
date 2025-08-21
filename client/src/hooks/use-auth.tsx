@@ -14,6 +14,8 @@ interface User {
   lastName?: string;
   profileImageUrl?: string;
   role?: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 type LoginFormData = z.infer<typeof loginSchema>;

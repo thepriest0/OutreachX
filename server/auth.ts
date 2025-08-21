@@ -333,6 +333,94 @@ export function setupAuth(app: Express) {
       res.status(500).json({ message: "Failed to delete user" });
     }
   });
+
+  // User profile routes
+  app.put("/api/user/profile", requireAuth, async (req, res) => {
+    try {
+      const { firstName, lastName, email, username } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Validate required fields
+      if (!firstName || !lastName || !username) {
+        return res.status(400).json({ message: "First name, last name, and username are required" });
+      }
+
+      // Check if username is already taken by another user
+      if (username !== req.user?.username) {
+        const existingUser = await storage.getUserByUsername(username);
+        if (existingUser && existingUser.id !== userId) {
+          return res.status(400).json({ message: "Username is already taken" });
+        }
+      }
+
+      // Update user profile
+      await storage.updateUser(userId, {
+        firstName,
+        lastName,
+        email: email || null,
+        username,
+      });
+
+      const updatedUser = await storage.getUser(userId);
+      res.json({ 
+        message: "Profile updated successfully",
+        user: updatedUser 
+      });
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      res.status(500).json({ message: "Failed to update profile" });
+    }
+  });
+
+  app.put("/api/user/password", requireAuth, async (req, res) => {
+    try {
+      const { currentPassword, newPassword } = req.body;
+      const userId = req.user?.id;
+
+      if (!userId) {
+        return res.status(401).json({ message: "User not authenticated" });
+      }
+
+      // Validate required fields
+      if (!currentPassword || !newPassword) {
+        return res.status(400).json({ message: "Current password and new password are required" });
+      }
+
+      // Validate new password length
+      if (newPassword.length < 6) {
+        return res.status(400).json({ message: "New password must be at least 6 characters long" });
+      }
+
+      // Get current user
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Verify current password
+      const isValidPassword = await comparePasswords(currentPassword, user.password);
+      if (!isValidPassword) {
+        return res.status(400).json({ message: "Current password is incorrect" });
+      }
+
+      // Hash new password
+      const hashedNewPassword = await hashPassword(newPassword);
+
+      // Update password
+      await storage.updateUser(userId, {
+        password: hashedNewPassword,
+      });
+
+      res.json({ message: "Password changed successfully" });
+    } catch (error) {
+      console.error('Error changing password:', error);
+      res.status(500).json({ message: "Failed to change password" });
+    }
+  });
 }
 
 // Middleware to require authentication

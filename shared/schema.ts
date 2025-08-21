@@ -38,42 +38,7 @@ export const users = pgTable("users", {
   firstName: varchar("first_name"),
   lastName: varchar("last_name"),
   profileImageUrl: varchar("profile_image_url"),
-  company: varchar("company"),
-  bio: text("bio"),
   role: userRoleEnum("role").default("designer"),
-  lastLoginAt: timestamp("last_login_at"),
-  createdAt: timestamp("created_at").defaultNow(),
-  updatedAt: timestamp("updated_at").defaultNow(),
-});
-
-// User Settings table
-export const userSettings = pgTable("user_settings", {
-  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
-  userId: varchar("user_id").references(() => users.id).notNull(),
-  
-  // Email Configuration
-  fromName: varchar("from_name"),
-  fromEmail: varchar("from_email"),
-  emailSignature: text("email_signature"),
-  
-  // Company Branding
-  companyName: varchar("company_name"),
-  companyWebsite: varchar("company_website"),
-  companyDescription: text("company_description"),
-  
-  // AI Preferences
-  defaultTone: varchar("default_tone"),
-  aiPersonality: text("ai_personality"),
-  
-  // Notifications
-  emailNotifications: boolean("email_notifications").default(true),
-  campaignNotifications: boolean("campaign_notifications").default(true),
-  leadNotifications: boolean("lead_notifications").default(true),
-  
-  // Advanced
-  trackingEnabled: boolean("tracking_enabled").default(true),
-  analyticsEnabled: boolean("analytics_enabled").default(true),
-  
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
 });
@@ -169,26 +134,7 @@ export const insertUserSchema = createInsertSchema(users).pick({
   firstName: true,
   lastName: true,
   profileImageUrl: true,
-  company: true,
-  bio: true,
   role: true,
-});
-
-export const insertUserSettingsSchema = createInsertSchema(userSettings).pick({
-  userId: true,
-  fromName: true,
-  fromEmail: true,
-  emailSignature: true,
-  companyName: true,
-  companyWebsite: true,
-  companyDescription: true,
-  defaultTone: true,
-  aiPersonality: true,
-  emailNotifications: true,
-  campaignNotifications: true,
-  leadNotifications: true,
-  trackingEnabled: true,
-  analyticsEnabled: true,
 });
 
 export const loginSchema = z.object({
@@ -236,8 +182,6 @@ export const insertInsightSchema = createInsertSchema(insights).pick({
 export type UpsertUser = z.infer<typeof insertUserSchema> & { id: string };
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
-export type UserSettings = typeof userSettings.$inferSelect;
-export type InsertUserSettings = z.infer<typeof insertUserSettingsSchema>;
 
 export type Lead = typeof leads.$inferSelect;
 export type InsertLead = z.infer<typeof insertLeadSchema>;
