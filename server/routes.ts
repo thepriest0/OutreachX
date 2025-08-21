@@ -743,8 +743,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const type = req.query.type as string;
       const limit = parseInt(req.query.limit as string) || 10;
-      const insights = await storage.getInsights(type, limit);
-      res.json(insights);
+      const dbInsights = await storage.getInsights(type, limit);
+      
+      const allInsights = dbInsights.flatMap(dbInsight => {
+        try {
+          if (!dbInsight.content) return [];
+          const parsedContent = JSON.parse(dbInsight.content);
+          if (Array.isArray(parsedContent)) {
+            return parsedContent.map((insight: any, index: number) => ({
+              ...insight,
+              id: `${dbInsight.id}-${index}`,
+              createdAt: dbInsight.generatedAt,
+            }));
+          }
+        } catch (e) {
+          console.error(`Failed to parse insight content for id ${dbInsight.id}:`, e);
+        }
+        return [];
+      });
+
+      res.json(allInsights);
     } catch (error) {
       console.error("Error fetching insights:", error);
       res.status(500).json({ message: "Failed to fetch insights" });
