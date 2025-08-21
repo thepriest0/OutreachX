@@ -470,8 +470,8 @@ export default function Campaigns() {
                                         </div>
                                         <span className="text-sm text-gray-600">{lead.email}</span>
                                       </div>
-                                      <Badge variant="secondary" className="text-xs">
-                                        {lead.status}
+                                      <Badge className={`text-xs ${getStatusColor(lead.status || 'new')}`}>
+                                        {formatStatus(lead.status || 'new')}
                                       </Badge>
                                     </div>
                                   ) : (
@@ -535,7 +535,7 @@ export default function Campaigns() {
 
                     {/* Follow-up Campaigns */}
                     {group.followUps.length > 0 && (
-                      <div className="ml-8 space-y-2">
+                      <div className="ml-8 space-y-3">
                         {group.followUps.map((followUp) => (
                           <Card key={followUp.id} className="hover:shadow-sm transition-shadow border-l-4 border-l-blue-300 bg-blue-50/30">
                             <CardContent className="p-4">
@@ -549,34 +549,41 @@ export default function Campaigns() {
                                 </div>
                                 
                                 <div className="flex-1">
-                                  <div className="flex items-start justify-between">
+                                  {/* Header Section */}
+                                  <div className="flex items-start justify-between mb-3">
                                     <div className="flex-1">
                                       <div className="flex items-center space-x-2 mb-2">
                                         <h4 className="text-md font-medium text-gray-800">
                                           {followUp.subject}
                                         </h4>
-                                        <Badge variant="outline" className="text-xs bg-blue-100">
+                                        <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
                                           Follow-up #{followUp.followUpSequence}
                                         </Badge>
                                       </div>
-                                      <div className="flex items-center space-x-3 mb-2">
-                                        <Badge className={getStatusColor(followUp.status || 'draft')} variant="secondary">
+                                      
+                                      <div className="flex flex-wrap items-center gap-2 mb-2">
+                                        <Badge className={`text-xs ${getStatusColor(followUp.status || 'draft')}`}>
                                           {formatStatus(followUp.status || 'draft')}
                                         </Badge>
-                                        <span className="text-xs text-gray-500">
+                                        <Badge variant="outline" className="text-xs text-gray-600">
                                           {followUp.tone.charAt(0).toUpperCase() + followUp.tone.slice(1)} tone
-                                        </span>
+                                        </Badge>
+                                        {followUp.scheduledAt && (
+                                          <Badge variant="outline" className="text-xs text-purple-600 bg-purple-50 border-purple-200">
+                                            Scheduled: {new Date(followUp.scheduledAt).toLocaleDateString()}
+                                          </Badge>
+                                        )}
                                       </div>
-                                      
-                                      {followUp.scheduledAt && (
-                                        <div className="text-xs text-gray-500">
-                                          Scheduled for: {new Date(followUp.scheduledAt).toLocaleDateString()}
-                                        </div>
-                                      )}
                                     </div>
                                     
-                                    <div className="flex items-center space-x-2 ml-4">
-                                      <Button variant="ghost" size="sm" onClick={() => { setEditingCampaign(followUp); setIsEditMode(false); }}> 
+                                    {/* Action Buttons */}
+                                    <div className="flex items-center space-x-1 ml-4">
+                                      <Button 
+                                        variant="ghost" 
+                                        size="sm" 
+                                        onClick={() => { setEditingCampaign(followUp); setIsEditMode(false); }}
+                                        className="text-gray-600 hover:text-gray-900"
+                                      > 
                                         <Eye className="h-3 w-3 mr-1" />
                                         View
                                       </Button>
@@ -586,6 +593,7 @@ export default function Campaigns() {
                                             variant="ghost" 
                                             size="sm"
                                             onClick={() => { setEditingCampaign(followUp); setIsEditMode(true); }}
+                                            className="text-blue-600 hover:text-blue-900"
                                           >
                                             <Edit className="h-3 w-3 mr-1" />
                                             Edit
@@ -594,15 +602,20 @@ export default function Campaigns() {
                                             variant="ghost" 
                                             size="sm"
                                             onClick={() => sendCampaignMutation.mutate(followUp.id)}
+                                            className="text-green-600 hover:text-green-900"
                                           >
                                             <Send className="h-3 w-3 mr-1" />
-                                            Send Follow-up
+                                            Send
                                           </Button>
                                         </>
                                       )}
                                       <AlertDialog>
                                         <AlertDialogTrigger asChild>
-                                          <Button variant="ghost" size="sm">
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm"
+                                            className="text-red-600 hover:text-red-900"
+                                          >
                                             <Trash2 className="h-3 w-3 mr-1" />
                                             Delete
                                           </Button>
