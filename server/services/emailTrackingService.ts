@@ -4,14 +4,24 @@ export class EmailTrackingService {
   async trackEmailOpen(trackingId: string): Promise<void> {
     try {
       const [campaignId] = trackingId.split('_');
+      console.log(`📧 TRACKING: Processing open for campaignId: ${campaignId} (from trackingId: ${trackingId})`);
+      
+      const existingCampaign = await storage.getEmailCampaignById(campaignId);
+      if (!existingCampaign) {
+        console.log(`⚠️ TRACKING: Campaign ${campaignId} not found`);
+        return;
+      }
+      
+      console.log(`📧 TRACKING: Found campaign ${campaignId}, current status: ${existingCampaign.status}`);
       
       await storage.updateEmailCampaign(campaignId, {
         status: 'opened',
+        openedAt: new Date(),
       });
       
-      console.log(`Email opened: Campaign ${campaignId}`);
+      console.log(`✅ TRACKING: Email opened successfully tracked for campaign ${campaignId}`);
     } catch (error) {
-      console.error('Error tracking email open:', error);
+      console.error('❌ TRACKING: Error tracking email open:', error);
     }
   }
 

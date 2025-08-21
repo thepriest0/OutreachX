@@ -54,8 +54,17 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Email tracking routes
   app.get('/api/email/track-open/:trackingId', async (req, res) => {
     try {
-      console.log(`📧 TRACKING: Email open request for trackingId: ${req.params.trackingId}`);
-      await emailTrackingService.trackEmailOpen(req.params.trackingId);
+      const trackingId = req.params.trackingId;
+      console.log(`📧 TRACKING: Email open request for trackingId: ${trackingId}`);
+      console.log(`📧 TRACKING: Request headers:`, {
+        userAgent: req.get('User-Agent'),
+        referer: req.get('Referer'),
+        origin: req.get('Origin')
+      });
+      
+      await emailTrackingService.trackEmailOpen(trackingId);
+      console.log(`✅ TRACKING: Email open tracked successfully for ${trackingId}`);
+      
       // Return 1x1 transparent pixel
       const pixel = Buffer.from(
         'R0lGODlhAQABAIAAAAAAAP///yH5BAEAAAAALAAAAAABAAEAAAIBRAA7',
@@ -70,7 +79,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
       });
       res.end(pixel);
     } catch (error) {
-      console.error('Error tracking email open:', error);
+      console.error('❌ TRACKING: Error tracking email open:', error);
       res.status(500).end();
     }
   });
@@ -174,22 +183,55 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: 'Campaign not found' });
       }
 
-      // Update campaign as opened
-      await storage.updateEmailCampaign(campaignId, {
-        status: 'opened',
-        openedAt: new Date(),
-      });
+      // Create a test tracking ID and manually trigger the tracking
+      const testTrackingId = `${campaignId}_test`;
+      await emailTrackingService.trackEmailOpen(testTrackingId);
 
       res.json({ 
         success: true,
         message: `Campaign ${campaignId} manually marked as opened`,
-        campaign: campaign
+        campaign: campaign,
+        testTrackingId: testTrackingId
       });
     } catch (error) {
       console.error('Error in test tracking:', error);
       res.status(500).json({ 
         success: false,
         message: 'Failed to test tracking',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
+  // Test endpoint to check what tracking URL would be generated
+  app.get('/api/email/test-tracking-url/:campaignId', requireAuth, async (req, res) => {
+    try {
+      const campaignId = req.params.campaignId;
+      const testTrackingId = `${campaignId}_test`;
+      
+      // Determine the correct base URL based on environment
+      let baseUrl;
+      if (process.env.NODE_ENV === 'production') {
+        baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || req.protocol + '://' + req.get('host');
+      } else {
+        baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+      }
+      
+      const trackingUrl = `${baseUrl}/api/email/track-open/${testTrackingId}`;
+      
+      res.json({
+        success: true,
+        campaignId,
+        testTrackingId,
+        trackingUrl,
+        baseUrl,
+        environment: process.env.NODE_ENV || 'development'
+      });
+    } catch (error) {
+      console.error('Error generating test tracking URL:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Failed to generate test tracking URL',
         error: error instanceof Error ? error.message : 'Unknown error'
       });
     }

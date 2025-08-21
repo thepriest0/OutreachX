@@ -136,7 +136,15 @@ export class EmailService {
     
     if (!trackingId) return formattedContent;
 
-    const baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+    // Determine the correct base URL based on environment
+    let baseUrl;
+    if (process.env.NODE_ENV === 'production') {
+      // Use the Render app URL or a custom domain
+      baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://your-app.onrender.com';
+    } else {
+      // Development environment
+      baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+    }
     
     // Add invisible tracking pixel for open tracking
     const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" alt="" />`;
@@ -147,7 +155,7 @@ export class EmailService {
       `<a href="${baseUrl}/api/email/track-click/${trackingId}?url=$1"`
     );
 
-    console.log(`Adding tracking pixel: ${baseUrl}/api/email/track-open/${trackingId}`);
+    console.log(`📧 Adding tracking pixel: ${baseUrl}/api/email/track-open/${trackingId}`);
     
     return trackedContent + trackingPixel;
   }
