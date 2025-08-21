@@ -142,12 +142,13 @@ export default function FollowUpScheduler({
 
   const saveSchedulesMutation = useMutation({
     mutationFn: async (data: { schedules: FollowUpSchedule[] }) => {
-      return await apiRequest("POST", `/api/email-campaigns/${campaignId}/update-followups`, data);
+      const response = await apiRequest("POST", `/api/email-campaigns/${campaignId}/update-followups`, data);
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (data) => {
       toast({
         title: "Success",
-        description: "Follow-up schedules saved successfully",
+        description: data.message || "Follow-up schedules saved successfully",
       });
       queryClient.invalidateQueries({ queryKey: [`/api/email-campaigns/${campaignId}/followups`] });
       queryClient.invalidateQueries({ queryKey: ["/api/email-campaigns"] });
@@ -200,8 +201,24 @@ export default function FollowUpScheduler({
   };
 
   const handleSaveSchedules = () => {
-    const enabledSchedules = schedules.filter(s => s.enabled);
-    saveSchedulesMutation.mutate({ schedules: enabledSchedules });
+    // Only send new follow-ups (ones without an ID) that are enabled and have content
+    const newSchedules = schedules.filter(s => 
+      s.enabled && 
+      s.subject && 
+      s.content && 
+      !s.id // Only new ones, not existing
+    );
+    
+    if (newSchedules.length === 0) {
+      toast({
+        title: "No New Follow-ups",
+        description: "All enabled follow-ups have already been created",
+        variant: "default",
+      });
+      return;
+    }
+    
+    saveSchedulesMutation.mutate({ schedules: newSchedules });
   };
 
   const handleDeleteFollowUp = (followUpId: string, sequence: number) => {
@@ -219,11 +236,17 @@ export default function FollowUpScheduler({
 
   const getStatusBadge = (schedule: FollowUpSchedule) => {
     if (!schedule.enabled) return <Badge variant="secondary">Disabled</Badge>;
-    if (!schedule.id) return <Badge variant="outline">Not Scheduled</Badge>;
+    if (!schedule.id) {
+      // If it has content but no ID, it's ready to be saved
+      if (schedule.subject && schedule.content) {
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Ready to Save</Badge>;
+      }
+      return <Badge variant="outline">Not Created</Badge>;
+    }
     
     switch (schedule.status) {
       case "draft":
-        return <Badge variant="default">Scheduled</Badge>;
+        return <Badge variant="default" className="bg-blue-100 text-blue-800">Created & Scheduled</Badge>;
       case "sent":
         return <Badge variant="destructive">Sent</Badge>;
       case "bounced":
@@ -376,29 +399,69 @@ export default function FollowUpScheduler({
         </Tabs>
 
         <div className="mt-6 pt-4 border-t">
-          <Button
-            onClick={handleSaveSchedules}
-            disabled={saveSchedulesMutation.isPending}
-            className="w-full bg-blue-600 hover:bg-blue-700 text-white"
-          >
-            {saveSchedulesMutation.isPending ? (
+          {(() => {
+            const newSchedules = schedules.filter(s => 
+              s.enabled && 
+              s.subject && 
+              s.content && 
+              !s.id
+            );
+            const existingSchedules = schedules.filter(s => s.id);
+            
+            return (
               <>
-                <i className="fas fa-spinner fa-spin mr-2"></i>
-                Saving...
+                {newSchedules.length > 0 || existingSchedules.length > 0 ? (
+                  <div className="mb-3 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                    <div className="text-sm text-blue-800">
+                      {existingSchedules.length > 0 && (
+                        <p className="mb-1">
+                          ✅ {existingSchedules.length} follow-up(s) already created and locked
+                        </p>
+                      )}
+                      {newSchedules.length > 0 ? (
+                        <p className="text-green-700">
+                          🆕 {newSchedules.length} new follow-up(s) ready to create: 
+                          {newSchedules.map(s => ` #${s.sequence}`).join(',')}
+                        </p>
+                      ) : (
+                        <p className="text-gray-600">No new follow-ups to create</p>
+                      )}
+                    </div>
+                  </div>
+                ) : null}
+                
+                <Button
+                  onClick={handleSaveSchedules}
+                  disabled={saveSchedulesMutation.isPending || newSchedules.length === 0}
+                  className="w-full bg-blue-600 hover:bg-blue-700 text-white disabled:bg-gray-400"
+                >
+                  {saveSchedulesMutation.isPending ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Creating Follow-ups...
+                    </>
+                  ) : newSchedules.length > 0 ? (
+                    <>
+                      <i className="fas fa-plus mr-2"></i>
+                      Create {newSchedules.length} New Follow-up{newSchedules.length > 1 ? 's' : ''}
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-check mr-2"></i>
+                      All Follow-ups Created
+                    </>
+                  )}
+                </Button>
               </>
-            ) : (
-              <>
-                <i className="fas fa-save mr-2"></i>
-                Save Follow-up Schedules
-              </>
-            )}
-          </Button>
+            );
+          })()}
         </div>
 
         <div className="mt-4 text-xs text-muted-foreground space-y-1">
+          <p>• Follow-ups are created incrementally - existing ones won't be affected</p>
+          <p>• Created follow-ups are locked and can only be edited individually</p>
           <p>• Follow-ups will be sent automatically after the specified delay</p>
           <p>• Follow-ups are cancelled when the lead replies to any email</p>
-          <p>• You can edit schedules before they are sent</p>
           <p>• Each follow-up can have different timing, content, and tone</p>
         </div>
       </CardContent>

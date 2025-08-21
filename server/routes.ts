@@ -477,12 +477,14 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Parent campaign not found" });
       }
 
-      // Cancel existing follow-ups first
-      await followUpScheduler.cancelFollowUpsForLead(parentCampaign.leadId);
+      // Get existing follow-ups to avoid recreating them
+      const existingFollowUps = await storage.getFollowUpCampaignsForLead(parentCampaign.leadId);
+      const existingSequences = new Set(existingFollowUps.map(f => f.followUpSequence));
 
       const results = [];
       for (const schedule of schedules) {
-        if (schedule.enabled && schedule.subject && schedule.content) {
+        // Only create follow-ups that don't already exist and are enabled
+        if (schedule.enabled && schedule.subject && schedule.content && !existingSequences.has(schedule.sequence)) {
           const scheduledAt = new Date();
           scheduledAt.setDate(scheduledAt.getDate() + schedule.delayDays);
 
@@ -500,11 +502,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
           });
 
           results.push(followUpCampaign);
-          console.log(`Follow-up #${schedule.sequence} scheduled for ${scheduledAt.toISOString()}`);
+          console.log(`Follow-up #${schedule.sequence} created and scheduled for ${scheduledAt.toISOString()}`);
+        } else if (existingSequences.has(schedule.sequence)) {
+          console.log(`Follow-up #${schedule.sequence} already exists - skipping creation`);
         }
       }
 
-      res.json({ message: "Follow-up schedules updated successfully", followUps: results });
+      // Include existing follow-ups in response
+      const allFollowUps = [...existingFollowUps, ...results];
+      
+      res.json({ 
+        message: results.length > 0 
+          ? `${results.length} new follow-up(s) created successfully` 
+          : "No new follow-ups to create",
+        followUps: allFollowUps 
+      });
     } catch (error) {
       console.error("Error updating follow-up schedules:", error);
       res.status(500).json({ message: "Failed to update follow-up schedules" });
