@@ -140,7 +140,7 @@ export class EmailService {
     let baseUrl;
     if (process.env.NODE_ENV === 'production') {
       // Use the Render app URL or a custom domain
-      baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://your-app.onrender.com';
+      baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://outreachx.onrender.com';
     } else {
       // Development environment
       baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
