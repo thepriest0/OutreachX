@@ -113,6 +113,25 @@ export default function Campaigns() {
     return status.charAt(0).toUpperCase() + status.slice(1);
   };
 
+  // Group campaigns by parent/follow-up relationship
+  const groupedCampaigns = () => {
+    if (!campaigns) return [];
+    
+    const parentCampaigns = campaigns.filter(c => !c.isFollowUp);
+    const followUpCampaigns = campaigns.filter(c => c.isFollowUp);
+    
+    return parentCampaigns.map(parent => {
+      const relatedFollowUps = followUpCampaigns
+        .filter(followUp => followUp.parentEmailId === parent.id)
+        .sort((a, b) => (a.followUpSequence || 0) - (b.followUpSequence || 0));
+      
+      return {
+        parent,
+        followUps: relatedFollowUps
+      };
+    });
+  };
+
   // Filter campaigns based on search and status
   const filteredCampaigns = campaigns?.filter((campaign) => {
     const matchesSearch = campaign.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -120,6 +139,25 @@ export default function Campaigns() {
     const matchesStatus = statusFilter === "all" || campaign.status === statusFilter;
     return matchesSearch && matchesStatus;
   }) || [];
+
+  // Filter the grouped campaigns
+  const filteredGroupedCampaigns = groupedCampaigns().filter(group => {
+    const { parent } = group;
+    const lead = leads?.find(l => l.id === parent.leadId);
+    
+    // Search filter
+    const matchesSearch = !searchTerm || 
+      parent.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      parent.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      lead?.company?.toLowerCase().includes(searchTerm.toLowerCase());
+    
+    // Status filter
+    const matchesStatus = statusFilter === "all" || parent.status === statusFilter;
+    
+    return matchesSearch && matchesStatus;
+  });
 
   // Handle campaign selection
   const handleCampaignSelect = (campaignId: string, checked: boolean) => {
@@ -270,187 +308,249 @@ export default function Campaigns() {
                 </div>
               )}
               
-              <div className="space-y-4">
-                {filteredCampaigns.map((campaign: EmailCampaign) => (
-                  <Card key={campaign.id} className="hover:shadow-md transition-shadow">
-                    <CardContent className="p-6">
-                      <div className="flex items-start space-x-4">
-                        <div className="pt-1">
-                          <Checkbox
-                            checked={selectedCampaigns.includes(campaign.id)}
-                            onCheckedChange={(checked) => handleCampaignSelect(campaign.id, !!checked)}
-                            data-testid={`checkbox-campaign-${campaign.id}`}
-                          />
-                        </div>
-                        
-                        <div className="flex-1">
-                          <div className="flex items-start justify-between">
-                            <div className="flex-1">
-                              <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                                {campaign.subject}
-                              </h3>
-                              <div className="flex items-center space-x-3 mb-3">
-                                <Badge className={getStatusColor(campaign.status || 'draft')}>
-                                  {formatStatus(campaign.status || 'draft')}
-                                </Badge>
-                                {campaign.isFollowUp && (
-                                  <Badge variant="outline">
-                                    Follow-up #{campaign.followUpSequence}
+              <div className="space-y-6">
+                {filteredGroupedCampaigns.map((group) => (
+                  <div key={group.parent.id} className="space-y-3">
+                    {/* Parent Campaign */}
+                    <Card className="hover:shadow-md transition-shadow border-l-4 border-l-primary">
+                      <CardContent className="p-6">
+                        <div className="flex items-start space-x-4">
+                          <div className="pt-1">
+                            <Checkbox
+                              checked={selectedCampaigns.includes(group.parent.id)}
+                              onCheckedChange={(checked) => handleCampaignSelect(group.parent.id, !!checked)}
+                              data-testid={`checkbox-campaign-${group.parent.id}`}
+                            />
+                          </div>
+                          
+                          <div className="flex-1">
+                            <div className="flex items-start justify-between">
+                              <div className="flex-1">
+                                <div className="flex items-center space-x-2 mb-2">
+                                  <h3 className="text-lg font-semibold text-gray-900">
+                                    {group.parent.subject}
+                                  </h3>
+                                  <Badge variant="outline" className="text-xs">
+                                    Original Email
                                   </Badge>
+                                </div>
+                                <div className="flex items-center space-x-3 mb-3">
+                                  <Badge className={getStatusColor(group.parent.status || 'draft')}>
+                                    {formatStatus(group.parent.status || 'draft')}
+                                  </Badge>
+                                  <span className="text-sm text-gray-500">
+                                    {group.parent.tone.charAt(0).toUpperCase() + group.parent.tone.slice(1)} tone
+                                  </span>
+                                </div>
+                                
+                                {/* Recipient Information */}
+                                {group.parent.leadId && (
+                                  <div className="flex items-center space-x-2 mb-3">
+                                    <span className="text-sm font-medium text-gray-700">To:</span>
+                                    {(() => {
+                                      const lead = leads?.find(l => l.id === group.parent.leadId);
+                                      return lead ? (
+                                        <div className="flex items-center space-x-2">
+                                          <span className="text-sm text-gray-900">{lead.name}</span>
+                                          <span className="text-sm text-gray-500">({lead.email})</span>
+                                          {lead.company && (
+                                            <span className="text-sm text-gray-500">at {lead.company}</span>
+                                          )}
+                                        </div>
+                                      ) : (
+                                        <span className="text-sm text-gray-500">Unknown recipient</span>
+                                      );
+                                    })()}
+                                  </div>
                                 )}
-                                <span className="text-sm text-gray-500">
-                                  {campaign.tone.charAt(0).toUpperCase() + campaign.tone.slice(1)} tone
-                                </span>
                               </div>
                               
-                              {/* Recipient Information */}
-                              {campaign.leadId && (
-                                <div className="flex items-center space-x-2 mb-3">
-                                  <span className="text-sm font-medium text-gray-700">To:</span>
-                                  {(() => {
-                                    const lead = leads?.find(l => l.id === campaign.leadId);
-                                    return lead ? (
-                                      <div className="flex items-center space-x-2">
-                                        <span className="text-sm text-gray-900">{lead.name}</span>
-                                        <span className="text-sm text-gray-500">({lead.email})</span>
-                                        {lead.company && (
-                                          <span className="text-sm text-gray-500">at {lead.company}</span>
-                                        )}
-                                      </div>
-                                    ) : (
-                                      <span className="text-sm text-gray-500">Unknown recipient</span>
-                                    );
-                                  })()}
-                                </div>
-                              )}
-                            </div>
-                            
-                            <div className="flex items-center space-x-2 ml-4">
-                              <Button variant="ghost" size="sm" data-testid={`button-view-${campaign.id}`} onClick={() => setEditingCampaign(campaign)}> 
-                                <Eye className="h-4 w-4 mr-1" />
-                                View
-                              </Button>
-                              {campaign.status === 'draft' && (
-                                <>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => setEditingCampaign(campaign)}
-                                    data-testid={`button-edit-${campaign.id}`}
-                                  >
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Edit
-                                  </Button>
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                                    data-testid={`button-send-${campaign.id}`}
-                                  >
-                                    <Send className="h-4 w-4 mr-1" />
-                                    Send
-                                  </Button>
-                                  {campaign.isFollowUp && (
+                              <div className="flex items-center space-x-2 ml-4">
+                                {/* Parent campaign actions */}
+                                <Button variant="ghost" size="sm" data-testid={`button-view-${group.parent.id}`} onClick={() => setEditingCampaign(group.parent)}> 
+                                  <Eye className="h-4 w-4 mr-1" />
+                                  View
+                                </Button>
+                                {group.parent.status === 'draft' && (
+                                  <>
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
-                                      onClick={() => sendCampaignMutation.mutate(campaign.id)}
-                                      data-testid={`button-send-followup-${campaign.id}`}
+                                      onClick={() => setEditingCampaign(group.parent)}
+                                      data-testid={`button-edit-${group.parent.id}`}
+                                    >
+                                      <Edit className="h-4 w-4 mr-1" />
+                                      Edit
+                                    </Button>
+                                    <Button 
+                                      variant="ghost" 
+                                      size="sm"
+                                      onClick={() => sendCampaignMutation.mutate(group.parent.id)}
+                                      data-testid={`button-send-${group.parent.id}`}
                                     >
                                       <Send className="h-4 w-4 mr-1" />
-                                      Send Follow-up
+                                      Send
                                     </Button>
-                                  )}
-                                </>
-                              )}
-                              {(campaign.status === 'sent' || campaign.status === 'opened') && !campaign.isFollowUp && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => {
-                                    setSelectedCampaignForSchedule(campaign);
-                                    setShowFollowUpScheduler(true);
-                                  }}
-                                  data-testid={`button-schedule-${campaign.id}`}
-                                >
-                                  <Clock className="h-4 w-4 mr-1" />
-                                  Schedule Follow-up
-                                </Button>
-                              )}
-                              {(campaign.status === 'sent' || campaign.status === 'opened') && (
-                                <Button 
-                                  variant="ghost" 
-                                  size="sm"
-                                  onClick={() => markRepliedMutation.mutate(campaign.id)}
-                                  data-testid={`button-mark-replied-${campaign.id}`}
-                                >
-                                  <Edit className="h-4 w-4 mr-1" />
-                                  Mark as Replied
-                                </Button>
-                              )}
-                              
-                              <AlertDialog>
-                                <AlertDialogTrigger asChild>
-                                  <Button variant="ghost" size="sm" data-testid={`button-delete-${campaign.id}`}>
-                                    <Trash2 className="h-4 w-4 mr-1" />
-                                    Delete
+                                  </>
+                                )}
+                                {(group.parent.status === 'sent' || group.parent.status === 'opened') && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => {
+                                      setSelectedCampaignForSchedule(group.parent);
+                                      setShowFollowUpScheduler(true);
+                                    }}
+                                    data-testid={`button-schedule-${group.parent.id}`}
+                                  >
+                                    <Clock className="h-4 w-4 mr-1" />
+                                    Schedule Follow-up
                                   </Button>
-                                </AlertDialogTrigger>
-                                <AlertDialogContent>
-                                  <AlertDialogHeader>
-                                    <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
-                                    <AlertDialogDescription>
-                                      Are you sure you want to delete "{campaign.subject}"? This action cannot be undone.
-                                    </AlertDialogDescription>
-                                  </AlertDialogHeader>
-                                  <AlertDialogFooter>
-                                    <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                    <AlertDialogAction onClick={() => deleteCampaignMutation.mutate(campaign.id)}>
+                                )}
+                                {(group.parent.status === 'sent' || group.parent.status === 'opened') && (
+                                  <Button 
+                                    variant="ghost" 
+                                    size="sm"
+                                    onClick={() => markRepliedMutation.mutate(group.parent.id)}
+                                    data-testid={`button-mark-replied-${group.parent.id}`}
+                                  >
+                                    <Edit className="h-4 w-4 mr-1" />
+                                    Mark as Replied
+                                  </Button>
+                                )}
+                                
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button variant="ghost" size="sm" data-testid={`button-delete-${group.parent.id}`}>
+                                      <Trash2 className="h-4 w-4 mr-1" />
                                       Delete
-                                    </AlertDialogAction>
-                                  </AlertDialogFooter>
-                                </AlertDialogContent>
-                              </AlertDialog>
-                            </div>
-                          </div>
-                          
-                          <div className="text-sm text-gray-600 mb-3 line-clamp-2">
-                            {campaign.content.substring(0, 200)}...
-                          </div>
-                          
-                          <div className="flex items-center justify-between text-xs text-gray-500">
-                            <div className="flex items-center space-x-4">
-                              <span>
-                                Created: {campaign.createdAt 
-                                  ? new Date(campaign.createdAt).toLocaleDateString()
-                                  : ""
-                                }
-                              </span>
-                              {campaign.sentAt && (
-                                <span className="text-gray-600">
-                                  Sent: {new Date(campaign.sentAt).toLocaleString()}
-                                </span>
-                              )}
-                              {campaign.openedAt && (
-                                <span className="text-green-600">
-                                  Opened: {new Date(campaign.openedAt).toLocaleString()}
-                                </span>
-                              )}
-                              {campaign.repliedAt && (
-                                <span className="text-blue-600">
-                                  Replied: {new Date(campaign.repliedAt).toLocaleString()}
-                                </span>
-                              )}
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>Delete Campaign</AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        Are you sure you want to delete this campaign? This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction onClick={() => deleteCampaignMutation.mutate(group.parent.id)}>
+                                        Delete
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </div>
                             </div>
                           </div>
                         </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* Follow-up Campaigns */}
+                    {group.followUps.length > 0 && (
+                      <div className="ml-8 space-y-2">
+                        {group.followUps.map((followUp) => (
+                          <Card key={followUp.id} className="hover:shadow-sm transition-shadow border-l-4 border-l-blue-300 bg-blue-50/30">
+                            <CardContent className="p-4">
+                              <div className="flex items-start space-x-4">
+                                <div className="pt-1">
+                                  <Checkbox
+                                    checked={selectedCampaigns.includes(followUp.id)}
+                                    onCheckedChange={(checked) => handleCampaignSelect(followUp.id, !!checked)}
+                                    data-testid={`checkbox-campaign-${followUp.id}`}
+                                  />
+                                </div>
+                                
+                                <div className="flex-1">
+                                  <div className="flex items-start justify-between">
+                                    <div className="flex-1">
+                                      <div className="flex items-center space-x-2 mb-2">
+                                        <h4 className="text-md font-medium text-gray-800">
+                                          {followUp.subject}
+                                        </h4>
+                                        <Badge variant="outline" className="text-xs bg-blue-100">
+                                          Follow-up #{followUp.followUpSequence}
+                                        </Badge>
+                                      </div>
+                                      <div className="flex items-center space-x-3 mb-2">
+                                        <Badge className={getStatusColor(followUp.status || 'draft')} variant="secondary">
+                                          {formatStatus(followUp.status || 'draft')}
+                                        </Badge>
+                                        <span className="text-xs text-gray-500">
+                                          {followUp.tone.charAt(0).toUpperCase() + followUp.tone.slice(1)} tone
+                                        </span>
+                                      </div>
+                                      
+                                      {followUp.scheduledAt && (
+                                        <div className="text-xs text-gray-500">
+                                          Scheduled for: {new Date(followUp.scheduledAt).toLocaleDateString()}
+                                        </div>
+                                      )}
+                                    </div>
+                                    
+                                    <div className="flex items-center space-x-2 ml-4">
+                                      <Button variant="ghost" size="sm" onClick={() => setEditingCampaign(followUp)}> 
+                                        <Eye className="h-3 w-3 mr-1" />
+                                        View
+                                      </Button>
+                                      {followUp.status === 'draft' && (
+                                        <>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm"
+                                            onClick={() => setEditingCampaign(followUp)}
+                                          >
+                                            <Edit className="h-3 w-3 mr-1" />
+                                            Edit
+                                          </Button>
+                                          <Button 
+                                            variant="ghost" 
+                                            size="sm"
+                                            onClick={() => sendCampaignMutation.mutate(followUp.id)}
+                                          >
+                                            <Send className="h-3 w-3 mr-1" />
+                                            Send Follow-up
+                                          </Button>
+                                        </>
+                                      )}
+                                      <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                          <Button variant="ghost" size="sm">
+                                            <Trash2 className="h-3 w-3 mr-1" />
+                                            Delete
+                                          </Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                          <AlertDialogHeader>
+                                            <AlertDialogTitle>Delete Follow-up</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                              Are you sure you want to delete this follow-up campaign?
+                                            </AlertDialogDescription>
+                                          </AlertDialogHeader>
+                                          <AlertDialogFooter>
+                                            <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                            <AlertDialogAction onClick={() => deleteCampaignMutation.mutate(followUp.id)}>
+                                              Delete
+                                            </AlertDialogAction>
+                                          </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                      </AlertDialog>
+                                    </div>
+                                  </div>
+                                </div>
+                              </div>
+                            </CardContent>
+                          </Card>
+                        ))}
                       </div>
-                    </CardContent>
-                  </Card>
+                    )}
+                  </div>
                 ))}
               </div>
 
-              {filteredCampaigns.length === 0 && !campaignsLoading && (
+              {filteredGroupedCampaigns.length === 0 && !campaignsLoading && (
                 <div className="text-center py-12">
                   <Mail className="h-12 w-12 text-gray-400 mx-auto mb-4" />
                   <h3 className="text-lg font-medium text-gray-900 mb-2">
