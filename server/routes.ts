@@ -18,6 +18,28 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupAuth(app);
 
+  // Database connection test route
+  app.get('/api/db-test', async (req, res) => {
+    try {
+      const userCount = await storage.getUserCount();
+      const setupNeeded = userCount === 0;
+      res.json({ 
+        success: true,
+        message: 'Database connection successful',
+        userCount,
+        setupNeeded,
+        timestamp: new Date().toISOString()
+      });
+    } catch (error) {
+      console.error('Database connection test failed:', error);
+      res.status(500).json({ 
+        success: false,
+        message: 'Database connection failed',
+        error: error instanceof Error ? error.message : 'Unknown error'
+      });
+    }
+  });
+
   // Start follow-up scheduler
   followUpScheduler.start();
 
