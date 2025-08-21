@@ -69,16 +69,8 @@ const quickActionButtons = [
     icon: Upload,
     color: "bg-orange-500 hover:bg-orange-600",
     variant: "outline" as const
-  },
-  {
-    id: "check-replies",
-    title: "Check Replies",
-    description: "Test reply tracking",
-    icon: RefreshCw,
-    color: "bg-teal-500 hover:bg-teal-600",
-    variant: "outline" as const,
-    badge: "TEST"
   }
+  // Note: Check Replies functionality removed for production
 ];
 
 interface NewLeadFormData {
@@ -190,38 +182,7 @@ export default function QuickActions() {
     },
   });
 
-  // Check replies mutation
-  const checkRepliesMutation = useMutation({
-    mutationFn: async () => {
-      const response = await fetch("/api/email/check-replies", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-      });
-
-      if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || "Failed to check replies");
-      }
-
-      return response.json();
-    },
-    onSuccess: (data) => {
-      toast({
-        title: "Reply Check Complete",
-        description: data.message || "Reply tracking completed successfully.",
-      });
-      // Refresh any relevant queries
-      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/dashboard/stats"] });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+  // Note: Check replies functionality removed for production
 
   const handleAction = (actionId: string) => {
     switch (actionId) {
@@ -243,10 +204,7 @@ export default function QuickActions() {
         fileInput.onchange = handleFileUpload;
         fileInput.click();
         break;
-      case "check-replies":
-        // Test reply tracking
-        checkRepliesMutation.mutate();
-        break;
+      // Note: check-replies case removed for production
     }
   };
 

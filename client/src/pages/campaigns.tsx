@@ -8,6 +8,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
@@ -16,7 +17,7 @@ import FollowUpScheduler from "@/components/email/follow-up-scheduler";
 import EmailTracker from "@/components/email/email-tracker";
 import { Search, Filter, Plus, Trash2, Edit, Send, Clock, Eye, MoreHorizontal, Mail } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
-import type { EmailCampaign, Lead } from "@shared/schema";
+import type { EmailCampaign, EmailCampaignWithUser, Lead } from "@shared/schema";
 
 export default function Campaigns() {
   const [showEmailGenerator, setShowEmailGenerator] = useState(false);
@@ -26,14 +27,26 @@ export default function Campaigns() {
   const [selectedCampaigns, setSelectedCampaigns] = useState<string[]>([]);
   const [searchTerm, setSearchTerm] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [createdByFilter, setCreatedByFilter] = useState<string>("all");
   const [showLeadSelector, setShowLeadSelector] = useState(false);
-  const [editingCampaign, setEditingCampaign] = useState<EmailCampaign | null>(null);
+  const [editingCampaign, setEditingCampaign] = useState<EmailCampaignWithUser | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
+  const [editSubject, setEditSubject] = useState("");
+  const [editContent, setEditContent] = useState("");
 
   const { toast } = useToast();
   const { user } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaign[]>({
+  // Update edit fields when campaign is selected for editing
+  useEffect(() => {
+    if (editingCampaign && isEditMode) {
+      setEditSubject(editingCampaign.subject);
+      setEditContent(editingCampaign.content);
+    }
+  }, [editingCampaign, isEditMode]);
+
+  const { data: campaigns, isLoading: campaignsLoading } = useQuery<EmailCampaignWithUser[]>({
     queryKey: ["/api/campaigns"],
     enabled: !!user,
   });
@@ -92,6 +105,33 @@ export default function Campaigns() {
     },
   });
 
+  // Update campaign mutation
+  const updateCampaignMutation = useMutation({
+    mutationFn: async ({ campaignId, data }: { campaignId: string; data: { subject: string; content: string } }) => {
+      return apiRequest("PUT", `/api/email-campaigns/${campaignId}`, data);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+      toast({ title: "Campaign updated successfully!" });
+      setEditingCampaign(null);
+      setIsEditMode(false);
+    },
+    onError: () => {
+      toast({ title: "Failed to update campaign", variant: "destructive" });
+    },
+  });
+
+  const handleUpdateCampaign = () => {
+    if (!editingCampaign) return;
+    updateCampaignMutation.mutate({
+      campaignId: editingCampaign.id,
+      data: {
+        subject: editSubject,
+        content: editContent
+      }
+    });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "draft":
@@ -137,7 +177,8 @@ export default function Campaigns() {
     const matchesSearch = campaign.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          campaign.content.toLowerCase().includes(searchTerm.toLowerCase());
     const matchesStatus = statusFilter === "all" || campaign.status === statusFilter;
-    return matchesSearch && matchesStatus;
+    const matchesCreatedBy = createdByFilter === "all" || campaign.createdBy === createdByFilter;
+    return matchesSearch && matchesStatus && matchesCreatedBy;
   }) || [];
 
   // Filter the grouped campaigns
@@ -156,7 +197,10 @@ export default function Campaigns() {
     // Status filter
     const matchesStatus = statusFilter === "all" || parent.status === statusFilter;
     
-    return matchesSearch && matchesStatus;
+    // Created by filter  
+    const matchesCreatedBy = createdByFilter === "all" || parent.createdBy === createdByFilter;
+    
+    return matchesSearch && matchesStatus && matchesCreatedBy;
   });
 
   // Handle campaign selection
@@ -255,6 +299,19 @@ export default function Campaigns() {
                     <SelectItem value="opened">Opened</SelectItem>
                     <SelectItem value="replied">Replied</SelectItem>
                     <SelectItem value="bounced">Bounced</SelectItem>
+                  </SelectContent>
+                </Select>
+                <Select value={createdByFilter} onValueChange={setCreatedByFilter}>
+                  <SelectTrigger className="w-40">
+                    <SelectValue placeholder="Added By" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="all">All Users</SelectItem>
+                    {campaigns && Array.from(new Set(campaigns.map(c => c.createdByUser).filter(Boolean))).map(user => (
+                      <SelectItem key={user?.id} value={user?.id || ''}>
+                        {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'Unknown'}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -367,7 +424,7 @@ export default function Campaigns() {
                               
                               <div className="flex items-center space-x-2 ml-4">
                                 {/* Parent campaign actions */}
-                                <Button variant="ghost" size="sm" data-testid={`button-view-${group.parent.id}`} onClick={() => setEditingCampaign(group.parent)}> 
+                                <Button variant="ghost" size="sm" data-testid={`button-view-${group.parent.id}`} onClick={() => { setEditingCampaign(group.parent); setIsEditMode(false); }}> 
                                   <Eye className="h-4 w-4 mr-1" />
                                   View
                                 </Button>
@@ -376,7 +433,7 @@ export default function Campaigns() {
                                     <Button 
                                       variant="ghost" 
                                       size="sm"
-                                      onClick={() => setEditingCampaign(group.parent)}
+                                      onClick={() => { setEditingCampaign(group.parent); setIsEditMode(true); }}
                                       data-testid={`button-edit-${group.parent.id}`}
                                     >
                                       <Edit className="h-4 w-4 mr-1" />
@@ -491,7 +548,7 @@ export default function Campaigns() {
                                     </div>
                                     
                                     <div className="flex items-center space-x-2 ml-4">
-                                      <Button variant="ghost" size="sm" onClick={() => setEditingCampaign(followUp)}> 
+                                      <Button variant="ghost" size="sm" onClick={() => { setEditingCampaign(followUp); setIsEditMode(false); }}> 
                                         <Eye className="h-3 w-3 mr-1" />
                                         View
                                       </Button>
@@ -500,7 +557,7 @@ export default function Campaigns() {
                                           <Button 
                                             variant="ghost" 
                                             size="sm"
-                                            onClick={() => setEditingCampaign(followUp)}
+                                            onClick={() => { setEditingCampaign(followUp); setIsEditMode(true); }}
                                           >
                                             <Edit className="h-3 w-3 mr-1" />
                                             Edit
@@ -717,10 +774,12 @@ export default function Campaigns() {
             <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
               <div className="p-6">
                 <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Campaign Details</h2>
+                  <h2 className="text-xl font-semibold">
+                    {isEditMode ? 'Edit Campaign' : 'Campaign Details'}
+                  </h2>
                   <Button
                     variant="ghost"
-                    onClick={() => setEditingCampaign(null)}
+                    onClick={() => { setEditingCampaign(null); setIsEditMode(false); }}
                   >
                     ×
                   </Button>
@@ -728,9 +787,17 @@ export default function Campaigns() {
                 <div className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium mb-1">Subject</label>
-                    <div className="p-3 bg-gray-50 rounded border">
-                      {editingCampaign.subject}
-                    </div>
+                    {isEditMode ? (
+                      <Input
+                        value={editSubject}
+                        onChange={(e) => setEditSubject(e.target.value)}
+                        placeholder="Email subject"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded border">
+                        {editingCampaign.subject}
+                      </div>
+                    )}
                   </div>
                   
                   {/* Recipient Information */}
@@ -761,9 +828,18 @@ export default function Campaigns() {
                   
                   <div>
                     <label className="block text-sm font-medium mb-1">Content</label>
-                    <div className="p-3 bg-gray-50 rounded border min-h-[200px] whitespace-pre-wrap">
-                      {editingCampaign.content}
-                    </div>
+                    {isEditMode ? (
+                      <Textarea
+                        value={editContent}
+                        onChange={(e) => setEditContent(e.target.value)}
+                        placeholder="Email content"
+                        className="min-h-[200px]"
+                      />
+                    ) : (
+                      <div className="p-3 bg-gray-50 rounded border min-h-[200px] whitespace-pre-wrap">
+                        {editingCampaign.content}
+                      </div>
+                    )}
                   </div>
                   <div className="grid grid-cols-2 gap-4">
                     <div>
@@ -785,6 +861,32 @@ export default function Campaigns() {
                       <div className="p-2 bg-gray-50 rounded border">
                         {new Date(editingCampaign.sentAt).toLocaleString()}
                       </div>
+                    </div>
+                  )}
+                  <div>
+                    <label className="block text-sm font-medium mb-1">Created By</label>
+                    <div className="p-2 bg-gray-50 rounded border">
+                      {editingCampaign.createdByUser ? 
+                        `${editingCampaign.createdByUser.firstName || ''} ${editingCampaign.createdByUser.lastName || ''}`.trim() || 
+                        editingCampaign.createdByUser.username || 'Unknown User'
+                        : 'Unknown User'
+                      }
+                    </div>
+                  </div>
+                  {isEditMode && (
+                    <div className="flex justify-end space-x-3 pt-4 border-t">
+                      <Button
+                        variant="outline"
+                        onClick={() => { setIsEditMode(false); setEditingCampaign(null); }}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleUpdateCampaign}
+                        disabled={updateCampaignMutation.isPending}
+                      >
+                        {updateCampaignMutation.isPending ? "Saving..." : "Save Changes"}
+                      </Button>
                     </div>
                   )}
                 </div>

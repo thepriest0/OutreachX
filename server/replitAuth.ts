@@ -59,7 +59,9 @@ async function upsertUser(
 ) {
   await storage.upsertUser({
     id: claims["sub"],
+    username: claims["preferred_username"] || claims["email"] || claims["sub"],
     email: claims["email"],
+    password: "", // Replit users don't need passwords since they use OAuth
     firstName: claims["first_name"],
     lastName: claims["last_name"],
     profileImageUrl: claims["profile_image_url"],
@@ -78,10 +80,23 @@ export async function setupAuth(app: Express) {
     tokens: client.TokenEndpointResponse & client.TokenEndpointResponseHelpers,
     verified: passport.AuthenticateCallback
   ) => {
-    const user = {};
-    updateUserSession(user, tokens);
-    await upsertUser(tokens.claims());
-    verified(null, user);
+    const claims = tokens.claims();
+    if (!claims) {
+      verified(new Error("No claims found in token"), false);
+      return;
+    }
+    
+    await upsertUser(claims);
+    
+    // Get the user from the database after upserting
+    const user = await storage.getUser(claims["sub"]);
+    
+    if (user) {
+      updateUserSession(user, tokens);
+      verified(null, user);
+    } else {
+      verified(new Error("Failed to create or retrieve user"), false);
+    }
   };
 
   for (const domain of process.env

@@ -9,6 +9,7 @@ import {
   type Lead,
   type InsertLead,
   type EmailCampaign,
+  type EmailCampaignWithUser,
   type InsertEmailCampaign,
   type Insight,
   type InsertInsight,
@@ -470,11 +471,41 @@ export class DatabaseStorage implements IStorage {
       .where(eq(emailCampaigns.id, id));
   }
 
-  async getEmailCampaignsByUser(userId: string): Promise<EmailCampaign[]> {
-    // All users can see all campaigns
+  async getEmailCampaignsByUser(userId: string): Promise<EmailCampaignWithUser[]> {
+    // All users can see all campaigns, with creator information
     return await db
-      .select()
+      .select({
+        id: emailCampaigns.id,
+        subject: emailCampaigns.subject,
+        content: emailCampaigns.content,
+        tone: emailCampaigns.tone,
+        leadId: emailCampaigns.leadId,
+        status: emailCampaigns.status,
+        sentAt: emailCampaigns.sentAt,
+        openedAt: emailCampaigns.openedAt,
+        clickedAt: emailCampaigns.clickedAt,
+        repliedAt: emailCampaigns.repliedAt,
+        createdAt: emailCampaigns.createdAt,
+        updatedAt: emailCampaigns.updatedAt,
+        messageId: emailCampaigns.messageId,
+        trackingId: emailCampaigns.trackingId,
+        parentCampaignId: emailCampaigns.parentCampaignId,
+        parentEmailId: emailCampaigns.parentEmailId,
+        isFollowUp: emailCampaigns.isFollowUp,
+        followUpDelay: emailCampaigns.followUpDelay,
+        followUpSequence: emailCampaigns.followUpSequence,
+        scheduledAt: emailCampaigns.scheduledAt,
+        createdBy: emailCampaigns.createdBy,
+        createdByUser: {
+          id: users.id,
+          username: users.username,
+          firstName: users.firstName,
+          lastName: users.lastName,
+          email: users.email
+        }
+      })
       .from(emailCampaigns)
+      .leftJoin(users, eq(emailCampaigns.createdBy, users.id))
       .orderBy(desc(emailCampaigns.createdAt));
   }
 

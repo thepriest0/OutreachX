@@ -2,7 +2,7 @@ import { useState } from "react";
 import { useAuth } from "@/hooks/use-auth";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { getQueryFn, apiRequest, queryClient } from "@/lib/queryClient";
-import { User, registerSchema } from "@shared/schema";
+import { User, registerSchema, insertUserSchema } from "@shared/schema";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useToast } from "@/hooks/use-toast";
@@ -71,11 +71,10 @@ export default function AdminPage() {
 
   const { data: users, isLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
-    queryFn: getQueryFn(),
   });
 
   const createUserForm = useForm<CreateUserData>({
-    resolver: zodResolver(registerSchema.omit({ confirmPassword: true })),
+    resolver: zodResolver(insertUserSchema),
     defaultValues: {
       username: "",
       email: "",
@@ -163,7 +162,7 @@ export default function AdminPage() {
   });
 
   // Check if current user has admin privileges
-  if (!user || !['head_admin', 'admin'].includes(user.role)) {
+  if (!user || !user.role || !['head_admin', 'admin'].includes(user.role)) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <Card className="w-96">
@@ -253,7 +252,7 @@ export default function AdminPage() {
                       <FormItem>
                         <FormLabel>First Name</FormLabel>
                         <FormControl>
-                          <Input {...field} data-testid="input-admin-firstname" />
+                          <Input {...field} value={field.value || ""} data-testid="input-admin-firstname" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -266,7 +265,7 @@ export default function AdminPage() {
                       <FormItem>
                         <FormLabel>Last Name</FormLabel>
                         <FormControl>
-                          <Input {...field} data-testid="input-admin-lastname" />
+                          <Input {...field} value={field.value || ""} data-testid="input-admin-lastname" />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
@@ -293,7 +292,7 @@ export default function AdminPage() {
                     <FormItem>
                       <FormLabel>Email</FormLabel>
                       <FormControl>
-                        <Input {...field} type="email" data-testid="input-admin-email" />
+                        <Input {...field} value={field.value || ""} type="email" data-testid="input-admin-email" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>
@@ -305,7 +304,7 @@ export default function AdminPage() {
                   render={({ field }) => (
                     <FormItem>
                       <FormLabel>Role</FormLabel>
-                      <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <Select onValueChange={field.onChange} defaultValue={field.value || undefined}>
                         <FormControl>
                           <SelectTrigger data-testid="select-admin-role">
                             <SelectValue placeholder="Select role" />
@@ -400,8 +399,8 @@ export default function AdminPage() {
                       {user.email || 'No email'}
                     </TableCell>
                     <TableCell>
-                      <Badge className={getRoleBadgeColor(user.role)}>
-                        {user.role.replace('_', ' ')}
+                      <Badge className={getRoleBadgeColor(user.role || "")}>
+                        {user.role ? user.role.replace('_', ' ') : 'No Role'}
                       </Badge>
                     </TableCell>
                     <TableCell data-testid={`text-user-created-${user.id}`}>
@@ -441,7 +440,7 @@ export default function AdminPage() {
                                       <FormItem>
                                         <FormLabel>First Name</FormLabel>
                                         <FormControl>
-                                          <Input {...field} data-testid="input-edit-firstname" />
+                                          <Input {...field} value={field.value || ""} data-testid="input-edit-firstname" />
                                         </FormControl>
                                         <FormMessage />
                                       </FormItem>
@@ -454,7 +453,7 @@ export default function AdminPage() {
                                       <FormItem>
                                         <FormLabel>Last Name</FormLabel>
                                         <FormControl>
-                                          <Input {...field} data-testid="input-edit-lastname" />
+                                          <Input {...field} value={field.value || ""} data-testid="input-edit-lastname" />
                                         </FormControl>
                                         <FormMessage />
                                       </FormItem>
@@ -481,7 +480,7 @@ export default function AdminPage() {
                                     <FormItem>
                                       <FormLabel>Email</FormLabel>
                                       <FormControl>
-                                        <Input {...field} type="email" data-testid="input-edit-email" />
+                                        <Input {...field} value={field.value || ""} type="email" data-testid="input-edit-email" />
                                       </FormControl>
                                       <FormMessage />
                                     </FormItem>
@@ -493,7 +492,7 @@ export default function AdminPage() {
                                   render={({ field }) => (
                                     <FormItem>
                                       <FormLabel>Role</FormLabel>
-                                      <Select onValueChange={field.onChange} value={field.value}>
+                                      <Select onValueChange={field.onChange} value={field.value || undefined}>
                                         <FormControl>
                                           <SelectTrigger data-testid="select-edit-role">
                                             <SelectValue placeholder="Select role" />

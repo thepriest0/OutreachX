@@ -9,6 +9,7 @@ import Header from "@/components/layout/header";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   Table,
   TableBody,
@@ -25,6 +26,8 @@ import type { Lead } from "@shared/schema";
 
 export default function Leads() {
   const [searchQuery, setSearchQuery] = useState("");
+  const [statusFilter, setStatusFilter] = useState<string>("all");
+  const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -33,10 +36,23 @@ export default function Leads() {
   const { user, isLoading, isAuthenticated } = useAuth();
   const queryClient = useQueryClient();
 
-  const { data: leads, isLoading: leadsLoading } = useQuery({
-    queryKey: ["/api/leads", searchQuery],
+  const { data: leads, isLoading: leadsLoading } = useQuery<Lead[]>({
+    queryKey: ["/api/leads"],
     enabled: !!user,
   });
+
+  // Filter leads based on search query, status, and company
+  const filteredLeads = leads?.filter((lead: Lead) => {
+    const matchesSearch = !searchQuery || 
+      lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      lead.company.toLowerCase().includes(searchQuery.toLowerCase());
+    
+    const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
+    const matchesCompany = companyFilter === "all" || lead.company === companyFilter;
+    
+    return matchesSearch && matchesStatus && matchesCompany;
+  }) || [];
 
   const deleteMutation = useMutation({
     mutationFn: async (leadId: string) => {
@@ -91,7 +107,8 @@ export default function Leads() {
     }
   };
 
-  const getStatusColor = (status: string) => {
+  const getStatusColor = (status: string | null) => {
+    if (!status) return "bg-gray-100 text-gray-800";
     switch (status) {
       case "new":
         return "bg-blue-100 text-blue-800";
@@ -110,7 +127,8 @@ export default function Leads() {
     }
   };
 
-  const formatStatus = (status: string) => {
+  const formatStatus = (status: string | null) => {
+    if (!status) return "Unknown";
     return status.replace(/_/g, " ").replace(/\b\w/g, l => l.toUpperCase());
   };
 
@@ -142,16 +160,41 @@ export default function Leads() {
           <Card>
             <CardContent className="p-6">
               {/* Actions Bar */}
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center space-x-4">
+              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                <div className="flex items-center space-x-4 flex-wrap gap-2">
                   <Input
                     placeholder="Search leads..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                     className="w-64"
                   />
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="new">New</SelectItem>
+                      <SelectItem value="contacted">Contacted</SelectItem>
+                      <SelectItem value="replied">Replied</SelectItem>
+                      <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
+                      <SelectItem value="qualified">Qualified</SelectItem>
+                      <SelectItem value="closed">Closed</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={companyFilter} onValueChange={setCompanyFilter}>
+                    <SelectTrigger className="w-40">
+                      <SelectValue placeholder="Filter by company" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Companies</SelectItem>
+                      {leads && Array.from(new Set(leads.map((lead: Lead) => lead.company).filter(Boolean))).map((company: string) => (
+                        <SelectItem key={company} value={company}>{company}</SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="flex items-center space-x-3">
+                <div className="flex items-center space-x-3 flex-shrink-0">
                   <Button
                     variant="outline"
                     onClick={() => setShowCSVImport(true)}
@@ -170,7 +213,7 @@ export default function Leads() {
                   </Button>
                   <Button
                     onClick={() => setShowLeadForm(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                    className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
                     data-testid="button-add-lead"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -185,7 +228,7 @@ export default function Leads() {
                   <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                   <p className="text-gray-600">Loading leads...</p>
                 </div>
-              ) : leads && leads.length > 0 ? (
+              ) : filteredLeads && filteredLeads.length > 0 ? (
                 <Table>
                   <TableHeader>
                     <TableRow>
@@ -197,7 +240,7 @@ export default function Leads() {
                     </TableRow>
                   </TableHeader>
                   <TableBody>
-                    {leads.map((lead: Lead) => (
+                    {filteredLeads.map((lead: Lead) => (
                       <TableRow key={lead.id}>
                         <TableCell>
                           <div className="flex items-center">

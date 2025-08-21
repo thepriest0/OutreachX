@@ -18,27 +18,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // Auth middleware
   setupAuth(app);
 
-  // Database connection test route
-  app.get('/api/db-test', async (req, res) => {
-    try {
-      const userCount = await storage.getUserCount();
-      const setupNeeded = userCount === 0;
-      res.json({ 
-        success: true,
-        message: 'Database connection successful',
-        userCount,
-        setupNeeded,
-        timestamp: new Date().toISOString()
-      });
-    } catch (error) {
-      console.error('Database connection test failed:', error);
-      res.status(500).json({ 
-        success: false,
-        message: 'Database connection failed',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  // Production routes only - removed test endpoints
 
   // Start follow-up scheduler
   followUpScheduler.start();
@@ -148,94 +128,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  // Email reply tracker testing endpoint
-  app.post('/api/email/check-replies', requireAuth, async (req, res) => {
-    try {
-      if (!process.env.GMAIL_CLIENT_ID || !process.env.GMAIL_CLIENT_SECRET || !process.env.GMAIL_REFRESH_TOKEN) {
-        return res.status(400).json({ 
-          message: 'Gmail credentials not configured. Reply tracking is disabled.' 
-        });
-      }
+  // Production email tracking only - test endpoints removed
 
-      await emailReplyTracker.checkNow();
-      res.json({ 
-        success: true,
-        message: 'Reply check completed successfully' 
-      });
-    } catch (error) {
-      console.error('Error checking replies:', error);
-      res.status(500).json({ 
-        success: false,
-        message: 'Failed to check for replies',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Debug endpoint to manually test email open tracking
-  app.post('/api/email/test-tracking/:campaignId', requireAuth, async (req, res) => {
-    try {
-      const campaignId = req.params.campaignId;
-      
-      // Find a tracking ID for this campaign (simulate open tracking)
-      const campaign = await storage.getEmailCampaignById(campaignId);
-      if (!campaign) {
-        return res.status(404).json({ message: 'Campaign not found' });
-      }
-
-      // Create a test tracking ID and manually trigger the tracking
-      const testTrackingId = `${campaignId}_test`;
-      await emailTrackingService.trackEmailOpen(testTrackingId);
-
-      res.json({ 
-        success: true,
-        message: `Campaign ${campaignId} manually marked as opened`,
-        campaign: campaign,
-        testTrackingId: testTrackingId
-      });
-    } catch (error) {
-      console.error('Error in test tracking:', error);
-      res.status(500).json({ 
-        success: false,
-        message: 'Failed to test tracking',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
-
-  // Test endpoint to check what tracking URL would be generated
-  app.get('/api/email/test-tracking-url/:campaignId', requireAuth, async (req, res) => {
-    try {
-      const campaignId = req.params.campaignId;
-      const testTrackingId = `${campaignId}_test`;
-      
-      // Determine the correct base URL based on environment
-      let baseUrl;
-      if (process.env.NODE_ENV === 'production') {
-        baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || req.protocol + '://' + req.get('host');
-      } else {
-        baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
-      }
-      
-      const trackingUrl = `${baseUrl}/api/email/track-open/${testTrackingId}`;
-      
-      res.json({
-        success: true,
-        campaignId,
-        testTrackingId,
-        trackingUrl,
-        baseUrl,
-        environment: process.env.NODE_ENV || 'development'
-      });
-    } catch (error) {
-      console.error('Error generating test tracking URL:', error);
-      res.status(500).json({ 
-        success: false,
-        message: 'Failed to generate test tracking URL',
-        error: error instanceof Error ? error.message : 'Unknown error'
-      });
-    }
-  });
+  // Production email tracking only - test endpoints removed
 
   // User info route (already handled in auth.ts)
 

@@ -121,9 +121,10 @@ export class EmailService {
         sentAt: new Date()
       });
 
-      // Update lead last contact date
+      // Update lead last contact date and status
       await storage.updateLead(leadId, {
-        lastContactDate: new Date()
+        lastContactDate: new Date(),
+        status: 'contacted'
       });
     }
 

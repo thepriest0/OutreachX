@@ -72,7 +72,9 @@ export const emailCampaigns = pgTable("email_campaigns", {
   repliedAt: timestamp("replied_at"),
   isFollowUp: boolean("is_follow_up").default(false),
   followUpSequence: integer("follow_up_sequence").default(0),
+  followUpDelay: integer("follow_up_delay"), // Added missing column
   parentEmailId: varchar("parent_email_id"),
+  parentCampaignId: varchar("parent_campaign_id"), // Added missing column
   messageId: varchar("message_id"), // For tracking email responses
   trackingId: varchar("tracking_id"), // For email open/click tracking
   scheduledAt: timestamp("scheduled_at"), // For follow-up scheduling
@@ -186,6 +188,17 @@ export type InsertLead = z.infer<typeof insertLeadSchema>;
 
 export type EmailCampaign = typeof emailCampaigns.$inferSelect;
 export type InsertEmailCampaign = z.infer<typeof insertEmailCampaignSchema>;
+
+// Extended EmailCampaign type with user information
+export type EmailCampaignWithUser = EmailCampaign & {
+  createdByUser?: {
+    id: string;
+    username: string;
+    firstName: string | null;
+    lastName: string | null;
+    email: string | null;
+  } | null;
+};
 
 export type Insight = typeof insights.$inferSelect;
 export type InsertInsight = z.infer<typeof insertInsightSchema>;

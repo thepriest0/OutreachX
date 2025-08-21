@@ -18,6 +18,16 @@ export class EmailTrackingService {
         status: 'opened',
         openedAt: new Date(),
       });
+
+      // Update lead status to 'contacted' if not already further along
+      if (existingCampaign.leadId) {
+        const lead = await storage.getLeadById(existingCampaign.leadId);
+        if (lead && (lead.status === 'new' || lead.status === 'contacted')) {
+          await storage.updateLead(existingCampaign.leadId, {
+            status: 'contacted'
+          });
+        }
+      }
       
       console.log(`✅ TRACKING: Email opened successfully tracked for campaign ${campaignId}`);
     } catch (error) {
@@ -58,8 +68,13 @@ export class EmailTrackingService {
           repliedAt: new Date(),
         });
         
-        // Cancel any scheduled follow-ups for this lead
+        // Update lead status to 'replied'
         if (campaign.leadId) {
+          await storage.updateLead(campaign.leadId, {
+            status: 'replied'
+          });
+          
+          // Cancel any scheduled follow-ups for this lead
           await storage.cancelScheduledFollowUps(campaign.leadId);
           console.log(`Cancelled all follow-ups for lead ${campaign.leadId} due to reply`);
         }
