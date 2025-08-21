@@ -1,11 +1,14 @@
 import {
   users,
+  userSettings,
   leads,
   emailCampaigns,
   insights,
   type User,
   type UpsertUser,
   type InsertUser,
+  type UserSettings,
+  type InsertUserSettings,
   type Lead,
   type InsertLead,
   type EmailCampaign,
@@ -29,6 +32,7 @@ export interface IStorage {
   
   // User operations
   getUser(id: string): Promise<User | undefined>;
+  getUserById(id: string): Promise<User | undefined>;
   getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
@@ -38,6 +42,10 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getUserCount(): Promise<number>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // User Settings operations
+  getUserSettings(userId: string): Promise<UserSettings | undefined>;
+  updateUserSettings(userId: string, settings: Partial<InsertUserSettings>): Promise<UserSettings>;
   
   // Lead operations
   getLeads(userId: string, limit?: number): Promise<Lead[]>;
@@ -142,6 +150,40 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  async getUserById(id: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user;
+  }
+
+  async getUserSettings(userId: string): Promise<UserSettings | undefined> {
+    const [settings] = await db
+      .select()
+      .from(userSettings)
+      .where(eq(userSettings.userId, userId));
+    return settings;
+  }
+
+  async updateUserSettings(userId: string, settingsData: Partial<InsertUserSettings>): Promise<UserSettings> {
+    // First try to update existing settings
+    const existingSettings = await this.getUserSettings(userId);
+    
+    if (existingSettings) {
+      const [settings] = await db
+        .update(userSettings)
+        .set({ ...settingsData, updatedAt: new Date() })
+        .where(eq(userSettings.userId, userId))
+        .returning();
+      return settings;
+    } else {
+      // Create new settings if none exist
+      const [settings] = await db
+        .insert(userSettings)
+        .values({ userId, ...settingsData })
+        .returning();
+      return settings;
+    }
   }
 
   // Lead operations
