@@ -386,107 +386,54 @@ export default function Campaigns() {
                             />
                           </div>
                           
-                          <div className="flex-1">
-                            <div className="flex items-start justify-between">
-                              <div className="flex-1">
-                                <div className="flex items-center space-x-2 mb-2">
-                                  <h3 className="text-lg font-semibold text-gray-900">
+                          <div className="flex-1 min-w-0">
+                            {/* Header Section */}
+                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex-1 min-w-0">
+                                <div className="flex items-center space-x-3 mb-2">
+                                  <h3 className="text-lg font-semibold text-gray-900 truncate">
                                     {group.parent.subject}
                                   </h3>
-                                  <Badge variant="outline" className="text-xs">
+                                  <Badge variant="outline" className="text-xs shrink-0">
                                     Original Email
                                   </Badge>
                                 </div>
-                                <div className="flex items-center space-x-3 mb-3">
+                                
+                                {/* Status and Tone Row */}
+                                <div className="flex items-center space-x-4 mb-3">
                                   <Badge className={getStatusColor(group.parent.status || 'draft')}>
                                     {formatStatus(group.parent.status || 'draft')}
                                   </Badge>
                                   <span className="text-sm text-gray-500">
                                     {group.parent.tone.charAt(0).toUpperCase() + group.parent.tone.slice(1)} tone
                                   </span>
+                                  {group.parent.createdByUser && (
+                                    <span className="text-sm text-gray-500">
+                                      by {group.parent.createdByUser.firstName || group.parent.createdByUser.username}
+                                    </span>
+                                  )}
                                 </div>
-                                
-                                {/* Recipient Information */}
-                                {group.parent.leadId && (
-                                  <div className="flex items-center space-x-2 mb-3">
-                                    <span className="text-sm font-medium text-gray-700">To:</span>
-                                    {(() => {
-                                      const lead = leads?.find(l => l.id === group.parent.leadId);
-                                      return lead ? (
-                                        <div className="flex items-center space-x-2">
-                                          <span className="text-sm text-gray-900">{lead.name}</span>
-                                          <span className="text-sm text-gray-500">({lead.email})</span>
-                                          {lead.company && (
-                                            <span className="text-sm text-gray-500">at {lead.company}</span>
-                                          )}
-                                        </div>
-                                      ) : (
-                                        <span className="text-sm text-gray-500">Unknown recipient</span>
-                                      );
-                                    })()}
-                                  </div>
-                                )}
                               </div>
                               
-                              <div className="flex items-center space-x-2 ml-4">
-                                {/* Parent campaign actions */}
+                              {/* Quick Actions */}
+                              <div className="flex items-center space-x-1 ml-4 shrink-0">
                                 <Button variant="ghost" size="sm" data-testid={`button-view-${group.parent.id}`} onClick={() => { setEditingCampaign(group.parent); setIsEditMode(false); }}> 
-                                  <Eye className="h-4 w-4 mr-1" />
-                                  View
+                                  <Eye className="h-4 w-4" />
                                 </Button>
                                 {group.parent.status === 'draft' && (
-                                  <>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={() => { setEditingCampaign(group.parent); setIsEditMode(true); }}
-                                      data-testid={`button-edit-${group.parent.id}`}
-                                    >
-                                      <Edit className="h-4 w-4 mr-1" />
-                                      Edit
-                                    </Button>
-                                    <Button 
-                                      variant="ghost" 
-                                      size="sm"
-                                      onClick={() => sendCampaignMutation.mutate(group.parent.id)}
-                                      data-testid={`button-send-${group.parent.id}`}
-                                    >
-                                      <Send className="h-4 w-4 mr-1" />
-                                      Send
-                                    </Button>
-                                  </>
-                                )}
-                                {(group.parent.status === 'sent' || group.parent.status === 'opened') && (
                                   <Button 
                                     variant="ghost" 
                                     size="sm"
-                                    onClick={() => {
-                                      setSelectedCampaignForSchedule(group.parent);
-                                      setShowFollowUpScheduler(true);
-                                    }}
-                                    data-testid={`button-schedule-${group.parent.id}`}
+                                    onClick={() => { setEditingCampaign(group.parent); setIsEditMode(true); }}
+                                    data-testid={`button-edit-${group.parent.id}`}
                                   >
-                                    <Clock className="h-4 w-4 mr-1" />
-                                    Schedule Follow-up
+                                    <Edit className="h-4 w-4" />
                                   </Button>
                                 )}
-                                {(group.parent.status === 'sent' || group.parent.status === 'opened') && (
-                                  <Button 
-                                    variant="ghost" 
-                                    size="sm"
-                                    onClick={() => markRepliedMutation.mutate(group.parent.id)}
-                                    data-testid={`button-mark-replied-${group.parent.id}`}
-                                  >
-                                    <Edit className="h-4 w-4 mr-1" />
-                                    Mark as Replied
-                                  </Button>
-                                )}
-                                
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button variant="ghost" size="sm" data-testid={`button-delete-${group.parent.id}`}>
-                                      <Trash2 className="h-4 w-4 mr-1" />
-                                      Delete
+                                      <Trash2 className="h-4 w-4" />
                                     </Button>
                                   </AlertDialogTrigger>
                                   <AlertDialogContent>
@@ -505,6 +452,81 @@ export default function Campaigns() {
                                   </AlertDialogContent>
                                 </AlertDialog>
                               </div>
+                            </div>
+                            
+                            {/* Recipient Information */}
+                            {group.parent.leadId && (
+                              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                                {(() => {
+                                  const lead = leads?.find(l => l.id === group.parent.leadId);
+                                  return lead ? (
+                                    <div className="flex items-center justify-between">
+                                      <div>
+                                        <div className="flex items-center space-x-2">
+                                          <span className="text-sm font-medium text-gray-900">{lead.name}</span>
+                                          {lead.company && (
+                                            <span className="text-sm text-gray-500">at {lead.company}</span>
+                                          )}
+                                        </div>
+                                        <span className="text-sm text-gray-600">{lead.email}</span>
+                                      </div>
+                                      <Badge variant="secondary" className="text-xs">
+                                        {lead.status}
+                                      </Badge>
+                                    </div>
+                                  ) : (
+                                    <span className="text-sm text-gray-500">Unknown recipient</span>
+                                  );
+                                })()}
+                              </div>
+                            )}
+                            
+                            {/* Action Buttons */}
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center space-x-2">
+                                {group.parent.status === 'draft' && (
+                                  <Button 
+                                    size="sm"
+                                    onClick={() => sendCampaignMutation.mutate(group.parent.id)}
+                                    data-testid={`button-send-${group.parent.id}`}
+                                    className="bg-blue-600 hover:bg-blue-700 text-white"
+                                  >
+                                    <Send className="h-4 w-4 mr-2" />
+                                    Send Email
+                                  </Button>
+                                )}
+                                {(group.parent.status === 'sent' || group.parent.status === 'opened') && (
+                                  <>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => {
+                                        setSelectedCampaignForSchedule(group.parent);
+                                        setShowFollowUpScheduler(true);
+                                      }}
+                                      data-testid={`button-schedule-${group.parent.id}`}
+                                    >
+                                      <Clock className="h-4 w-4 mr-2" />
+                                      Schedule Follow-up
+                                    </Button>
+                                    <Button 
+                                      variant="outline" 
+                                      size="sm"
+                                      onClick={() => markRepliedMutation.mutate(group.parent.id)}
+                                      data-testid={`button-mark-replied-${group.parent.id}`}
+                                    >
+                                      <Edit className="h-4 w-4 mr-2" />
+                                      Mark as Replied
+                                    </Button>
+                                  </>
+                                )}
+                              </div>
+                              
+                              {group.parent.createdAt && (
+                                <span className="text-xs text-gray-400">
+                                  {new Date(group.parent.createdAt).toLocaleDateString()}
+                                </span>
+                              )}
                             </div>
                           </div>
                         </div>

@@ -13,6 +13,7 @@ export interface EmailGenerationRequest {
   previousEmailContent?: string;
   senderName: string;
   senderCompany: string;
+  notes?: string;
 }
 
 export interface EmailGenerationResponse {
@@ -21,7 +22,12 @@ export interface EmailGenerationResponse {
 }
 
 export async function generateColdEmail(request: EmailGenerationRequest): Promise<EmailGenerationResponse> {
-  const { name, role, company, tone, senderName, senderCompany } = request;
+  const { name, role, company, tone, senderName, senderCompany, notes } = request;
+
+  const notesSection = notes ? `\nADDITIONAL CONTEXT ABOUT ${name.toUpperCase()}:
+${notes}
+
+Use this information to personalize the email and make it more relevant.` : '';
 
   const prompt = `Write a cold outreach email to ${name}, who is a ${role} at ${company}. 
 Tone: ${tone}. 
@@ -29,7 +35,23 @@ Tone: ${tone}.
 SENDER INFORMATION:
 - Your name is: ${senderName}
 - Your company is: ${senderCompany}
-- You are from a UI/UX and branding design studio
+- You are from a UI/UX and branding design studio${notesSection}
+
+FORMATTING REQUIREMENTS:
+- Use proper line breaks and spacing
+- Start with a personalized greeting
+- Keep paragraphs short (2-3 sentences max)
+- Add blank lines between paragraphs
+- End with a clear call-to-action
+- Include a professional signature
+- Ensure the email flows naturally and is easy to read
+
+EMAIL STRUCTURE:
+1. Personalized greeting
+2. Brief introduction and reason for reaching out
+3. Value proposition or benefit
+4. Clear call-to-action
+5. Professional closing
 
 Make the email short, personalized, and with a clear call-to-action to book a call.
 Use the sender's real name (${senderName}) and company name (${senderCompany}) in the email content naturally.
@@ -76,6 +98,7 @@ export async function generateFollowUpEmail({
   followUpSequence = 1,
   senderName,
   senderCompany,
+  notes,
 }: {
   name: string;
   role: string;
@@ -86,6 +109,7 @@ export async function generateFollowUpEmail({
   followUpSequence?: number;
   senderName: string;
   senderCompany: string;
+  notes?: string;
 }): Promise<EmailGenerationResponse> {
   const sequenceContext = {
     1: "This is the first follow-up. Gently remind them of your previous email and add additional value or a different angle.",
@@ -95,6 +119,11 @@ export async function generateFollowUpEmail({
 
   const sequenceGuidance = sequenceContext[followUpSequence as keyof typeof sequenceContext] || sequenceContext[1];
 
+  const notesSection = notes ? `\nADDITIONAL CONTEXT ABOUT ${name.toUpperCase()}:
+${notes}
+
+Use this information to personalize the follow-up email and make it more relevant.` : '';
+
   const prompt = `Generate a ${tone} follow-up email for ${name}, a ${role} at ${company}.
 This is follow-up #${followUpSequence} to the previous email content:
 ${previousEmailContent}
@@ -102,9 +131,19 @@ ${previousEmailContent}
 SENDER INFORMATION:
 - Your name is: ${senderName}
 - Your company is: ${senderCompany}
-- You are from a UI/UX and branding design studio
+- You are from a UI/UX and branding design studio${notesSection}
 
 ${sequenceGuidance}
+
+FORMATTING REQUIREMENTS:
+- Use proper line breaks and spacing
+- Start with a personalized greeting
+- Keep paragraphs short (2-3 sentences max)
+- Add blank lines between paragraphs
+- Reference the previous email naturally
+- End with a clear call-to-action
+- Include a professional signature
+- Ensure the email flows naturally and is easy to read
 
 The follow-up should:
 - Reference the previous communication naturally

@@ -456,7 +456,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
         previousEmailContent: campaign.content,
         followUpSequence: sequence,
         senderName,
-        senderCompany
+        senderCompany,
+        notes: lead.notes || undefined
       });
 
       res.json(followUpEmail);
@@ -585,7 +586,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           isFollowUp: true,
           previousEmailContent: parentEmail?.content || '',
           senderName,
-          senderCompany
+          senderCompany,
+          notes: lead.notes || undefined
         });
       } else {
         generatedEmail = await generateColdEmail({
@@ -594,7 +596,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
           company: lead.company,
           tone,
           senderName,
-          senderCompany
+          senderCompany,
+          notes: lead.notes || undefined
         });
       }
 

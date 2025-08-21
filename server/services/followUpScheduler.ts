@@ -78,7 +78,8 @@ export class FollowUpScheduler {
       isFollowUp: true,
       previousEmailContent: parentCampaign.content,
       senderName,
-      senderCompany
+      senderCompany,
+      notes: lead.notes || undefined
     });
 
     // Calculate scheduled time
