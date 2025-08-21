@@ -27,7 +27,6 @@ import type { Lead } from "@shared/schema";
 export default function Leads() {
   const [searchQuery, setSearchQuery] = useState("");
   const [statusFilter, setStatusFilter] = useState<string>("all");
-  const [companyFilter, setCompanyFilter] = useState<string>("all");
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
@@ -41,7 +40,7 @@ export default function Leads() {
     enabled: !!user,
   });
 
-  // Filter leads based on search query, status, and company
+  // Filter leads based on search query and status
   const filteredLeads = leads?.filter((lead: Lead) => {
     const matchesSearch = !searchQuery || 
       lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -49,9 +48,8 @@ export default function Leads() {
       lead.company.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
-    const matchesCompany = companyFilter === "all" || lead.company === companyFilter;
     
-    return matchesSearch && matchesStatus && matchesCompany;
+    return matchesSearch && matchesStatus;
   }) || [];
 
   const deleteMutation = useMutation({
@@ -180,17 +178,6 @@ export default function Leads() {
                       <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
                       <SelectItem value="qualified">Qualified</SelectItem>
                       <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <Select value={companyFilter} onValueChange={setCompanyFilter}>
-                    <SelectTrigger className="w-40">
-                      <SelectValue placeholder="Filter by company" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="all">All Companies</SelectItem>
-                      {leads && Array.from(new Set(leads.map((lead: Lead) => lead.company).filter(Boolean))).map((company: string) => (
-                        <SelectItem key={company} value={company}>{company}</SelectItem>
-                      ))}
                     </SelectContent>
                   </Select>
                 </div>

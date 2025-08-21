@@ -307,9 +307,15 @@ export default function Campaigns() {
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="all">All Users</SelectItem>
-                    {campaigns && Array.from(new Set(campaigns.map(c => c.createdByUser).filter(Boolean))).map(user => (
-                      <SelectItem key={user?.id} value={user?.id || ''}>
-                        {user ? `${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username : 'Unknown'}
+                    {campaigns && Array.from(
+                      new Map(
+                        campaigns
+                          .filter(c => c.createdByUser)
+                          .map(c => [c.createdByUser!.id, c.createdByUser!])
+                      ).values()
+                    ).map(user => (
+                      <SelectItem key={user.id} value={user.id}>
+                        {`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username}
                       </SelectItem>
                     ))}
                   </SelectContent>

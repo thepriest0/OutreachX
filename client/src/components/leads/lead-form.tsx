@@ -273,7 +273,7 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
               <Button
                 type="submit"
                 disabled={isPending}
-                className="bg-primary-500 hover:bg-primary-600"
+                className="bg-blue-600 hover:bg-blue-700 text-white"
               >
                 {isPending ? (
                   <>
