@@ -1,0 +1,19 @@
+# Render.com deployment configuration
+# This file tells Render how to build and deploy your app
+
+# Build Command: npm install && npm run build
+# Start Command: npm start
+
+# Environment Variables needed:
+# - DATABASE_URL (PostgreSQL connection string)
+# - GMAIL_CLIENT_ID (optional, for Gmail integration)
+# - GMAIL_CLIENT_SECRET (optional, for Gmail integration)
+# - GMAIL_REFRESH_TOKEN (optional, for Gmail integration)
+# - GMAIL_REDIRECT_URI (optional, for Gmail integration)
+# - SENDGRID_API_KEY (optional, for email sending)
+# - GOOGLE_AI_API_KEY (optional, for AI features)
+# - SESSION_SECRET (for session management)
+
+# Service Type: Web Service
+# Port: 10000 (Render's default)
+# Health Check Path: /api/health (you may want to add this endpoint)
