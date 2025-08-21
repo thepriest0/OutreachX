@@ -7,17 +7,17 @@ WORKDIR /app
 # Copy package files
 COPY package*.json ./
 
-# Install dependencies
-RUN npm ci --only=production
+# Install dependencies (including dev dependencies for tsx)
+RUN npm ci
 
 # Copy source code
 COPY . .
 
-# Build the application
+# Build the client
 RUN npm run build
 
 # Expose port
 EXPOSE 10000
 
-# Start the application
+# Start the application using tsx
 CMD ["npm", "start"]

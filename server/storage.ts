@@ -69,7 +69,14 @@ export interface IStorage {
 }
 
 export class DatabaseStorage implements IStorage {
-  constructor() {}  // User operations
+  sessionStore: any;
+
+  constructor() {
+    this.sessionStore = new PostgresSessionStore({
+      pool: pool,
+      tableName: 'session'
+    });
+  }  // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
     return user;
