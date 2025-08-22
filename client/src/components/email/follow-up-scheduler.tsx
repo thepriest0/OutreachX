@@ -17,7 +17,6 @@ interface FollowUpSchedule {
   id?: string;
   sequence: number;
   delayDays: number;
-  delayMinutes?: number; // Add support for minute delays
   subject: string;
   content: string;
   tone: string;
@@ -46,8 +45,7 @@ export default function FollowUpScheduler({
   const [schedules, setSchedules] = useState<FollowUpSchedule[]>([
     {
       sequence: 1,
-      delayDays: 0,
-      delayMinutes: 5, // Default to 5 minutes for testing
+      delayDays: 3,
       subject: "",
       content: "",
       tone: originalTone,
@@ -95,7 +93,6 @@ export default function FollowUpScheduler({
             id: followUp.id,
             sequence: followUp.followUpSequence,
             delayDays: followUp.delayDays || updatedSchedules[index].delayDays,
-            delayMinutes: followUp.delayMinutes || updatedSchedules[index].delayMinutes,
             subject: followUp.subject,
             content: followUp.content,
             tone: followUp.tone,
@@ -110,7 +107,7 @@ export default function FollowUpScheduler({
   }, [existingFollowUps]);
 
   const generateEmailMutation = useMutation({
-    mutationFn: async (data: { sequence: number; tone: string; delayDays: number; delayMinutes?: number }) => {
+    mutationFn: async (data: { sequence: number; tone: string; delayDays: number }) => {
       const response = await apiRequest("POST", `/api/email-campaigns/${campaignId}/generate-followup`, data);
       return await response.json();
     },
@@ -199,8 +196,7 @@ export default function FollowUpScheduler({
     generateEmailMutation.mutate({
       sequence,
       tone: schedule.tone,
-      delayDays: schedule.delayDays,
-      delayMinutes: schedule.delayMinutes
+      delayDays: schedule.delayDays
     });
   };
 
@@ -298,34 +294,23 @@ export default function FollowUpScheduler({
                 <div className="space-y-4">
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Delay</Label>
+                      <Label>Delay (Days)</Label>
                       <Select
-                        value={schedule.delayMinutes ? `${schedule.delayMinutes}m` : `${schedule.delayDays}d`}
-                        onValueChange={(value) => {
-                          if (value.endsWith('m')) {
-                            const minutes = parseInt(value.slice(0, -1));
-                            updateSchedule(index, { delayDays: 0, delayMinutes: minutes });
-                          } else {
-                            const days = parseInt(value.slice(0, -1));
-                            updateSchedule(index, { delayDays: days, delayMinutes: 0 });
-                          }
-                        }}
+                        value={schedule.delayDays.toString()}
+                        onValueChange={(value) => updateSchedule(index, { delayDays: parseInt(value) })}
                       >
                         <SelectTrigger>
                           <SelectValue />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="5m">5 minutes</SelectItem>
-                          <SelectItem value="10m">10 minutes</SelectItem>
-                          <SelectItem value="30m">30 minutes</SelectItem>
-                          <SelectItem value="1d">1 day</SelectItem>
-                          <SelectItem value="2d">2 days</SelectItem>
-                          <SelectItem value="3d">3 days</SelectItem>
-                          <SelectItem value="5d">5 days</SelectItem>
-                          <SelectItem value="7d">1 week</SelectItem>
-                          <SelectItem value="14d">2 weeks</SelectItem>
-                          <SelectItem value="21d">3 weeks</SelectItem>
-                          <SelectItem value="30d">1 month</SelectItem>
+                          <SelectItem value="1">1 day</SelectItem>
+                          <SelectItem value="2">2 days</SelectItem>
+                          <SelectItem value="3">3 days</SelectItem>
+                          <SelectItem value="5">5 days</SelectItem>
+                          <SelectItem value="7">1 week</SelectItem>
+                          <SelectItem value="14">2 weeks</SelectItem>
+                          <SelectItem value="21">3 weeks</SelectItem>
+                          <SelectItem value="30">1 month</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>

@@ -19,13 +19,13 @@ export class FollowUpScheduler {
   start(): void {
     if (this.isRunning) return;
 
-    // Run every minute to check for scheduled follow-ups (especially for minute-based testing)
-    cron.schedule('* * * * *', async () => {
+    // Run every 5 minutes to check for scheduled follow-ups
+    cron.schedule('*/5 * * * *', async () => {
       await this.processScheduledFollowUps();
     });
 
     this.isRunning = true;
-    console.log('Follow-up scheduler started - checking every minute for scheduled emails (Nigerian timezone)');
+    console.log('Follow-up scheduler started - checking every 5 minutes for scheduled emails (Nigerian timezone)');
   }
 
   stop(): void {
@@ -36,8 +36,7 @@ export class FollowUpScheduler {
   async scheduleFollowUp(
     parentCampaignId: string,
     delayDays: number,
-    userId: string,
-    delayMinutes?: number
+    userId: string
   ): Promise<string> {
     const parentCampaign = await storage.getEmailCampaignById(parentCampaignId);
     if (!parentCampaign || !parentCampaign.leadId) {
@@ -85,18 +84,9 @@ export class FollowUpScheduler {
 
     // Calculate scheduled time in West Africa Time (Nigeria - UTC+1)
     const scheduledAt = new Date();
-    
-    if (delayMinutes && delayMinutes > 0) {
-      // For minute delays (testing purposes)
-      scheduledAt.setMinutes(scheduledAt.getMinutes() + delayMinutes);
-      console.log(`Scheduling follow-up for ${delayMinutes} minutes from now (Nigerian time): ${scheduledAt.toString()}`);
-      console.log(`UTC equivalent: ${scheduledAt.toISOString()}`);
-    } else {
-      // For day delays (production use)
-      scheduledAt.setDate(scheduledAt.getDate() + delayDays);
-      console.log(`Scheduling follow-up for ${delayDays} days from now (Nigerian time): ${scheduledAt.toString()}`);
-      console.log(`UTC equivalent: ${scheduledAt.toISOString()}`);
-    }
+    scheduledAt.setDate(scheduledAt.getDate() + delayDays);
+    console.log(`Scheduling follow-up for ${delayDays} days from now (Nigerian time): ${scheduledAt.toString()}`);
+    console.log(`UTC equivalent: ${scheduledAt.toISOString()}`);
 
     // Create follow-up campaign
     const followUpCampaign = await storage.createEmailCampaign({
@@ -108,7 +98,6 @@ export class FollowUpScheduler {
       isFollowUp: true,
       followUpSequence: (parentCampaign.followUpSequence || 0) + 1,
       followUpDelay: delayDays,
-      delayMinutes: delayMinutes,
       parentEmailId: parentCampaignId,
       scheduledAt,
       createdBy: userId,

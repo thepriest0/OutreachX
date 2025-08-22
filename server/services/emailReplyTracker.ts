@@ -15,6 +15,11 @@ class EmailReplyTracker {
   private checkInterval = 30000; // Check every 30 seconds
   private intervalId: NodeJS.Timeout | null = null;
 
+  // Getter to check if tracker is running
+  get running(): boolean {
+    return this.isRunning;
+  }
+
   async start() {
     if (this.isRunning) {
       console.log("📧 Reply tracker already running");
@@ -189,6 +194,14 @@ class EmailReplyTracker {
         status: 'replied' as any,
         repliedAt: reply.receivedAt,
       });
+
+      // Update lead status to 'replied'
+      if (matchedCampaign.leadId) {
+        await storage.updateLead(matchedCampaign.leadId, {
+          status: 'replied'
+        });
+        console.log(`Updated lead ${matchedCampaign.leadId} status to 'replied'`);
+      }
 
       // Cancel any scheduled follow-ups for this lead
       await storage.cancelScheduledFollowUps(matchedCampaign.leadId);

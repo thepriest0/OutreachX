@@ -493,6 +493,7 @@ export class DatabaseStorage implements IStorage {
         parentEmailId: emailCampaigns.parentEmailId,
         isFollowUp: emailCampaigns.isFollowUp,
         followUpDelay: emailCampaigns.followUpDelay,
+        delayMinutes: emailCampaigns.delayMinutes,
         followUpSequence: emailCampaigns.followUpSequence,
         scheduledAt: emailCampaigns.scheduledAt,
         createdBy: emailCampaigns.createdBy,
