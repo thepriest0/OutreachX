@@ -19,13 +19,13 @@ export class FollowUpScheduler {
   start(): void {
     if (this.isRunning) return;
 
-    // Run every 5 minutes to check for scheduled follow-ups
-    cron.schedule('*/5 * * * *', async () => {
+    // Run every minute to check for scheduled follow-ups (especially for minute-based testing)
+    cron.schedule('* * * * *', async () => {
       await this.processScheduledFollowUps();
     });
 
     this.isRunning = true;
-    console.log('Follow-up scheduler started');
+    console.log('Follow-up scheduler started - checking every minute for scheduled emails (Nigerian timezone)');
   }
 
   stop(): void {
@@ -36,7 +36,8 @@ export class FollowUpScheduler {
   async scheduleFollowUp(
     parentCampaignId: string,
     delayDays: number,
-    userId: string
+    userId: string,
+    delayMinutes?: number
   ): Promise<string> {
     const parentCampaign = await storage.getEmailCampaignById(parentCampaignId);
     if (!parentCampaign || !parentCampaign.leadId) {
@@ -82,9 +83,20 @@ export class FollowUpScheduler {
       notes: lead.notes || undefined
     });
 
-    // Calculate scheduled time
+    // Calculate scheduled time in West Africa Time (Nigeria - UTC+1)
     const scheduledAt = new Date();
-    scheduledAt.setDate(scheduledAt.getDate() + delayDays);
+    
+    if (delayMinutes && delayMinutes > 0) {
+      // For minute delays (testing purposes)
+      scheduledAt.setMinutes(scheduledAt.getMinutes() + delayMinutes);
+      console.log(`Scheduling follow-up for ${delayMinutes} minutes from now (Nigerian time): ${scheduledAt.toString()}`);
+      console.log(`UTC equivalent: ${scheduledAt.toISOString()}`);
+    } else {
+      // For day delays (production use)
+      scheduledAt.setDate(scheduledAt.getDate() + delayDays);
+      console.log(`Scheduling follow-up for ${delayDays} days from now (Nigerian time): ${scheduledAt.toString()}`);
+      console.log(`UTC equivalent: ${scheduledAt.toISOString()}`);
+    }
 
     // Create follow-up campaign
     const followUpCampaign = await storage.createEmailCampaign({
@@ -95,6 +107,8 @@ export class FollowUpScheduler {
       status: 'draft',
       isFollowUp: true,
       followUpSequence: (parentCampaign.followUpSequence || 0) + 1,
+      followUpDelay: delayDays,
+      delayMinutes: delayMinutes,
       parentEmailId: parentCampaignId,
       scheduledAt,
       createdBy: userId,
@@ -106,10 +120,22 @@ export class FollowUpScheduler {
 
   private async processScheduledFollowUps(): Promise<void> {
     try {
+      // Use local time (Nigerian time) for processing
       const now = new Date();
+      console.log(`Checking for scheduled follow-ups at ${now.toString()} (Nigerian time)`);
+      console.log(`UTC equivalent: ${now.toISOString()}`);
+      
       const scheduledCampaigns = await storage.getScheduledEmailCampaigns(now);
+      console.log(`Found ${scheduledCampaigns.length} scheduled campaigns ready to send`);
 
       for (const campaign of scheduledCampaigns) {
+        if (!campaign.scheduledAt) {
+          console.log(`Skipping campaign ${campaign.id} - no scheduled time`);
+          continue;
+        }
+        
+        const scheduledTime = new Date(campaign.scheduledAt);
+        console.log(`Processing campaign ${campaign.id} scheduled for ${scheduledTime.toString()} (Nigerian time)`);
         await this.processScheduledCampaign(campaign);
       }
     } catch (error) {

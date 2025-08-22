@@ -354,14 +354,19 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/email-campaigns/:id/schedule-followup', requireAuth, async (req: any, res) => {
     try {
       const campaignId = req.params.id;
-      const { delayDays } = req.body;
+      const { delayDays, delayMinutes } = req.body;
       const userId = req.user.id;
       
-      if (!delayDays || delayDays < 1 || delayDays > 30) {
+      // Support both minute delays (for testing) and day delays (for production)
+      if (delayMinutes && delayMinutes > 0) {
+        if (delayMinutes < 1 || delayMinutes > 1440) { // Max 24 hours in minutes
+          return res.status(400).json({ message: "Delay minutes must be between 1 and 1440" });
+        }
+      } else if (!delayDays || delayDays < 1 || delayDays > 30) {
         return res.status(400).json({ message: "Delay days must be between 1 and 30" });
       }
       
-      const followUpId = await followUpScheduler.scheduleFollowUp(campaignId, delayDays, userId);
+      const followUpId = await followUpScheduler.scheduleFollowUp(campaignId, delayDays || 0, userId, delayMinutes);
       res.json({ message: "Follow-up scheduled successfully", followUpId });
     } catch (error) {
       console.error("Error scheduling follow-up:", error);
@@ -486,7 +491,13 @@ export async function registerRoutes(app: Express): Promise<Server> {
         // Only create follow-ups that don't already exist and are enabled
         if (schedule.enabled && schedule.subject && schedule.content && !existingSequences.has(schedule.sequence)) {
           const scheduledAt = new Date();
-          scheduledAt.setDate(scheduledAt.getDate() + schedule.delayDays);
+          
+          // Handle both minute delays (for testing) and day delays (for production) - use local time (Nigerian time)
+          if (schedule.delayMinutes && schedule.delayMinutes > 0) {
+            scheduledAt.setMinutes(scheduledAt.getMinutes() + schedule.delayMinutes);
+          } else {
+            scheduledAt.setDate(scheduledAt.getDate() + schedule.delayDays);
+          }
 
           const followUpCampaign = await storage.createEmailCampaign({
             leadId: parentCampaign.leadId,
@@ -496,6 +507,8 @@ export async function registerRoutes(app: Express): Promise<Server> {
             status: 'draft',
             isFollowUp: true,
             followUpSequence: schedule.sequence,
+            followUpDelay: schedule.delayDays,
+            delayMinutes: schedule.delayMinutes,
             parentEmailId: req.params.id,
             scheduledAt,
             createdBy: userId,

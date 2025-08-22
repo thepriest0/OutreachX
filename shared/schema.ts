@@ -72,7 +72,8 @@ export const emailCampaigns = pgTable("email_campaigns", {
   repliedAt: timestamp("replied_at"),
   isFollowUp: boolean("is_follow_up").default(false),
   followUpSequence: integer("follow_up_sequence").default(0),
-  followUpDelay: integer("follow_up_delay"), // Added missing column
+  followUpDelay: integer("follow_up_delay"), // Days delay for production
+  delayMinutes: integer("delay_minutes"), // Minutes delay for testing
   parentEmailId: varchar("parent_email_id"),
   parentCampaignId: varchar("parent_campaign_id"), // Added missing column
   messageId: varchar("message_id"), // For tracking email responses
@@ -166,6 +167,8 @@ export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).pick
   status: true,
   isFollowUp: true,
   followUpSequence: true,
+  followUpDelay: true,
+  delayMinutes: true,
   parentEmailId: true,
   messageId: true,
   trackingId: true,
