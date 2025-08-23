@@ -16,6 +16,7 @@ import Users from "@/pages/users";
 import Analytics from "@/pages/analytics";
 import IntegrationPage from "@/pages/integration";
 import ProfilePage from "@/pages/profile";
+import InviteAcceptPage from "@/pages/invite-accept";
 
 function Router() {
   const { setupNeeded, isLoading } = useAuth();
@@ -38,6 +39,7 @@ function Router() {
   return (
     <Switch>
       <Route path="/auth" component={AuthPage} />
+      <Route path="/invite/:token" component={InviteAcceptPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/leads" component={Leads} />
       <ProtectedRoute path="/campaigns" component={Campaigns} />

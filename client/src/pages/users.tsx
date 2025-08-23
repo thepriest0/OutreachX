@@ -17,15 +17,10 @@ import { apiRequest } from "@/lib/queryClient";
 import type { User } from "@shared/schema";
 
 export default function UsersPage() {
-  const [showCreateUser, setShowCreateUser] = useState(false);
+  const [showInviteUser, setShowInviteUser] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [newUser, setNewUser] = useState({
-    username: "",
     email: "",
-    firstName: "",
-    lastName: "",
-    password: "",
-    confirmPassword: "",
     role: "admin" as const
   });
 
@@ -42,37 +37,25 @@ export default function UsersPage() {
   });
 
   // Create user mutation
-  const createUserMutation = useMutation({
+  const sendInvitationMutation = useMutation({
     mutationFn: async (userData: typeof newUser) => {
-      if (userData.password !== userData.confirmPassword) {
-        throw new Error("Passwords don't match");
-      }
-      return apiRequest("POST", "/api/admin/users", {
-        username: userData.username,
+      return apiRequest("POST", "/api/admin/invitations", {
         email: userData.email,
-        firstName: userData.firstName,
-        lastName: userData.lastName,
-        password: userData.password,
         role: userData.role
       });
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
-      toast({ title: "User created successfully" });
-      setShowCreateUser(false);
+      toast({ title: "Invitation sent successfully" });
+      setShowInviteUser(false);
       setNewUser({
-        username: "",
         email: "",
-        firstName: "",
-        lastName: "",
-        password: "",
-        confirmPassword: "",
         role: "admin"
       });
     },
     onError: (error: any) => {
       toast({ 
-        title: "Failed to create user", 
+        title: "Failed to send invitation", 
         description: error.message || "Please try again",
         variant: "destructive" 
       });
@@ -119,8 +102,8 @@ export default function UsersPage() {
     },
   });
 
-  const handleCreateUser = () => {
-    createUserMutation.mutate(newUser);
+  const handleSendInvitation = () => {
+    sendInvitationMutation.mutate(newUser);
   };
 
   const getRoleBadgeColor = (role: string) => {
@@ -176,58 +159,30 @@ export default function UsersPage() {
                 <h1 className="text-2xl font-bold text-gray-900 mb-2">User Management</h1>
                 <p className="text-gray-600">Manage team members and their access levels</p>
               </div>
-              <Dialog open={showCreateUser} onOpenChange={setShowCreateUser}>
+              <Dialog open={showInviteUser} onOpenChange={setShowInviteUser}>
                 <DialogTrigger asChild>
                   <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
-                    <UserPlus className="h-4 w-4 mr-2" />
-                    Add User
+                    <Mail className="h-4 w-4 mr-2" />
+                    Invite User
                   </Button>
                 </DialogTrigger>
                 <DialogContent className="sm:max-w-md">
                   <DialogHeader>
-                    <DialogTitle>Create New User</DialogTitle>
+                    <DialogTitle>Invite New User</DialogTitle>
                     <DialogDescription>
-                      Add a new team member to your OutreachX workspace.
+                      Send an invitation email to add a new team member to your OutreachX workspace.
                     </DialogDescription>
                   </DialogHeader>
                   <div className="space-y-4">
-                    <div className="grid grid-cols-2 gap-4">
-                      <div>
-                        <Label htmlFor="firstName">First Name</Label>
-                        <Input
-                          id="firstName"
-                          value={newUser.firstName}
-                          onChange={(e) => setNewUser(prev => ({ ...prev, firstName: e.target.value }))}
-                          placeholder="John"
-                        />
-                      </div>
-                      <div>
-                        <Label htmlFor="lastName">Last Name</Label>
-                        <Input
-                          id="lastName"
-                          value={newUser.lastName}
-                          onChange={(e) => setNewUser(prev => ({ ...prev, lastName: e.target.value }))}
-                          placeholder="Doe"
-                        />
-                      </div>
-                    </div>
                     <div>
-                      <Label htmlFor="username">Username</Label>
-                      <Input
-                        id="username"
-                        value={newUser.username}
-                        onChange={(e) => setNewUser(prev => ({ ...prev, username: e.target.value }))}
-                        placeholder="johndoe"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="email">Email</Label>
+                      <Label htmlFor="email">Email Address</Label>
                       <Input
                         id="email"
                         type="email"
                         value={newUser.email}
                         onChange={(e) => setNewUser(prev => ({ ...prev, email: e.target.value }))}
-                        placeholder="john@company.com"
+                        placeholder="Enter recipient's email address"
+                        required
                       />
                     </div>
                     <div>
@@ -246,36 +201,16 @@ export default function UsersPage() {
                         </SelectContent>
                       </Select>
                     </div>
-                    <div>
-                      <Label htmlFor="password">Password</Label>
-                      <Input
-                        id="password"
-                        type="password"
-                        value={newUser.password}
-                        onChange={(e) => setNewUser(prev => ({ ...prev, password: e.target.value }))}
-                        placeholder="••••••••"
-                      />
-                    </div>
-                    <div>
-                      <Label htmlFor="confirmPassword">Confirm Password</Label>
-                      <Input
-                        id="confirmPassword"
-                        type="password"
-                        value={newUser.confirmPassword}
-                        onChange={(e) => setNewUser(prev => ({ ...prev, confirmPassword: e.target.value }))}
-                        placeholder="••••••••"
-                      />
-                    </div>
                   </div>
                   <DialogFooter>
-                    <Button variant="outline" onClick={() => setShowCreateUser(false)}>
+                    <Button variant="outline" onClick={() => setShowInviteUser(false)}>
                       Cancel
                     </Button>
                     <Button 
-                      onClick={handleCreateUser}
-                      disabled={createUserMutation.isPending}
+                      onClick={handleSendInvitation}
+                      disabled={sendInvitationMutation.isPending}
                     >
-                      {createUserMutation.isPending ? "Creating..." : "Create User"}
+                      {sendInvitationMutation.isPending ? "Sending..." : "Send Invitation"}
                     </Button>
                   </DialogFooter>
                 </DialogContent>
@@ -384,7 +319,7 @@ export default function UsersPage() {
               <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No users yet</h3>
               <p className="text-gray-500 mb-4">Start building your team by adding the first user</p>
-              <Button onClick={() => setShowCreateUser(true)}>
+              <Button onClick={() => setShowInviteUser(true)}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add First User
               </Button>

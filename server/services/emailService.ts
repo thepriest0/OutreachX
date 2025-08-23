@@ -82,6 +82,17 @@ export class EmailService {
     return new MockEmailProvider();
   }
 
+  // Simple email sending method for invitations and other non-campaign emails
+  async sendEmail(params: { to: string; subject: string; content: string; fromName?: string; fromEmail?: string; }): Promise<EmailSendResult> {
+    return await this.provider.sendEmail({
+      to: params.to,
+      subject: params.subject,
+      content: params.content,
+      fromName: params.fromName || process.env.FROM_NAME || "OutreachX Team",
+      fromEmail: params.fromEmail || process.env.FROM_EMAIL || "noreply@outreachx.com",
+    });
+  }
+
   async sendCampaignEmail(campaignId: string, leadId: string): Promise<EmailSendResult> {
     const campaign = await storage.getEmailCampaignById(campaignId);
     const lead = await storage.getLeadById(leadId);

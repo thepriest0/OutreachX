@@ -5,7 +5,8 @@ import session from "express-session";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
-import { User as SelectUser } from "@shared/schema";
+import { User as SelectUser, insertInvitationSchema, acceptInvitationSchema } from "@shared/schema";
+import { invitationService } from "./services/invitationService";
 
 declare global {
   namespace Express {
@@ -233,43 +234,37 @@ export function setupAuth(app: Express) {
     }
   });
 
-  app.post("/api/admin/users", requireRole(['head_admin']), async (req, res) => {
+  app.post("/api/admin/users", requireRole(['head_admin']), async (req: any, res) => {
     try {
-      const { username, email, password, firstName, lastName, role } = req.body;
+      const { email, role } = req.body;
       
-      // Check if user already exists
-      const existingUser = await storage.getUserByUsername(username);
-      if (existingUser) {
-        return res.status(400).json({ message: "Username already exists" });
+      // Validate input
+      const validatedData = insertInvitationSchema.parse({ email, role });
+      
+      const result = await invitationService.createInvitation(
+        validatedData.email,
+        validatedData.role,
+        req.user.id
+      );
+
+      if (result.success) {
+        res.status(201).json({
+          message: "Invitation sent successfully",
+          invitation: {
+            id: result.invitation.id,
+            email: result.invitation.email,
+            role: result.invitation.role,
+            status: result.invitation.status,
+            createdAt: result.invitation.createdAt,
+            expiresAt: result.invitation.expiresAt,
+          }
+        });
+      } else {
+        res.status(400).json({ message: result.error });
       }
-
-      const existingEmail = await storage.getUserByEmail(email);
-      if (existingEmail) {
-        return res.status(400).json({ message: "Email already exists" });
-      }
-
-      const user = await storage.createUser({
-        username,
-        email,
-        password: await hashPassword(password),
-        firstName,
-        lastName,
-        role: role || 'designer',
-      });
-
-      res.status(201).json({
-        id: user.id,
-        username: user.username,
-        email: user.email,
-        firstName: user.firstName,
-        lastName: user.lastName,
-        role: user.role,
-        createdAt: user.createdAt,
-        updatedAt: user.updatedAt,
-      });
     } catch (error) {
-      console.error('Error creating user:', error);
-      res.status(500).json({ message: "Failed to create user" });
+      console.error('Error creating invitation:', error);
+      res.status(500).json({ message: "Failed to create invitation" });
     }
   });
 
@@ -331,6 +326,129 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error('Error deleting user:', error);
       res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Invitation management routes
+  app.post("/api/admin/invitations", requireRole(['head_admin']), async (req: any, res) => {
+    try {
+      const { email, role } = req.body;
+      
+      // Validate input
+      const validatedData = insertInvitationSchema.parse({ email, role });
+      
+      console.log(`🔄 Creating invitation for ${email} with role ${role} by user ${req.user.id}`);
+      
+      const result = await invitationService.createInvitation(
+        validatedData.email,
+        validatedData.role,
+        req.user.id
+      );
+
+      if (result.success) {
+        console.log(`✅ Invitation created successfully for ${email}`);
+        res.status(201).json({
+          message: "Invitation sent successfully",
+          invitation: {
+            id: result.invitation.id,
+            email: result.invitation.email,
+            role: result.invitation.role,
+            status: result.invitation.status,
+            createdAt: result.invitation.createdAt,
+            expiresAt: result.invitation.expiresAt,
+          }
+        });
+      } else {
+        console.log(`❌ Failed to create invitation for ${email}: ${result.error}`);
+        res.status(400).json({ message: result.error });
+      }
+    } catch (error) {
+      console.error('Error creating invitation:', error);
+      res.status(500).json({ message: "Failed to create invitation" });
+    }
+  });
+
+  app.get("/api/admin/invitations", requireRole(['head_admin']), async (req, res) => {
+    try {
+      const invitations = await storage.getAllInvitations();
+      res.json(invitations);
+    } catch (error) {
+      console.error('Error fetching invitations:', error);
+      res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
+  app.delete("/api/admin/invitations/:id", requireRole(['head_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteInvitation(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting invitation:', error);
+      res.status(500).json({ message: "Failed to delete invitation" });
+    }
+  });
+
+  // Public invitation routes (no authentication required)
+  app.get("/api/invitations/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const validation = await invitationService.validateInvitation(token);
+      
+      if (validation.valid) {
+        res.json({
+          valid: true,
+          email: validation.invitation.email,
+          role: validation.invitation.role,
+        });
+      } else {
+        res.status(400).json({ valid: false, error: validation.error });
+      }
+    } catch (error) {
+      console.error('Error validating invitation:', error);
+      res.status(500).json({ valid: false, error: "Failed to validate invitation" });
+    }
+  });
+
+  app.post("/api/invitations/:token/accept", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const { username, password, firstName, lastName } = req.body;
+      
+      const validatedData = acceptInvitationSchema.parse({
+        token,
+        username,
+        password,
+        firstName,
+        lastName,
+      });
+
+      const result = await invitationService.acceptInvitation(token, {
+        username: validatedData.username,
+        password: await hashPassword(validatedData.password),
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+      });
+
+      if (result.success) {
+        res.json({ 
+          success: true, 
+          message: "Account created successfully",
+          user: {
+            id: result.user.id,
+            username: result.user.username,
+            email: result.user.email,
+            firstName: result.user.firstName,
+            lastName: result.user.lastName,
+            role: result.user.role,
+          }
+        });
+      } else {
+        res.status(400).json({ success: false, error: result.error });
+      }
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      res.status(500).json({ success: false, error: "Failed to accept invitation" });
     }
   });
 
@@ -419,6 +537,97 @@ export function setupAuth(app: Express) {
     } catch (error) {
       console.error('Error changing password:', error);
       res.status(500).json({ message: "Failed to change password" });
+    }
+  });
+
+  // Invitation routes
+  app.get("/api/admin/invitations", requireRole(['head_admin']), async (req, res) => {
+    try {
+      const invitations = await storage.getAllInvitations();
+      const safeInvitations = invitations.map(invitation => ({
+        id: invitation.id,
+        email: invitation.email,
+        role: invitation.role,
+        status: invitation.status,
+        expiresAt: invitation.expiresAt,
+        createdAt: invitation.createdAt,
+        acceptedAt: invitation.acceptedAt,
+      }));
+      res.json(safeInvitations);
+    } catch (error) {
+      console.error('Error fetching invitations:', error);
+      res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
+  app.delete("/api/admin/invitations/:id", requireRole(['head_admin']), async (req, res) => {
+    try {
+      const { id } = req.params;
+      await storage.deleteInvitation(id);
+      res.status(204).send();
+    } catch (error) {
+      console.error('Error deleting invitation:', error);
+      res.status(500).json({ message: "Failed to delete invitation" });
+    }
+  });
+
+  // Public invitation routes
+  app.get("/api/invite/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const validation = await invitationService.validateInvitation(token);
+      
+      if (validation.valid) {
+        res.json({
+          valid: true,
+          email: validation.invitation.email,
+          role: validation.invitation.role,
+        });
+      } else {
+        res.status(400).json({
+          valid: false,
+          error: validation.error,
+        });
+      }
+    } catch (error) {
+      console.error('Error validating invitation:', error);
+      res.status(500).json({ message: "Failed to validate invitation" });
+    }
+  });
+
+  app.post("/api/invite/:token/accept", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const validatedData = acceptInvitationSchema.parse(req.body);
+      
+      // Hash the password
+      const hashedPassword = await hashPassword(validatedData.password);
+      
+      const result = await invitationService.acceptInvitation(validatedData.token, {
+        username: validatedData.username,
+        password: hashedPassword,
+        firstName: validatedData.firstName,
+        lastName: validatedData.lastName,
+      });
+
+      if (result.success) {
+        res.status(201).json({
+          message: "Account created successfully",
+          user: {
+            id: result.user.id,
+            username: result.user.username,
+            email: result.user.email,
+            firstName: result.user.firstName,
+            lastName: result.user.lastName,
+            role: result.user.role,
+          }
+        });
+      } else {
+        res.status(400).json({ message: result.error });
+      }
+    } catch (error) {
+      console.error('Error accepting invitation:', error);
+      res.status(500).json({ message: "Failed to accept invitation" });
     }
   });
 }

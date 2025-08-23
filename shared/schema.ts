@@ -28,6 +28,7 @@ export const userRoleEnum = pgEnum("user_role", ["head_admin", "admin", "founder
 export const leadStatusEnum = pgEnum("lead_status", ["new", "contacted", "replied", "follow_up_scheduled", "qualified", "closed"]);
 export const emailStatusEnum = pgEnum("email_status", ["draft", "sent", "opened", "clicked", "replied", "bounced"]);
 export const emailToneEnum = pgEnum("email_tone", ["professional", "casual", "direct"]);
+export const invitationStatusEnum = pgEnum("invitation_status", ["pending", "accepted", "expired"]);
 
 // User storage table.
 export const users = pgTable("users", {
@@ -41,6 +42,19 @@ export const users = pgTable("users", {
   role: userRoleEnum("role").default("designer"),
   createdAt: timestamp("created_at").defaultNow(),
   updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+// User invitations table
+export const invitations = pgTable("invitations", {
+  id: varchar("id").primaryKey().default(sql`gen_random_uuid()`),
+  email: varchar("email").notNull(),
+  role: userRoleEnum("role").notNull(),
+  token: varchar("token").unique().notNull(),
+  status: invitationStatusEnum("status").default("pending"),
+  invitedBy: varchar("invited_by").references(() => users.id).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 // Leads table
@@ -127,6 +141,13 @@ export const insightsRelations = relations(insights, ({ one }) => ({
   }),
 }));
 
+export const invitationsRelations = relations(invitations, ({ one }) => ({
+  invitedBy: one(users, {
+    fields: [invitations.invitedBy],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -181,6 +202,19 @@ export const insertInsightSchema = createInsertSchema(insights).pick({
   metrics: true,
 });
 
+export const insertInvitationSchema = createInsertSchema(invitations).pick({
+  email: true,
+  role: true,
+});
+
+export const acceptInvitationSchema = z.object({
+  token: z.string().min(1, "Invitation token is required"),
+  username: z.string().min(3, "Username must be at least 3 characters"),
+  password: z.string().min(6, "Password must be at least 6 characters"),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+});
+
 // Types
 export type UpsertUser = z.infer<typeof insertUserSchema> & { id: string };
 export type User = typeof users.$inferSelect;
@@ -205,6 +239,9 @@ export type EmailCampaignWithUser = EmailCampaign & {
 
 export type Insight = typeof insights.$inferSelect;
 export type InsertInsight = z.infer<typeof insertInsightSchema>;
+
+export type Invitation = typeof invitations.$inferSelect;
+export type InsertInvitation = z.infer<typeof insertInvitationSchema>;
 
 // Dashboard stats type
 export type DashboardStats = {

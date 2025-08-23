@@ -3,6 +3,7 @@ import {
   leads,
   emailCampaigns,
   insights,
+  invitations,
   type User,
   type UpsertUser,
   type InsertUser,
@@ -13,6 +14,8 @@ import {
   type InsertEmailCampaign,
   type Insight,
   type InsertInsight,
+  type Invitation,
+  type InsertInvitation,
   type DashboardStats,
 } from "@shared/schema";
 import session from "express-session";
@@ -38,6 +41,15 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   getUserCount(): Promise<number>;
   upsertUser(user: UpsertUser): Promise<User>;
+  
+  // Invitation operations
+  createInvitation(invitation: InsertInvitation & { invitedBy: string; token: string; expiresAt: Date }): Promise<Invitation>;
+  getInvitationByToken(token: string): Promise<Invitation | undefined>;
+  getInvitationByEmail(email: string): Promise<Invitation | undefined>;
+  updateInvitation(id: string, invitation: Partial<Invitation>): Promise<Invitation>;
+  deleteInvitation(id: string): Promise<void>;
+  getAllInvitations(): Promise<Invitation[]>;
+  markInvitationAsAccepted(token: string): Promise<void>;
   
   // Lead operations
   getLeads(userId: string, limit?: number): Promise<Lead[]>;
@@ -77,6 +89,51 @@ export class DatabaseStorage implements IStorage {
       pool: pool,
       tableName: 'session'
     });
+    // Initialize invitations table if it doesn't exist
+    this.initializeInvitationsTable();
+  }
+
+  private async initializeInvitationsTable(): Promise<void> {
+    try {
+      await pool.query(`
+        -- Create invitation_status enum only if it doesn't exist
+        DO $$ BEGIN
+            CREATE TYPE invitation_status AS ENUM('pending', 'accepted', 'expired');
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+
+        -- Create invitations table
+        CREATE TABLE IF NOT EXISTS invitations (
+            id varchar PRIMARY KEY DEFAULT gen_random_uuid() NOT NULL,
+            email varchar NOT NULL,
+            role user_role NOT NULL,
+            token varchar NOT NULL,
+            status invitation_status DEFAULT 'pending',
+            invited_by varchar NOT NULL,
+            expires_at timestamp NOT NULL,
+            accepted_at timestamp,
+            created_at timestamp DEFAULT now()
+        );
+
+        -- Add constraints safely
+        DO $$ BEGIN
+            ALTER TABLE invitations ADD CONSTRAINT invitations_token_unique UNIQUE(token);
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+
+        DO $$ BEGIN
+            ALTER TABLE invitations ADD CONSTRAINT invitations_invited_by_users_id_fk 
+                FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE no action ON UPDATE no action;
+        EXCEPTION
+            WHEN duplicate_object THEN null;
+        END $$;
+      `);
+      console.log('✅ Invitations table initialized successfully');
+    } catch (error) {
+      console.error('❌ Failed to initialize invitations table:', error);
+    }
   }  // User operations
   async getUser(id: string): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
@@ -142,6 +199,46 @@ export class DatabaseStorage implements IStorage {
       })
       .returning();
     return user;
+  }
+
+  // Invitation operations
+  async createInvitation(invitation: InsertInvitation & { invitedBy: string; token: string; expiresAt: Date }): Promise<Invitation> {
+    const [newInvitation] = await db.insert(invitations).values(invitation).returning();
+    return newInvitation;
+  }
+
+  async getInvitationByToken(token: string): Promise<Invitation | undefined> {
+    const [invitation] = await db.select().from(invitations).where(eq(invitations.token, token));
+    return invitation;
+  }
+
+  async getInvitationByEmail(email: string): Promise<Invitation | undefined> {
+    const [invitation] = await db.select().from(invitations).where(eq(invitations.email, email));
+    return invitation;
+  }
+
+  async updateInvitation(id: string, invitation: Partial<Invitation>): Promise<Invitation> {
+    const [updatedInvitation] = await db
+      .update(invitations)
+      .set(invitation)
+      .where(eq(invitations.id, id))
+      .returning();
+    return updatedInvitation;
+  }
+
+  async deleteInvitation(id: string): Promise<void> {
+    await db.delete(invitations).where(eq(invitations.id, id));
+  }
+
+  async getAllInvitations(): Promise<Invitation[]> {
+    return await db.select().from(invitations).orderBy(desc(invitations.createdAt));
+  }
+
+  async markInvitationAsAccepted(token: string): Promise<void> {
+    await db
+      .update(invitations)
+      .set({ status: 'accepted', acceptedAt: new Date() })
+      .where(eq(invitations.token, token));
   }
 
   // Lead operations
