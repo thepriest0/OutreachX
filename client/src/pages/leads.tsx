@@ -257,6 +257,8 @@ export default function Leads() {
                     className="w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4 mr-2" />
+                    Export CSV
+                  </Button>
                   {selectedLeadIds.length > 0 && (
                     <>
                       <Button
@@ -278,8 +280,6 @@ export default function Leads() {
                       </Button>
                     </>
                   )}
-                    Export CSV
-                  </Button>
                   <Button
                     onClick={() => setShowLeadForm(true)}
                     className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap w-full sm:w-auto"
