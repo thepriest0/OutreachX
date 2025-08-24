@@ -277,6 +277,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
+  // Export selected leads by IDs
+  app.post('/api/leads/export', requireAuth, async (req: any, res) => {
+    try {
+      const userId = req.user.id;
+      const ids: string[] = req.body && req.body.ids ? req.body.ids : [];
+      let leads;
+      if (ids.length > 0) {
+        // storage does not expose getLeadsByIds; fetch all and filter by ids and owner
+        const allLeads = await storage.getLeads(userId);
+        leads = allLeads.filter((l: any) => ids.includes(l.id));
+      } else {
+        leads = await storage.getLeads(userId);
+      }
+
+      const csv = convertLeadsToCSV(leads);
+      res.setHeader('Content-Type', 'text/csv');
+      res.setHeader('Content-Disposition', 'attachment; filename=selected-leads.csv');
+      res.send(csv);
+    } catch (error) {
+      console.error('Error exporting selected leads:', error);
+      res.status(500).json({ message: 'Failed to export selected leads' });
+    }
+  });
+
   app.get('/api/leads/csv-template', (req, res) => {
     try {
       const template = getCSVTemplate();

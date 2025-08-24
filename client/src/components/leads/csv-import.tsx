@@ -146,6 +146,10 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
       const file = e.dataTransfer.files[0];
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
         setSelectedFile(file);
+        // auto-start import when a file is dropped, unless an import is already pending
+        if (!importMutation.isPending) {
+          importMutation.mutate(file);
+        }
       } else {
         toast({
           title: "Error",
@@ -161,6 +165,10 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
       const file = e.target.files[0];
       if (file.type === "text/csv" || file.name.endsWith(".csv")) {
         setSelectedFile(file);
+        // auto-start import when a file is selected via the file input
+        if (!importMutation.isPending) {
+          importMutation.mutate(file);
+        }
       } else {
         toast({
           title: "Error",
@@ -187,36 +195,41 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <i className="fas fa-upload mr-3 text-primary-500"></i>
-            Import Leads from CSV
-          </DialogTitle>
-          <DialogDescription>
-            Upload a CSV file to bulk import leads into your database.
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="w-full h-full sm:max-w-[600px] sm:h-auto sm:rounded-lg">
+        <div className="h-full flex flex-col">
+          <DialogHeader>
+            <DialogTitle className="flex items-center">
+              <i className="fas fa-upload mr-3 text-primary-500"></i>
+              Import Leads from CSV
+            </DialogTitle>
+            <DialogDescription>
+              Upload a CSV file to bulk import leads into your database.
+            </DialogDescription>
+          </DialogHeader>
 
-        <div className="space-y-6">
-          {/* Template Download */}
+          <div className="flex-1 overflow-auto p-6">
+            <div className="space-y-6">
+          {/* CSV Instructions */}
           <Card className="border-dashed border-2 border-gray-300">
-            <CardContent className="p-6 text-center">
-              <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center mx-auto mb-4">
-                <i className="fas fa-download text-blue-600"></i>
+            <CardContent className="p-6">
+              <div className="mb-3">
+                <h3 className="font-medium text-gray-900">CSV Format Instructions</h3>
+                <p className="text-sm text-gray-600 mt-1">Provide a CSV file with the following columns (headers are case-insensitive):</p>
               </div>
-              <h3 className="font-medium text-gray-900 mb-2">Download CSV Template</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                Download our template to ensure your CSV file has the correct format.
-              </p>
-              <Button
-                variant="outline"
-                onClick={downloadTemplate}
-                className="border-blue-300 text-blue-700 hover:bg-blue-50"
-              >
-                <i className="fas fa-download mr-2"></i>
-                Download Template
-              </Button>
+
+              <ul className="text-sm text-gray-700 list-disc list-inside space-y-1 mb-3">
+                <li><strong>Required:</strong> <code>name</code>, <code>email</code>, <code>company</code></li>
+                <li><strong>Optional:</strong> <code>role</code>, <code>notes</code></li>
+              </ul>
+
+              <div className="text-sm text-gray-600">
+                <p className="mb-1">Tips:</p>
+                <ul className="list-disc list-inside space-y-1">
+                  <li>Wrap fields that contain commas or quotes in double quotes (e.g., <code>"O'Connor, Liam"</code>).</li>
+                  <li>Ensure email addresses are valid (e.g., <code>user@example.com</code>).</li>
+                  <li>Extra columns are allowed but will be ignored unless explicitly mapped.</li>
+                </ul>
+              </div>
             </CardContent>
           </Card>
 
@@ -268,7 +281,6 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
                     id="csv-upload"
                   />
                   <Button
-                    variant="outline"
                     onClick={() => document.getElementById("csv-upload")?.click()}
                   >
                     <i className="fas fa-folder-open mr-2"></i>
@@ -321,8 +333,9 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
             </div>
           )}
         </div>
+        </div>
 
-        <DialogFooter>
+        <DialogFooter className="p-4 sm:p-6">
           <Button
             variant="outline"
             onClick={onClose}
@@ -350,7 +363,8 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
             </Button>
           )}
         </DialogFooter>
-      </DialogContent>
-    </Dialog>
+      </div>
+    </DialogContent>
+  </Dialog>
   );
 }

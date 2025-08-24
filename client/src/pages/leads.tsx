@@ -24,6 +24,7 @@ import LeadForm from "@/components/leads/lead-form";
 import CSVImport from "@/components/leads/csv-import";
 import AIEmailGenerator from "@/components/email/ai-email-generator";
 import { Edit, Trash2, Search, Plus, Upload, Download, Mail } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 import type { Lead } from "@shared/schema";
 
 export default function Leads() {
@@ -34,6 +35,7 @@ export default function Leads() {
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
   const [showEmailGenerator, setShowEmailGenerator] = useState(false);
   const [selectedLeadForEmail, setSelectedLeadForEmail] = useState<Lead | null>(null);
+  const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>([]);
   const [, setLocation] = useLocation();
 
   const { toast } = useToast();
@@ -75,6 +77,20 @@ export default function Leads() {
         variant: "destructive",
       });
     },
+  });
+
+  const bulkDeleteMutation = useMutation({
+    mutationFn: async (ids: string[]) => {
+      await Promise.all(ids.map(id => apiRequest("DELETE", `/api/leads/${id}`)));
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
+      setSelectedLeadIds([]);
+      toast({ title: "Success", description: "Selected leads deleted" });
+    },
+    onError: () => {
+      toast({ title: "Error", description: "Failed to delete selected leads", variant: "destructive" });
+    }
   });
 
   const handleExport = async () => {
@@ -127,6 +143,44 @@ export default function Leads() {
         return "bg-gray-100 text-gray-800";
       default:
         return "bg-gray-100 text-gray-800";
+    }
+  };
+
+  const toggleSelect = (id: string) => {
+    setSelectedLeadIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]);
+  };
+
+  const selectAllVisible = () => {
+    const ids = filteredLeads.map(l => l.id);
+    setSelectedLeadIds(ids);
+  };
+
+  const clearSelection = () => setSelectedLeadIds([]);
+
+  const handleExportSelected = async () => {
+    try {
+      const response = await fetch('/api/leads/export', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids: selectedLeadIds }),
+      });
+
+      if (!response.ok) throw new Error('Export failed');
+
+      const blob = await response.blob();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'selected-leads.csv';
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+
+      toast({ title: 'Success', description: 'Selected leads exported' });
+    } catch (err) {
+      toast({ title: 'Error', description: 'Failed to export selected leads', variant: 'destructive' });
     }
   };
 
@@ -203,6 +257,27 @@ export default function Leads() {
                     className="w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4 mr-2" />
+                  {selectedLeadIds.length > 0 && (
+                    <>
+                      <Button
+                        variant="outline"
+                        onClick={() => handleExportSelected()}
+                        className="w-full sm:w-auto"
+                      >
+                        <Download className="h-4 w-4 mr-2" />
+                        Export Selected
+                      </Button>
+                      <Button
+                        variant="destructive"
+                        onClick={() => bulkDeleteMutation.mutate(selectedLeadIds)}
+                        className="w-full sm:w-auto"
+                        disabled={bulkDeleteMutation.isPending}
+                      >
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete Selected
+                      </Button>
+                    </>
+                  )}
                     Export CSV
                   </Button>
                   <Button
@@ -229,6 +304,13 @@ export default function Leads() {
                     <Table className="min-w-[600px]">
                       <TableHeader>
                         <TableRow>
+                          <TableHead className="text-xs sm:text-sm w-8">
+                            <Checkbox
+                              checked={filteredLeads.length > 0 && selectedLeadIds.length === filteredLeads.length}
+                              onCheckedChange={(val) => (val ? selectAllVisible() : clearSelection())}
+                              aria-label="Select all leads"
+                            />
+                          </TableHead>
                           <TableHead className="text-xs sm:text-sm">Lead</TableHead>
                           <TableHead className="text-xs sm:text-sm">Company</TableHead>
                           <TableHead className="text-xs sm:text-sm">Status</TableHead>
@@ -239,6 +321,13 @@ export default function Leads() {
                       <TableBody>
                         {filteredLeads.map((lead: Lead) => (
                           <TableRow key={lead.id}>
+                            <TableCell>
+                              <Checkbox
+                                checked={selectedLeadIds.includes(lead.id)}
+                                onCheckedChange={() => toggleSelect(lead.id)}
+                                aria-label={`Select lead ${lead.name}`}
+                              />
+                            </TableCell>
                             <TableCell>
                               <div className="flex items-center">
                                 <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
@@ -337,6 +426,11 @@ export default function Leads() {
                           <span className="text-xs text-muted-foreground">{lead.lastContactDate ? new Date(lead.lastContactDate).toLocaleDateString() : "Never"}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
+                          <Checkbox
+                            checked={selectedLeadIds.includes(lead.id)}
+                            onCheckedChange={() => toggleSelect(lead.id)}
+                            aria-label={`Select lead ${lead.name}`}
+                          />
                           <Button
                             variant="ghost"
                             size="sm"
