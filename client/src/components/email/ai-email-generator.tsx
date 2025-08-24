@@ -270,7 +270,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-0 sm:p-4">
-      <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-4xl rounded-t-lg sm:rounded-lg overflow-hidden sm:overflow-auto">
+      <div className="bg-card w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-4xl rounded-t-lg sm:rounded-lg overflow-hidden sm:overflow-auto">
         <div className="h-full flex flex-col">
           <div className="flex items-center justify-between p-4 border-b sm:p-6">
             <h2 className="text-lg sm:text-xl font-semibold flex items-center">
@@ -290,7 +290,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
             {/* Lead Selection */}
             {!preselectedLead && (!preselectedLeads || preselectedLeads.length === 0) && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Select Leads</label>
+                <label className="text-sm font-medium text-foreground">Select Leads</label>
                 <Popover open={leadSelectorOpen} onOpenChange={setLeadSelectorOpen}>
                   <PopoverTrigger asChild>
                     <Button
@@ -300,8 +300,8 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
                       className="w-full justify-between h-auto min-h-[40px] p-3"
                     >
                       <div className="flex flex-wrap gap-1">
-                        {selectedLeads.length === 0 ? (
-                          <span className="text-gray-500">Select leads...</span>
+                          {selectedLeads.length === 0 ? (
+                          <span className="text-muted-foreground">Select leads...</span>
                         ) : (
                           <>
                             {selectedLeads.slice(0, 2).map((lead: Lead) => (
@@ -372,7 +372,7 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
                   </PopoverContent>
                 </Popover>
                 {selectedLeads.length > 0 && (
-                  <p className="text-sm text-gray-600">
+                  <p className="text-sm text-muted-foreground">
                     {selectedLeads.length} lead(s) selected
                   </p>
                 )}

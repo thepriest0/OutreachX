@@ -131,15 +131,15 @@ export default function UsersPage() {
 
   if (!canManageUsers) {
     return (
-      <div className="min-h-screen bg-gray-50 flex">
+      <div className="min-h-screen bg-background flex">
         <Sidebar />
         <main className="flex-1 overflow-auto">
           <Header title="User Management" />
           <div className="p-2 sm:p-6">
             <div className="text-center py-12">
-              <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
-              <p className="text-gray-500">Only head administrators can manage users.</p>
+                <Shield className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">Access Denied</h3>
+                <p className="text-muted-foreground">Only head administrators can manage users.</p>
             </div>
           </div>
         </main>
@@ -148,7 +148,7 @@ export default function UsersPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <Header title="User Management" />
@@ -156,8 +156,8 @@ export default function UsersPage() {
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">User Management</h1>
-                <p className="text-gray-600">Manage team members and their access levels</p>
+                  <h1 className="text-2xl font-bold text-foreground mb-2">User Management</h1>
+                  <p className="text-muted-foreground">Manage team members and their access levels</p>
               </div>
               <Dialog open={showInviteUser} onOpenChange={setShowInviteUser}>
         <DialogTrigger asChild>
@@ -222,7 +222,7 @@ export default function UsersPage() {
           {usersLoading ? (
             <div className="text-center py-12">
               <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-              <p className="text-gray-600">Loading users...</p>
+                <p className="text-muted-foreground">Loading users...</p>
             </div>
           ) : (
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -235,10 +235,10 @@ export default function UsersPage() {
                           <Users className="h-5 w-5 text-primary" />
                         </div>
                         <div className="min-w-0">
-                          <h3 className="font-semibold text-gray-900 truncate">
+                          <h3 className="font-semibold text-foreground truncate">
                             {userItem.firstName} {userItem.lastName}
                           </h3>
-                          <p className="text-sm text-gray-600 truncate">@{userItem.username}</p>
+                          <p className="text-sm text-muted-foreground truncate">@{userItem.username}</p>
                         </div>
                       </div>
                       <Badge className={`shrink-0 ${getRoleBadgeColor(userItem.role || 'designer')}`}>
@@ -248,12 +248,12 @@ export default function UsersPage() {
                     
                     <div className="space-y-2 mb-4">
                       {userItem.email && (
-                        <div className="flex items-center text-sm text-gray-600 min-w-0">
+                          <div className="flex items-center text-sm text-muted-foreground min-w-0">
                           <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
                           <span className="truncate">{userItem.email}</span>
                         </div>
                       )}
-                      <div className="flex items-center text-sm text-gray-600">
+                        <div className="flex items-center text-sm text-muted-foreground">
                         <Calendar className="h-4 w-4 mr-2" />
                         Joined {new Date(userItem.createdAt!).toLocaleDateString()}
                       </div>
@@ -316,9 +316,9 @@ export default function UsersPage() {
 
           {users?.length === 0 && !usersLoading && (
             <div className="text-center py-12">
-              <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-              <h3 className="text-lg font-medium text-gray-900 mb-2">No users yet</h3>
-              <p className="text-gray-500 mb-4">Start building your team by adding the first user</p>
+                <Users className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-medium text-foreground mb-2">No users yet</h3>
+                <p className="text-muted-foreground mb-4">Start building your team by adding the first user</p>
               <Button onClick={() => setShowInviteUser(true)}>
                 <UserPlus className="h-4 w-4 mr-2" />
                 Add First User

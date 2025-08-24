@@ -125,7 +125,7 @@ export default function ProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-background flex">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <Header title="Profile & Settings" />
@@ -136,8 +136,8 @@ export default function ProfilePage() {
                 <UserIcon className="h-6 w-6 text-blue-600" />
               </div>
               <div>
-                <h1 className="text-2xl font-bold text-gray-900">Profile & Settings</h1>
-                <p className="text-gray-600">Manage your account information and security settings</p>
+                <h1 className="text-2xl font-bold text-foreground">Profile & Settings</h1>
+                <p className="text-muted-foreground">Manage your account information and security settings</p>
               </div>
             </div>
           </div>
@@ -358,28 +358,28 @@ export default function ProfilePage() {
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-gray-500">Account ID</Label>
-                    <div className="p-2 bg-gray-50 rounded border text-sm text-gray-700">
+                    <div className="p-2 bg-card/50 rounded border text-sm text-muted-foreground">
                       {user?.id || "N/A"}
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-500">Role</Label>
-                    <div className="p-2 bg-gray-50 rounded border text-sm text-gray-700">
+                    <div className="p-2 bg-card/50 rounded border text-sm text-muted-foreground">
                       {user?.role ? user.role.replace('_', ' ').toUpperCase() : "N/A"}
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-500">Account Created</Label>
-                    <div className="p-2 bg-gray-50 rounded border text-sm text-gray-700">
+                    <div className="p-2 bg-card/50 rounded border text-sm text-muted-foreground">
                       {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : "N/A"}
                     </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label className="text-gray-500">Last Updated</Label>
-                    <div className="p-2 bg-gray-50 rounded border text-sm text-gray-700">
+                    <div className="p-2 bg-card/50 rounded border text-sm text-muted-foreground">
                       {user?.updatedAt ? new Date(user.updatedAt).toLocaleDateString() : "N/A"}
                     </div>
                   </div>

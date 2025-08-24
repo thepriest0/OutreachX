@@ -231,19 +231,19 @@ export default function Campaigns() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-primary rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Mail className="h-8 w-8 text-primary-foreground animate-pulse" />
           </div>
-          <p className="text-gray-600">Loading campaigns...</p>
+          <p className="text-muted-foreground">Loading campaigns...</p>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <Header 
@@ -251,11 +251,11 @@ export default function Campaigns() {
           subtitle="Manage your email outreach campaigns and track performance."
         />
 
-        <div className="p-2 sm:p-6">
+          <div className="p-2 sm:p-6">
           {/* Action Bar */}
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
-            <div className="flex items-center space-x-3">
-              <h3 className="hidden sm:block text-lg font-medium text-gray-900">Campaign Management</h3>
+              <div className="flex items-center space-x-3">
+              <h3 className="hidden sm:block text-lg font-medium text-foreground">Campaign Management</h3>
               {selectedCampaigns.length > 0 && (
                 <Badge variant="secondary">
                   {selectedCampaigns.length} selected
@@ -275,11 +275,11 @@ export default function Campaigns() {
           </div>
 
           {/* Filters and Search */}
-          <div className="bg-white rounded-lg border p-3 sm:p-4 mb-6">
+          <div className="bg-card rounded-lg border p-3 sm:p-4 mb-6">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
               <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 flex-1">
                 <div className="relative w-full sm:max-w-md">
-                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                  <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-muted-foreground h-4 w-4" />
                   <Input
                     placeholder="Search campaigns..."
                     value={searchTerm}
@@ -361,7 +361,7 @@ export default function Campaigns() {
               <p className="text-gray-600">Loading campaigns...</p>
             </div>
           ) : (
-            <div className="space-y-4">
+      <div className="space-y-4">
               {filteredCampaigns.length > 0 && (
                 <div className="flex items-center space-x-2 mb-4">
                   <Checkbox
@@ -369,12 +369,12 @@ export default function Campaigns() {
                     onCheckedChange={handleSelectAll}
                     data-testid="checkbox-select-all"
                   />
-                  <span className="text-sm text-gray-600">Select all</span>
+        <span className="text-sm text-muted-foreground">Select all</span>
                 </div>
               )}
               
               <div className="space-y-6">
-        {filteredGroupedCampaigns.map((group) => (
+                {filteredGroupedCampaigns.map((group) => (
           <div key={group.parent.id} className="space-y-3">
                     {/* Parent Campaign */}
                       <Card className="w-full hover:shadow-md transition-shadow border-l-4 border-l-primary">
@@ -393,7 +393,7 @@ export default function Campaigns() {
                               <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
                               <div className="flex-1 min-w-0">
                                 <div className="flex items-center space-x-3 mb-2 min-w-0">
-                                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
+                                  <h3 className="text-base sm:text-lg font-semibold text-foreground truncate">
                                     {group.parent.subject}
                                   </h3>
                                   <Badge variant="outline" className="text-xs shrink-0 hidden sm:inline">
@@ -406,11 +406,11 @@ export default function Campaigns() {
                                   <Badge className={getStatusColor(group.parent.status || 'draft')}>
                                     {formatStatus(group.parent.status || 'draft')}
                                   </Badge>
-                                  <span className="text-sm text-gray-500">
+                                  <span className="text-sm text-muted-foreground">
                                     {group.parent.tone.charAt(0).toUpperCase() + group.parent.tone.slice(1)} tone
                                   </span>
                                   {group.parent.createdByUser && (
-                                    <span className="text-sm text-gray-500">
+                                    <span className="text-sm text-muted-foreground">
                                       by {group.parent.createdByUser.firstName || group.parent.createdByUser.username}
                                     </span>
                                   )}
@@ -458,19 +458,19 @@ export default function Campaigns() {
                             
                             {/* Recipient Information */}
                             {group.parent.leadId && (
-                              <div className="bg-gray-50 rounded-lg p-3 mb-4">
+                              <div className="bg-card/50 rounded-lg p-3 mb-4">
                                 {(() => {
                                   const lead = leads?.find(l => l.id === group.parent.leadId);
                                   return lead ? (
                                     <div className="flex items-center justify-between">
                                       <div className="min-w-0 pr-2">
                                         <div className="flex items-center space-x-2 min-w-0">
-                                          <span className="text-sm font-medium text-gray-900 truncate block">{lead.name}</span>
+                      <span className="text-sm font-medium text-foreground truncate block">{lead.name}</span>
                                           {lead.company && (
-                                            <span className="text-sm text-gray-500 truncate hidden sm:inline">at {lead.company}</span>
+                        <span className="text-sm text-muted-foreground truncate hidden sm:inline">at {lead.company}</span>
                                           )}
                                         </div>
-                                        <span className="text-sm text-gray-600 truncate block">{lead.email}</span>
+                      <span className="text-sm text-muted-foreground truncate block">{lead.email}</span>
                                       </div>
                                       <Badge className={`text-xs shrink-0 ${getStatusColor(lead.status || 'new')}`}>
                                         {formatStatus(lead.status || 'new')}
@@ -485,7 +485,7 @@ export default function Campaigns() {
                             
                             {/* Action Buttons */}
                             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
-                              <div className="flex items-center gap-2">
+                                  <div className="flex items-center gap-2">
                                 {group.parent.status === 'draft' && (
                                   <Button 
                                     size="sm"
@@ -525,7 +525,7 @@ export default function Campaigns() {
                               </div>
                               
                               {group.parent.createdAt && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-muted-foreground">
                                   {new Date(group.parent.createdAt).toLocaleDateString()}
                                 </span>
                               )}

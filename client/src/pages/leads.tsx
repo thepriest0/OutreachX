@@ -137,12 +137,12 @@ export default function Leads() {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center mx-auto mb-4">
             <Search className="h-8 w-8 text-white animate-pulse" />
           </div>
-          <p className="text-gray-600">Loading leads...</p>
+          <p className="text-muted-foreground">Loading leads...</p>
         </div>
       </div>
     );
@@ -151,7 +151,7 @@ export default function Leads() {
 
 
   return (
-    <div className="flex h-screen bg-gray-50">
+    <div className="flex h-screen bg-background">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <Header 
@@ -161,7 +161,7 @@ export default function Leads() {
 
         <div className="p-2 pt-4 sm:p-6 sm:pt-6">
           <Card>
-            <CardContent className="p-2 sm:p-6">
+              <CardContent className="p-2 sm:p-6">
               {/* Actions Bar */}
               <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
                 <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4 flex-wrap">
@@ -247,21 +247,21 @@ export default function Leads() {
                                   </span>
                                 </div>
                                 <div className="ml-3">
-                                  <p className="text-xs sm:text-sm font-medium text-gray-900">{lead.name}</p>
-                                  <p className="text-[10px] sm:text-xs text-gray-500">{lead.role || 'Contact'}</p>
+                                  <p className="text-xs sm:text-sm font-medium text-foreground">{lead.name}</p>
+                                  <p className="text-[10px] sm:text-xs text-muted-foreground">{lead.role || 'Contact'}</p>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <p className="text-xs sm:text-sm text-gray-900">{lead.company}</p>
-                              <p className="text-[10px] sm:text-xs text-gray-500">{lead.email}</p>
+                              <p className="text-xs sm:text-sm text-foreground">{lead.company}</p>
+                              <p className="text-[10px] sm:text-xs text-muted-foreground">{lead.email}</p>
                             </TableCell>
                             <TableCell>
                               <Badge className={getStatusColor(lead.status) + ' text-[10px] sm:text-xs px-2 py-1'}>
                                 {formatStatus(lead.status)}
                               </Badge>
                             </TableCell>
-                            <TableCell className="text-[10px] sm:text-sm text-gray-500">
+                            <TableCell className="text-[10px] sm:text-sm text-muted-foreground">
                               {lead.lastContactDate 
                                 ? new Date(lead.lastContactDate).toLocaleDateString()
                                 : "Never"
@@ -272,7 +272,7 @@ export default function Leads() {
                                 <Button
                                   variant="ghost"
                                   size="sm"
-                                  className="h-8 w-8 p-0 hover:bg-blue-100"
+                                  className="h-8 w-8 p-0 hover:bg-card/50"
                                   onClick={() => {
                                     setSelectedLeadForEmail(lead);
                                     setShowEmailGenerator(true);
@@ -292,7 +292,7 @@ export default function Leads() {
                                   }}
                                   data-testid={`button-edit-${lead.id}`}
                                 >
-                                  <Edit className="h-4 w-4 text-gray-600" />
+                                  <Edit className="h-4 w-4 text-muted-foreground" />
                                 </Button>
                                 <Button
                                   variant="ghost"
@@ -314,7 +314,7 @@ export default function Leads() {
                   {/* Mobile Cards */}
                   <div className="sm:hidden flex flex-col gap-3">
                     {filteredLeads.map((lead: Lead) => (
-                      <div key={lead.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-3 border border-gray-200">
+                      <div key={lead.id} className="bg-card rounded-lg shadow-sm p-4 flex flex-col gap-3 border border-border">
                         <div className="flex items-center gap-3">
                           <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
                             <span className="text-gray-700 text-base font-semibold">
@@ -322,19 +322,19 @@ export default function Leads() {
                             </span>
                           </div>
                           <div className="flex-1">
-                            <p className="text-base font-medium text-gray-900 leading-tight">{lead.name}</p>
-                            <p className="text-xs text-gray-500">{lead.role || 'Contact'}</p>
+                            <p className="text-base font-medium text-foreground leading-tight">{lead.name}</p>
+                            <p className="text-xs text-muted-foreground">{lead.role || 'Contact'}</p>
                           </div>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <p className="text-sm text-gray-900 font-medium">{lead.company}</p>
-                          <p className="text-xs text-gray-500">{lead.email}</p>
+                          <p className="text-sm text-foreground font-medium">{lead.company}</p>
+                          <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                         <div className="flex items-center gap-2 mt-1">
                           <Badge className={getStatusColor(lead.status) + ' text-xs px-2 py-1 font-medium'}>
                             {formatStatus(lead.status)}
                           </Badge>
-                          <span className="text-xs text-gray-400">{lead.lastContactDate ? new Date(lead.lastContactDate).toLocaleDateString() : "Never"}</span>
+                          <span className="text-xs text-muted-foreground">{lead.lastContactDate ? new Date(lead.lastContactDate).toLocaleDateString() : "Never"}</span>
                         </div>
                         <div className="flex items-center gap-2 mt-2">
                           <Button
@@ -379,11 +379,11 @@ export default function Leads() {
                 </>
               ) : (
                 <div className="text-center py-12">
-                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <Search className="h-8 w-8 text-gray-400" />
+                  <div className="w-16 h-16 bg-card/5 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <Search className="h-8 w-8 text-muted-foreground" />
                   </div>
-                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No leads found</h3>
-                  <p className="text-xs sm:text-sm text-gray-500 mb-4">
+                  <h3 className="text-base sm:text-lg font-medium text-foreground mb-2">No leads found</h3>
+                  <p className="text-xs sm:text-sm text-muted-foreground mb-4">
                     {searchQuery 
                       ? "No leads match your search criteria."
                       : "Get started by adding your first lead or importing from CSV."
