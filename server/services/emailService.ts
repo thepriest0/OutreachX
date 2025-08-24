@@ -148,8 +148,8 @@ export class EmailService {
     
     if (!trackingId) return formattedContent;
 
-    // Determine the correct base URL based on environment
-    let baseUrl;
+    // Determine the correct base URL based on environment and normalize it
+    let baseUrl = '';
     if (process.env.NODE_ENV === 'production') {
       // Use the Render app URL or a custom domain
       baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://outreachx.onrender.com';
@@ -157,18 +157,25 @@ export class EmailService {
       // Development environment
       baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
     }
-    
+
+    // Ensure protocol is present (default to http for dev, https for prod)
+    if (!/^https?:\/\//i.test(baseUrl)) {
+      baseUrl = (process.env.NODE_ENV === 'production' ? 'https://' : 'http://') + baseUrl;
+    }
+    // Remove any trailing slashes to avoid '//' when concatenating paths
+    baseUrl = baseUrl.replace(/\/+$/, '');
+
     // Add invisible tracking pixel for open tracking
     const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" alt="" />`;
 
-    // Add tracking to links
+    // Add tracking to links (normalize link replacement to use encoded original URL)
     const trackedContent = formattedContent.replace(
       /<a\s+href="([^"]+)"/g,
-      `<a href="${baseUrl}/api/email/track-click/${trackingId}?url=$1"`
+      (match: string, p1: string) => `<a href="${baseUrl}/api/email/track-click/${trackingId}?url=${encodeURIComponent(p1)}"`
     );
 
     console.log(`📧 Adding tracking pixel: ${baseUrl}/api/email/track-open/${trackingId}`);
-    
+
     return trackedContent + trackingPixel;
   }
 

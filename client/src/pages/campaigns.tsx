@@ -814,13 +814,13 @@ export default function Campaigns() {
           </div>
         )}
 
-        {/* Edit/View Campaign Modal */}
+        {/* Edit/View Campaign Modal (use Follow-up Scheduler layout) */}
         {editingCampaign && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-2xl w-full max-h-[90vh] overflow-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-4xl rounded-t-lg sm:rounded-lg overflow-hidden sm:overflow-auto">
+              <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-semibold">
                     {isEditMode ? 'Edit Campaign' : 'Campaign Details'}
                   </h2>
                   <Button
@@ -830,111 +830,114 @@ export default function Campaigns() {
                     ×
                   </Button>
                 </div>
-                <div className="space-y-4">
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Subject</label>
-                    {isEditMode ? (
-                      <Input
-                        value={editSubject}
-                        onChange={(e) => setEditSubject(e.target.value)}
-                        placeholder="Email subject"
-                      />
-                    ) : (
-                      <div className="p-3 bg-gray-50 rounded border">
-                        {editingCampaign.subject}
+
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                  <div className="space-y-4">
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Subject</label>
+                      {isEditMode ? (
+                        <Input
+                          value={editSubject}
+                          onChange={(e) => setEditSubject(e.target.value)}
+                          placeholder="Email subject"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded border">
+                          {editingCampaign.subject}
+                        </div>
+                      )}
+                    </div>
+
+                    {/* Recipient Information */}
+                    {editingCampaign.leadId && (
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Recipient</label>
+                        <div className="p-3 bg-gray-50 rounded border">
+                          {(() => {
+                            const lead = leads?.find(l => l.id === editingCampaign.leadId);
+                            return lead ? (
+                              <div className="space-y-1">
+                                <div className="font-medium text-gray-900">{lead.name}</div>
+                                <div className="text-sm text-gray-600">{lead.email}</div>
+                                {lead.company && (
+                                  <div className="text-sm text-gray-500">{lead.company}</div>
+                                )}
+                                {lead.role && (
+                                  <div className="text-sm text-gray-500">{lead.role}</div>
+                                )}
+                              </div>
+                            ) : (
+                              <span className="text-gray-500">Unknown recipient</span>
+                            );
+                          })()}
+                        </div>
+                      </div>
+                    )}
+
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Content</label>
+                      {isEditMode ? (
+                        <Textarea
+                          value={editContent}
+                          onChange={(e) => setEditContent(e.target.value)}
+                          placeholder="Email content"
+                          className="min-h-[200px]"
+                        />
+                      ) : (
+                        <div className="p-3 bg-gray-50 rounded border min-h-[200px] whitespace-pre-wrap">
+                          {editingCampaign.content}
+                        </div>
+                      )}
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Status</label>
+                        <Badge className={getStatusColor(editingCampaign.status || 'draft')}>
+                          {formatStatus(editingCampaign.status || 'draft')}
+                        </Badge>
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Tone</label>
+                        <div className="p-2 bg-gray-50 rounded border">
+                          {editingCampaign.tone}
+                        </div>
+                      </div>
+                    </div>
+                    {editingCampaign.sentAt && (
+                      <div>
+                        <label className="block text-sm font-medium mb-1">Sent At</label>
+                        <div className="p-2 bg-gray-50 rounded border">
+                          {new Date(editingCampaign.sentAt).toLocaleString()}
+                        </div>
+                      </div>
+                    )}
+                    <div>
+                      <label className="block text-sm font-medium mb-1">Created By</label>
+                      <div className="p-2 bg-gray-50 rounded border">
+                        {editingCampaign.createdByUser ? 
+                          `${editingCampaign.createdByUser.firstName || ''} ${editingCampaign.createdByUser.lastName || ''}`.trim() || 
+                          editingCampaign.createdByUser.username || 'Unknown User'
+                          : 'Unknown User'
+                        }
+                      </div>
+                    </div>
+                    {isEditMode && (
+                      <div className="flex justify-end space-x-3 pt-4 border-t">
+                        <Button
+                          variant="outline"
+                          onClick={() => { setIsEditMode(false); setEditingCampaign(null); }}
+                        >
+                          Cancel
+                        </Button>
+                        <Button
+                          onClick={handleUpdateCampaign}
+                          disabled={updateCampaignMutation.isPending}
+                        >
+                          {updateCampaignMutation.isPending ? "Saving..." : "Save Changes"}
+                        </Button>
                       </div>
                     )}
                   </div>
-                  
-                  {/* Recipient Information */}
-                  {editingCampaign.leadId && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Recipient</label>
-                      <div className="p-3 bg-gray-50 rounded border">
-                        {(() => {
-                          const lead = leads?.find(l => l.id === editingCampaign.leadId);
-                          return lead ? (
-                            <div className="space-y-1">
-                              <div className="font-medium text-gray-900">{lead.name}</div>
-                              <div className="text-sm text-gray-600">{lead.email}</div>
-                              {lead.company && (
-                                <div className="text-sm text-gray-500">{lead.company}</div>
-                              )}
-                              {lead.role && (
-                                <div className="text-sm text-gray-500">{lead.role}</div>
-                              )}
-                            </div>
-                          ) : (
-                            <span className="text-gray-500">Unknown recipient</span>
-                          );
-                        })()}
-                      </div>
-                    </div>
-                  )}
-                  
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Content</label>
-                    {isEditMode ? (
-                      <Textarea
-                        value={editContent}
-                        onChange={(e) => setEditContent(e.target.value)}
-                        placeholder="Email content"
-                        className="min-h-[200px]"
-                      />
-                    ) : (
-                      <div className="p-3 bg-gray-50 rounded border min-h-[200px] whitespace-pre-wrap">
-                        {editingCampaign.content}
-                      </div>
-                    )}
-                  </div>
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Status</label>
-                      <Badge className={getStatusColor(editingCampaign.status || 'draft')}>
-                        {formatStatus(editingCampaign.status || 'draft')}
-                      </Badge>
-                    </div>
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Tone</label>
-                      <div className="p-2 bg-gray-50 rounded border">
-                        {editingCampaign.tone}
-                      </div>
-                    </div>
-                  </div>
-                  {editingCampaign.sentAt && (
-                    <div>
-                      <label className="block text-sm font-medium mb-1">Sent At</label>
-                      <div className="p-2 bg-gray-50 rounded border">
-                        {new Date(editingCampaign.sentAt).toLocaleString()}
-                      </div>
-                    </div>
-                  )}
-                  <div>
-                    <label className="block text-sm font-medium mb-1">Created By</label>
-                    <div className="p-2 bg-gray-50 rounded border">
-                      {editingCampaign.createdByUser ? 
-                        `${editingCampaign.createdByUser.firstName || ''} ${editingCampaign.createdByUser.lastName || ''}`.trim() || 
-                        editingCampaign.createdByUser.username || 'Unknown User'
-                        : 'Unknown User'
-                      }
-                    </div>
-                  </div>
-                  {isEditMode && (
-                    <div className="flex justify-end space-x-3 pt-4 border-t">
-                      <Button
-                        variant="outline"
-                        onClick={() => { setIsEditMode(false); setEditingCampaign(null); }}
-                      >
-                        Cancel
-                      </Button>
-                      <Button
-                        onClick={handleUpdateCampaign}
-                        disabled={updateCampaignMutation.isPending}
-                      >
-                        {updateCampaignMutation.isPending ? "Saving..." : "Save Changes"}
-                      </Button>
-                    </div>
-                  )}
                 </div>
               </div>
             </div>

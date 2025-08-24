@@ -105,15 +105,26 @@ export class GmailProvider implements EmailProvider {
 
   private addTracking(content: string, trackingId?: string): string {
     if (!trackingId) return content;
+    // Determine and normalize base URL similar to emailService
+    let baseUrl = '';
+    if (process.env.NODE_ENV === 'production') {
+      baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://outreachx.onrender.com';
+    } else {
+      baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+    }
+
+    if (!/^https?:\/\//i.test(baseUrl)) {
+      baseUrl = (process.env.NODE_ENV === 'production' ? 'https://' : 'http://') + baseUrl;
+    }
+    baseUrl = baseUrl.replace(/\/+$/, '');
 
     // Add tracking pixel for open tracking
-    const trackingPixel = `<img src="${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" />`;
+    const trackingPixel = `<img src="${baseUrl}/api/email/track-open/${trackingId}" width="1" height="1" style="display:none;" />`;
 
-    // Add tracking to links
-    const trackedContent = content.replace(
-      /<a\s+href="([^"]+)"/g,
-      `<a href="${process.env.REPLIT_DOMAINS?.split(',')[0] || 'localhost:5000'}/api/email/track-click/${trackingId}?url=$1"`
-    );
+    // Add tracking to links (encode original URL)
+    const trackedContent = content.replace(/<a\s+href=\"([^\"]+)\"/g, (match: string, p1: string) => {
+      return `<a href="${baseUrl}/api/email/track-click/${trackingId}?url=${encodeURIComponent(p1)}"`;
+    });
 
     return trackedContent + trackingPixel;
   }
