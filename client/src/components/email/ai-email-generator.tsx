@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { useQuery, useMutation } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -32,6 +32,7 @@ interface AIEmailGeneratorProps {
 }
 
 export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, leads: preselectedLeads }: AIEmailGeneratorProps) {
+  const queryClient = useQueryClient();
   const [selectedLeadIds, setSelectedLeadIds] = useState<string[]>(preselectedLead ? [preselectedLead.id] : []);
   const [selectedTone, setSelectedTone] = useState<"professional" | "casual" | "direct">("professional");
   const [generatedEmail, setGeneratedEmail] = useState<EmailGenerationResponse | null>(null);
@@ -115,7 +116,8 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
         title: "Success",
         description: `Email campaigns created for ${selectedLeadIds.length} lead(s)`,
       });
-      onSuccess();
+  queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+  onSuccess();
     },
     onError: (error) => {
       if (false) {
@@ -206,7 +208,8 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
         title: "Success",
         description: `Emails sent successfully to ${selectedLeadIds.length} lead(s)!`,
       });
-      onSuccess();
+  queryClient.invalidateQueries({ queryKey: ["/api/campaigns"] });
+  onSuccess();
     },
     onError: (error) => {
       if (false) {
