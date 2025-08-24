@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { useAuth } from "@/hooks/use-auth";
+import { useIsMobile } from "@/hooks/use-mobile";
+import { useMobileSidebar } from "@/hooks/use-mobile-sidebar";
 import { 
   LayoutDashboard, 
   Users, 
@@ -19,8 +21,17 @@ import {
   Send,
   Calendar,
   ChevronLeft,
-  ChevronRight
+  ChevronRight,
+  Menu
 } from "lucide-react";
+import {
+  Sheet,
+  SheetContent,
+  SheetDescription,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from "@/components/ui/sheet";
 
 const navigation = [
   {
@@ -91,6 +102,8 @@ export default function Sidebar() {
   const [location] = useLocation();
   const [collapsed, setCollapsed] = useState(false);
   const { user } = useAuth();
+  const isMobile = useIsMobile();
+  const { mobileOpen, setMobileOpen } = useMobileSidebar();
   
   // Filter navigation items based on user role
   const canManageUsers = user?.role === "head_admin";
@@ -98,15 +111,15 @@ export default function Sidebar() {
     !item.adminOnly || canManageUsers
   );
 
-  return (
-    <div className={cn(
-      "h-screen bg-card border-r border-border flex flex-col transition-all duration-300 relative",
-      collapsed ? "w-16" : "w-64"
-    )}>
+  const SidebarContent = () => (
+    <>
       {/* Header */}
-      <div className="p-4 border-b border-border">
+      <div className={cn(
+        "p-4 border-b border-border",
+        isMobile ? "px-4" : collapsed ? "px-2" : "px-4"
+      )}>
         <div className="flex items-center justify-between">
-          {!collapsed && (
+          {(!collapsed || isMobile) && (
             <div className="flex items-center space-x-2">
               <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
                 <TrendingUp className="h-4 w-4 text-primary-foreground" />
@@ -118,19 +131,21 @@ export default function Sidebar() {
             </div>
           )}
 
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setCollapsed(!collapsed)}
-            className="h-8 w-8 shrink-0"
-            data-testid="button-toggle-sidebar"
-          >
-            {collapsed ? (
-              <ChevronRight className="h-4 w-4" />
-            ) : (
-              <ChevronLeft className="h-4 w-4" />
-            )}
-          </Button>
+          {!isMobile && (
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setCollapsed(!collapsed)}
+              className="h-8 w-8 shrink-0"
+              data-testid="button-toggle-sidebar"
+            >
+              {collapsed ? (
+                <ChevronRight className="h-4 w-4" />
+              ) : (
+                <ChevronLeft className="h-4 w-4" />
+              )}
+            </Button>
+          )}
         </div>
       </div>
 
@@ -154,14 +169,15 @@ export default function Sidebar() {
                     : "text-muted-foreground"
                 )}
                 data-testid={`link-nav-${item.name.toLowerCase()}`}
+                onClick={() => isMobile && setMobileOpen(false)}
               >
                 <Icon className={cn(
                   "shrink-0 transition-transform duration-200",
-                  collapsed ? "h-5 w-5" : "h-4 w-4 mr-3",
+                  (collapsed && !isMobile) ? "h-5 w-5" : "h-4 w-4 mr-3",
                   "group-hover:scale-110"
                 )} />
 
-                {!collapsed && (
+                {(!collapsed || isMobile) && (
                   <div className="flex-1 min-w-0">
                     <div className="font-medium">{item.name}</div>
                     <div className="text-xs opacity-75 truncate">{item.description}</div>
@@ -172,7 +188,7 @@ export default function Sidebar() {
           })}
         </nav>
 
-        {!collapsed && (
+        {(!collapsed || isMobile) && (
           <>
             <Separator className="mx-4 my-4" />
 
@@ -195,6 +211,7 @@ export default function Sidebar() {
                         "text-left"
                       )}
                       data-testid={`button-quick-${action.name.toLowerCase().replace(/\s+/g, '-')}`}
+                      onClick={() => isMobile && setMobileOpen(false)}
                     >
                       <Icon className="h-4 w-4 mr-3 shrink-0 text-muted-foreground group-hover:text-foreground transition-colors" />
                       <div className="flex-1 min-w-0">
@@ -228,6 +245,31 @@ export default function Sidebar() {
           </>
         )}
       </div>
+    </>
+  );
+
+  if (isMobile) {
+    return (
+      <Sheet open={mobileOpen} onOpenChange={setMobileOpen}>
+        <SheetContent side="left" className="w-72 p-0">
+          <SheetHeader className="sr-only">
+            <SheetTitle>Navigation</SheetTitle>
+            <SheetDescription>Main navigation menu</SheetDescription>
+          </SheetHeader>
+          <div className="h-full bg-card border-r border-border flex flex-col">
+            <SidebarContent />
+          </div>
+        </SheetContent>
+      </Sheet>
+    );
+  }
+
+  return (
+    <div className={cn(
+      "h-screen bg-card border-r border-border flex flex-col transition-all duration-300 relative sticky top-0",
+      collapsed ? "w-16" : "w-64"
+    )}>
+      <SidebarContent />
     </div>
   );
 }

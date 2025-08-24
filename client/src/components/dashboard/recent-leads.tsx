@@ -87,8 +87,8 @@ function LeadRow({ lead }: { lead: Lead }) {
   };
 
   return (
-    <div className="flex items-center space-x-4 py-3 border-b border-border/50 last:border-0">
-      <Avatar className="h-10 w-10">
+    <div className="flex items-start space-x-3 sm:space-x-4 py-3 border-b border-border/50 last:border-0">
+      <Avatar className="h-8 w-8 sm:h-10 sm:w-10 shrink-0 mt-0.5">
         <AvatarImage src={lead.avatar} alt={lead.name} />
         <AvatarFallback className="text-xs font-medium">
           {getInitials(lead.name)}
@@ -96,66 +96,73 @@ function LeadRow({ lead }: { lead: Lead }) {
       </Avatar>
       
       <div className="flex-1 min-w-0">
-        <div className="flex items-center space-x-2">
-          <h4 className="text-sm font-medium truncate">{lead.name}</h4>
-          <Badge className={`text-xs px-1.5 py-0.5 ${status.className}`}>
-            <StatusIcon className="h-3 w-3 mr-1" />
-            {status.label}
-          </Badge>
-        </div>
-        
-        <div className="flex items-center space-x-4 mt-1 text-xs text-muted-foreground">
-          <span className="truncate">{lead.email}</span>
-          <span>•</span>
-          <span className="truncate">{lead.company}</span>
-          {lead.role && (
-            <>
-              <span>•</span>
-              <span className="truncate">{lead.role}</span>
-            </>
-          )}
-        </div>
-        
-        <div className="text-xs text-muted-foreground mt-1">
-          {lead.lastContactDate ? (
-            <>Last contact: {formatDate(lead.lastContactDate)}</>
-          ) : (
-            <>Added: {formatDate(lead.createdAt)}</>
-          )}
+        <div className="flex items-start justify-between">
+          <div className="min-w-0 flex-1">
+            <div className="flex items-center space-x-2 mb-1">
+              <h4 className="text-sm font-medium truncate">{lead.name}</h4>
+              <Badge className={`text-xs px-1.5 py-0.5 ${status.className} shrink-0 hidden sm:flex`}>
+                <StatusIcon className="h-3 w-3 mr-1" />
+                {status.label}
+              </Badge>
+            </div>
+            
+            {/* Mobile status badge */}
+            <Badge className={`text-xs px-1.5 py-0.5 ${status.className} mb-2 sm:hidden`}>
+              <StatusIcon className="h-3 w-3 mr-1" />
+              {status.label}
+            </Badge>
+            
+            <div className="space-y-1">
+              <div className="text-xs text-muted-foreground truncate">{lead.email}</div>
+              <div className="text-xs text-muted-foreground">
+                <span className="truncate">{lead.company}</span>
+                {lead.role && (
+                  <span className="hidden sm:inline"> • {lead.role}</span>
+                )}
+              </div>
+              <div className="text-xs text-muted-foreground">
+                {lead.lastContactDate ? (
+                  <>Last contact: {formatDate(lead.lastContactDate)}</>
+                ) : (
+                  <>Added: {formatDate(lead.createdAt)}</>
+                )}
+              </div>
+            </div>
+          </div>
+          
+          <DropdownMenu>
+            <DropdownMenuTrigger asChild>
+              <Button variant="ghost" size="sm" className="shrink-0" data-testid={`button-lead-menu-${lead.id}`}>
+                <MoreHorizontal className="h-4 w-4" />
+              </Button>
+            </DropdownMenuTrigger>
+            <DropdownMenuContent align="end">
+              <DropdownMenuLabel>Actions</DropdownMenuLabel>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem data-testid={`menu-item-view-${lead.id}`}>
+                <Eye className="mr-2 h-4 w-4" />
+                <span>View Details</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem data-testid={`menu-item-email-${lead.id}`}>
+                <Send className="mr-2 h-4 w-4" />
+                <span>Send Email</span>
+              </DropdownMenuItem>
+              <DropdownMenuItem data-testid={`menu-item-edit-${lead.id}`}>
+                <Edit3 className="mr-2 h-4 w-4" />
+                <span>Edit Lead</span>
+              </DropdownMenuItem>
+              <DropdownMenuSeparator />
+              <DropdownMenuItem 
+                className="text-destructive focus:text-destructive"
+                data-testid={`menu-item-delete-${lead.id}`}
+              >
+                <Trash2 className="mr-2 h-4 w-4" />
+                <span>Delete Lead</span>
+              </DropdownMenuItem>
+            </DropdownMenuContent>
+          </DropdownMenu>
         </div>
       </div>
-      
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="sm" data-testid={`button-lead-menu-${lead.id}`}>
-            <MoreHorizontal className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuLabel>Actions</DropdownMenuLabel>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem data-testid={`menu-item-view-${lead.id}`}>
-            <Eye className="mr-2 h-4 w-4" />
-            <span>View Details</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem data-testid={`menu-item-email-${lead.id}`}>
-            <Send className="mr-2 h-4 w-4" />
-            <span>Send Email</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem data-testid={`menu-item-edit-${lead.id}`}>
-            <Edit3 className="mr-2 h-4 w-4" />
-            <span>Edit Lead</span>
-          </DropdownMenuItem>
-          <DropdownMenuSeparator />
-          <DropdownMenuItem 
-            className="text-destructive focus:text-destructive"
-            data-testid={`menu-item-delete-${lead.id}`}
-          >
-            <Trash2 className="mr-2 h-4 w-4" />
-            <span>Delete Lead</span>
-          </DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
     </div>
   );
 }

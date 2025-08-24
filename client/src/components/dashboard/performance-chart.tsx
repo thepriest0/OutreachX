@@ -38,7 +38,7 @@ function EmailTrendsChart({ data }: { data: PerformanceData["emailsSent"] }) {
   if (!data.length) return null;
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-60 sm:h-64 md:h-72 w-full px-2 md:px-0">
       <ResponsiveContainer width="100%" height="100%">
         <LineChart data={data}>
           <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -75,7 +75,7 @@ function ResponseRateChart({ data }: { data: PerformanceData["responseRates"] })
   if (!data.length) return null;
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-60 sm:h-64 md:h-72 w-full px-2 md:px-0">
       <ResponsiveContainer width="100%" height="100%">
         <BarChart data={data}>
           <CartesianGrid strokeDasharray="3 3" className="opacity-30" />
@@ -109,7 +109,7 @@ function LeadStatusChart({ data }: { data: PerformanceData["leadsByStatus"] }) {
   if (!data.length) return null;
 
   return (
-    <div className="h-64 w-full">
+    <div className="h-60 sm:h-64 md:h-72 w-full flex items-center justify-center px-2 md:px-0">
       <ResponsiveContainer width="100%" height="100%">
         <PieChart>
           <Pie
@@ -178,12 +178,12 @@ export default function PerformanceChart() {
       <Card className="border-destructive/50">
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <CardTitle className="flex items-center space-x-2">
                 <BarChart3 className="h-5 w-5 text-destructive" />
                 <span>Performance Analytics</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 Unable to load performance data
               </CardDescription>
             </div>
@@ -192,8 +192,10 @@ export default function PerformanceChart() {
               size="sm"
               onClick={() => refetch()}
               data-testid="button-retry-performance"
+              className="shrink-0"
             >
               <RefreshCw className="h-4 w-4" />
+              <span className="hidden sm:inline ml-2">Retry</span>
             </Button>
           </div>
         </CardHeader>
@@ -267,22 +269,22 @@ export default function PerformanceChart() {
   return (
     <Card className="card-hover" data-testid="performance-chart-card">
       <CardHeader>
-        <div className="flex items-center justify-between">
+        <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
           <div>
-            <CardTitle className="flex items-center space-x-2">
+            <CardTitle className="flex items-center space-x-2 text-base sm:text-lg">
               <BarChart3 className="h-5 w-5 text-primary" />
               <span>Performance Analytics</span>
               <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
                 Live
               </Badge>
             </CardTitle>
-            <CardDescription>
+            <CardDescription className="text-xs sm:text-sm">
               Track your outreach campaign performance over time
             </CardDescription>
           </div>
-          <div className="flex items-center space-x-2">
+          <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-2">
             <Select value={chartType} onValueChange={(value: any) => setChartType(value)}>
-              <SelectTrigger className="w-40" data-testid="select-chart-type">
+              <SelectTrigger className="w-full sm:w-40" data-testid="select-chart-type">
                 <SelectValue />
               </SelectTrigger>
               <SelectContent>
@@ -305,13 +307,14 @@ export default function PerformanceChart() {
               onClick={() => refetch()}
               disabled={isRefetching}
               data-testid="button-refresh-performance"
+              className="w-full sm:w-auto"
             >
               <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
             </Button>
           </div>
         </div>
       </CardHeader>
-      <CardContent>
+      <CardContent className="px-0 sm:px-6">
         {renderChart()}
       </CardContent>
     </Card>

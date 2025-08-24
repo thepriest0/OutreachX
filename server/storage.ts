@@ -116,18 +116,24 @@ export class DatabaseStorage implements IStorage {
             created_at timestamp DEFAULT now()
         );
 
-        -- Add constraints safely
+        -- Add constraints safely by checking if they exist first
         DO $$ BEGIN
-            ALTER TABLE invitations ADD CONSTRAINT invitations_token_unique UNIQUE(token);
-        EXCEPTION
-            WHEN duplicate_object THEN null;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'invitations_token_unique'
+            ) THEN
+                ALTER TABLE invitations ADD CONSTRAINT invitations_token_unique UNIQUE(token);
+            END IF;
         END $$;
 
         DO $$ BEGIN
-            ALTER TABLE invitations ADD CONSTRAINT invitations_invited_by_users_id_fk 
-                FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE no action ON UPDATE no action;
-        EXCEPTION
-            WHEN duplicate_object THEN null;
+            IF NOT EXISTS (
+                SELECT 1 FROM information_schema.table_constraints 
+                WHERE constraint_name = 'invitations_invited_by_users_id_fk'
+            ) THEN
+                ALTER TABLE invitations ADD CONSTRAINT invitations_invited_by_users_id_fk 
+                    FOREIGN KEY (invited_by) REFERENCES users(id) ON DELETE no action ON UPDATE no action;
+            END IF;
         END $$;
       `);
       console.log('✅ Invitations table initialized successfully');

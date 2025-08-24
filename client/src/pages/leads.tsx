@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { useLocation } from "wouter";
 import { useAuth } from "@/hooks/use-auth";
 import { useToast } from "@/hooks/use-toast";
 import { isUnauthorizedError } from "@/lib/authUtils";
@@ -21,7 +22,8 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import LeadForm from "@/components/leads/lead-form";
 import CSVImport from "@/components/leads/csv-import";
-import { Edit, Trash2, Search, Plus, Upload, Download } from "lucide-react";
+import AIEmailGenerator from "@/components/email/ai-email-generator";
+import { Edit, Trash2, Search, Plus, Upload, Download, Mail } from "lucide-react";
 import type { Lead } from "@shared/schema";
 
 export default function Leads() {
@@ -30,6 +32,9 @@ export default function Leads() {
   const [showLeadForm, setShowLeadForm] = useState(false);
   const [showCSVImport, setShowCSVImport] = useState(false);
   const [selectedLead, setSelectedLead] = useState<Lead | null>(null);
+  const [showEmailGenerator, setShowEmailGenerator] = useState(false);
+  const [selectedLeadForEmail, setSelectedLeadForEmail] = useState<Lead | null>(null);
+  const [, setLocation] = useLocation();
 
   const { toast } = useToast();
   const { user, isLoading, isAuthenticated } = useAuth();
@@ -154,20 +159,20 @@ export default function Leads() {
           subtitle="Manage your lead database and track outreach progress."
         />
 
-        <div className="p-6">
+        <div className="p-2 pt-4 sm:p-6 sm:pt-6">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-2 sm:p-6">
               {/* Actions Bar */}
-              <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
-                <div className="flex items-center space-x-4 flex-wrap gap-2">
+              <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between mb-6">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-4 flex-wrap">
                   <Input
                     placeholder="Search leads..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
-                    className="w-64"
+                    className="w-full sm:w-64"
                   />
                   <Select value={statusFilter} onValueChange={setStatusFilter}>
-                    <SelectTrigger className="w-40">
+                    <SelectTrigger className="w-full sm:w-40">
                       <SelectValue placeholder="Filter by status" />
                     </SelectTrigger>
                     <SelectContent>
@@ -181,11 +186,12 @@ export default function Leads() {
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="flex items-center space-x-3 flex-shrink-0">
+                <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:space-x-3 flex-shrink-0 w-full sm:w-auto">
                   <Button
                     variant="outline"
                     onClick={() => setShowCSVImport(true)}
                     data-testid="button-import-csv"
+                    className="w-full sm:w-auto"
                   >
                     <Upload className="h-4 w-4 mr-2" />
                     Import CSV
@@ -194,13 +200,14 @@ export default function Leads() {
                     variant="outline"
                     onClick={handleExport}
                     data-testid="button-export-csv"
+                    className="w-full sm:w-auto"
                   >
                     <Download className="h-4 w-4 mr-2" />
                     Export CSV
                   </Button>
                   <Button
                     onClick={() => setShowLeadForm(true)}
-                    className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap"
+                    className="bg-blue-600 hover:bg-blue-700 text-white whitespace-nowrap w-full sm:w-auto"
                     data-testid="button-add-lead"
                   >
                     <Plus className="h-4 w-4 mr-2" />
@@ -209,91 +216,174 @@ export default function Leads() {
                 </div>
               </div>
 
-              {/* Leads Table */}
+              {/* Leads Table or Cards */}
               {leadsLoading ? (
                 <div className="text-center py-8">
                   <div className="w-8 h-8 border-4 border-blue-600 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
                   <p className="text-gray-600">Loading leads...</p>
                 </div>
               ) : filteredLeads && filteredLeads.length > 0 ? (
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>Lead</TableHead>
-                      <TableHead>Company</TableHead>
-                      <TableHead>Status</TableHead>
-                      <TableHead>Last Contact</TableHead>
-                      <TableHead>Actions</TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
+                <>
+                  {/* Desktop Table */}
+                  <div className="hidden sm:block overflow-x-auto">
+                    <Table className="min-w-[600px]">
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="text-xs sm:text-sm">Lead</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Company</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Status</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Last Contact</TableHead>
+                          <TableHead className="text-xs sm:text-sm">Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {filteredLeads.map((lead: Lead) => (
+                          <TableRow key={lead.id}>
+                            <TableCell>
+                              <div className="flex items-center">
+                                <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
+                                  <span className="text-white text-xs font-medium">
+                                    {lead.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                  </span>
+                                </div>
+                                <div className="ml-3">
+                                  <p className="text-xs sm:text-sm font-medium text-gray-900">{lead.name}</p>
+                                  <p className="text-[10px] sm:text-xs text-gray-500">{lead.role || 'Contact'}</p>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <p className="text-xs sm:text-sm text-gray-900">{lead.company}</p>
+                              <p className="text-[10px] sm:text-xs text-gray-500">{lead.email}</p>
+                            </TableCell>
+                            <TableCell>
+                              <Badge className={getStatusColor(lead.status) + ' text-[10px] sm:text-xs px-2 py-1'}>
+                                {formatStatus(lead.status)}
+                              </Badge>
+                            </TableCell>
+                            <TableCell className="text-[10px] sm:text-sm text-gray-500">
+                              {lead.lastContactDate 
+                                ? new Date(lead.lastContactDate).toLocaleDateString()
+                                : "Never"
+                              }
+                            </TableCell>
+                            <TableCell className="p-2 align-middle [&:has([role=checkbox])]:pr-0 bg-[#b8484800]">
+                              <div className="flex items-center space-x-1 sm:space-x-2">
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-blue-100"
+                                  onClick={() => {
+                                    setSelectedLeadForEmail(lead);
+                                    setShowEmailGenerator(true);
+                                  }}
+                                  data-testid={`button-email-${lead.id}`}
+                                  title="Send email to this lead"
+                                >
+                                  <Mail className="h-4 w-4 text-blue-600" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-gray-100"
+                                  onClick={() => {
+                                    setSelectedLead(lead);
+                                    setShowLeadForm(true);
+                                  }}
+                                  data-testid={`button-edit-${lead.id}`}
+                                >
+                                  <Edit className="h-4 w-4 text-gray-600" />
+                                </Button>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  className="h-8 w-8 p-0 hover:bg-red-100"
+                                  onClick={() => deleteMutation.mutate(lead.id)}
+                                  disabled={deleteMutation.isPending}
+                                  data-testid={`button-delete-${lead.id}`}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                  {/* Mobile Cards */}
+                  <div className="sm:hidden flex flex-col gap-3">
                     {filteredLeads.map((lead: Lead) => (
-                      <TableRow key={lead.id}>
-                        <TableCell>
-                          <div className="flex items-center">
-                            <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                              <span className="text-white text-xs font-medium">
-                                {lead.name.split(' ').map(n => n[0]).join('').toUpperCase()}
-                              </span>
-                            </div>
-                            <div className="ml-3">
-                              <p className="text-sm font-medium text-gray-900">{lead.name}</p>
-                              <p className="text-xs text-gray-500">{lead.role || 'Contact'}</p>
-                            </div>
+                      <div key={lead.id} className="bg-white rounded-lg shadow-sm p-4 flex flex-col gap-3 border border-gray-200">
+                        <div className="flex items-center gap-3">
+                          <div className="w-10 h-10 bg-gray-100 rounded-full flex items-center justify-center">
+                            <span className="text-gray-700 text-base font-semibold">
+                              {lead.name.split(' ').map(n => n[0]).join('').toUpperCase()}
+                            </span>
                           </div>
-                        </TableCell>
-                        <TableCell>
-                          <p className="text-sm text-gray-900">{lead.company}</p>
+                          <div className="flex-1">
+                            <p className="text-base font-medium text-gray-900 leading-tight">{lead.name}</p>
+                            <p className="text-xs text-gray-500">{lead.role || 'Contact'}</p>
+                          </div>
+                        </div>
+                        <div className="flex flex-col gap-1">
+                          <p className="text-sm text-gray-900 font-medium">{lead.company}</p>
                           <p className="text-xs text-gray-500">{lead.email}</p>
-                        </TableCell>
-                        <TableCell>
-                          <Badge className={getStatusColor(lead.status)}>
+                        </div>
+                        <div className="flex items-center gap-2 mt-1">
+                          <Badge className={getStatusColor(lead.status) + ' text-xs px-2 py-1 font-medium'}>
                             {formatStatus(lead.status)}
                           </Badge>
-                        </TableCell>
-                        <TableCell className="text-sm text-gray-500">
-                          {lead.lastContactDate 
-                            ? new Date(lead.lastContactDate).toLocaleDateString()
-                            : "Never"
-                          }
-                        </TableCell>
-                        <TableCell className="p-4 align-middle [&:has([role=checkbox])]:pr-0 bg-[#b8484800]">
-                          <div className="flex items-center space-x-2">
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-gray-100"
-                              onClick={() => {
-                                setSelectedLead(lead);
-                                setShowLeadForm(true);
-                              }}
-                              data-testid={`button-edit-${lead.id}`}
-                            >
-                              <Edit className="h-4 w-4 text-gray-600" />
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="h-8 w-8 p-0 hover:bg-red-100"
-                              onClick={() => deleteMutation.mutate(lead.id)}
-                              disabled={deleteMutation.isPending}
-                              data-testid={`button-delete-${lead.id}`}
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
+                          <span className="text-xs text-gray-400">{lead.lastContactDate ? new Date(lead.lastContactDate).toLocaleDateString() : "Never"}</span>
+                        </div>
+                        <div className="flex items-center gap-2 mt-2">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded hover:bg-gray-100"
+                            onClick={() => {
+                              setSelectedLeadForEmail(lead);
+                              setShowEmailGenerator(true);
+                            }}
+                            data-testid={`button-email-${lead.id}`}
+                            title="Send email to this lead"
+                          >
+                            <Mail className="h-4 w-4 text-gray-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded hover:bg-gray-100"
+                            onClick={() => {
+                              setSelectedLead(lead);
+                              setShowLeadForm(true);
+                            }}
+                            data-testid={`button-edit-${lead.id}`}
+                          >
+                            <Edit className="h-4 w-4 text-gray-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            className="h-8 w-8 p-0 rounded hover:bg-gray-100"
+                            onClick={() => deleteMutation.mutate(lead.id)}
+                            disabled={deleteMutation.isPending}
+                            data-testid={`button-delete-${lead.id}`}
+                          >
+                            <Trash2 className="h-4 w-4 text-gray-500" />
+                          </Button>
+                        </div>
+                      </div>
                     ))}
-                  </TableBody>
-                </Table>
+                  </div>
+                </>
               ) : (
                 <div className="text-center py-12">
                   <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
                     <Search className="h-8 w-8 text-gray-400" />
                   </div>
-                  <h3 className="text-lg font-medium text-gray-900 mb-2">No leads found</h3>
-                  <p className="text-gray-500 mb-4">
+                  <h3 className="text-base sm:text-lg font-medium text-gray-900 mb-2">No leads found</h3>
+                  <p className="text-xs sm:text-sm text-gray-500 mb-4">
                     {searchQuery 
                       ? "No leads match your search criteria."
                       : "Get started by adding your first lead or importing from CSV."
@@ -338,6 +428,25 @@ export default function Leads() {
             onSuccess={() => {
               queryClient.invalidateQueries({ queryKey: ["/api/leads"] });
               setShowCSVImport(false);
+            }}
+          />
+        )}
+
+        {/* AI Email Generator Modal */}
+        {showEmailGenerator && selectedLeadForEmail && (
+          <AIEmailGenerator
+            preselectedLead={selectedLeadForEmail}
+            onClose={() => {
+              setShowEmailGenerator(false);
+              setSelectedLeadForEmail(null);
+            }}
+            onSuccess={() => {
+              setShowEmailGenerator(false);
+              setSelectedLeadForEmail(null);
+              toast({
+                title: "Success",
+                description: "Email campaign created successfully!",
+              });
             }}
           />
         )}

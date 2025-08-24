@@ -29,7 +29,7 @@ function LoadingSkeleton() {
 
 function DashboardSkeleton() {
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
       <main className="flex-1 overflow-auto">
         <Header 
@@ -37,11 +37,11 @@ function DashboardSkeleton() {
           subtitle="Welcome back! Here's your outreach overview."
         />
         
-        <div className="p-8 space-y-8">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 pt-6">
           {/* Stats skeleton */}
           <div className="stats-grid">
             {Array.from({ length: 4 }).map((_, i) => (
-              <div key={i} className="bg-card rounded-xl border p-6">
+              <div key={i} className="bg-card rounded-xl border p-4 sm:p-6">
                 <div className="space-y-2">
                   <Skeleton className="h-4 w-20" />
                   <Skeleton className="h-8 w-16" />
@@ -52,7 +52,7 @@ function DashboardSkeleton() {
           </div>
 
           {/* AI Insights skeleton */}
-          <div className="bg-card rounded-xl border p-6">
+          <div className="bg-card rounded-xl border p-4 sm:p-6">
             <Skeleton className="h-6 w-32 mb-4" />
             <div className="space-y-2">
               <Skeleton className="h-4 w-full" />
@@ -76,24 +76,24 @@ export default function Dashboard() {
   }
 
   return (
-    <div className="flex h-screen bg-background">
+    <div className="flex min-h-screen bg-background">
       <Sidebar />
-      <main className="flex-1 overflow-auto">
+      <main className="flex-1 overflow-auto lg:ml-0">
         <Header 
           title="Dashboard"
           subtitle="Welcome back! Here's your outreach overview."
         />
         
-        <div className="p-8 space-y-8 max-w-7xl mx-auto">
+        <div className="p-4 sm:p-6 lg:p-8 space-y-6 lg:space-y-8 max-w-7xl mx-auto pt-6">
           <Suspense fallback={<DashboardSkeleton />}>
             <StatsCards />
             <AIInsights />
             
-            <div className="grid grid-cols-1 xl:grid-cols-3 gap-8">
-              <div className="xl:col-span-2">
+            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8">
+              <div className="lg:col-span-2 order-2 lg:order-1">
                 <RecentLeads />
               </div>
-              <div>
+              <div className="order-1 lg:order-2">
                 <QuickActions />
               </div>
             </div>

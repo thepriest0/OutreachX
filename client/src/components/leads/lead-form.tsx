@@ -138,32 +138,104 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
 
   return (
     <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[600px]">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <i className="fas fa-user-plus mr-3 text-primary-500"></i>
-            {isEditing ? "Edit Lead" : "Add New Lead"}
-          </DialogTitle>
-          <DialogDescription>
-            {isEditing 
-              ? "Update the lead information below." 
-              : "Fill in the details to add a new lead to your database."
-            }
-          </DialogDescription>
-        </DialogHeader>
+      <DialogContent className="sm:max-w-[600px] p-0 sm:p-6 w-full h-full sm:h-auto sm:rounded-lg rounded-none flex flex-col justify-center">
+        <div className="p-4 sm:p-0 h-full overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="flex items-center text-lg sm:text-xl">
+              <i className="fas fa-user-plus mr-3 text-primary-500"></i>
+              {isEditing ? "Edit Lead" : "Add New Lead"}
+            </DialogTitle>
+            <DialogDescription className="text-xs sm:text-sm">
+              {isEditing 
+                ? "Update the lead information below." 
+                : "Fill in the details to add a new lead to your database."
+              }
+            </DialogDescription>
+          </DialogHeader>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="John Doe" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="john@example.com" type="email" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-6">
+                <FormField
+                  control={form.control}
+                  name="company"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Company *</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Example Corp" {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={form.control}
+                  name="role"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Role/Title</FormLabel>
+                      <FormControl>
+                        <Input placeholder="CEO, Marketing Director, etc." {...field} className="text-sm" />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+              </div>
+
               <FormField
                 control={form.control}
-                name="name"
+                name="status"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Full Name *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="John Doe" {...field} />
-                    </FormControl>
+                    <FormLabel>Status</FormLabel>
+                    <Select onValueChange={field.onChange} defaultValue={field.value}>
+                      <FormControl>
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select lead status" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="new">New</SelectItem>
+                        <SelectItem value="contacted">Contacted</SelectItem>
+                        <SelectItem value="replied">Replied</SelectItem>
+                        <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
+                        <SelectItem value="qualified">Qualified</SelectItem>
+                        <SelectItem value="closed">Closed</SelectItem>
+                      </SelectContent>
+                    </Select>
                     <FormMessage />
                   </FormItem>
                 )}
@@ -171,125 +243,54 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
 
               <FormField
                 control={form.control}
-                name="email"
+                name="notes"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Email Address *</FormLabel>
+                    <FormLabel>Notes</FormLabel>
                     <FormControl>
-                      <Input placeholder="john@example.com" type="email" {...field} />
+                      <Textarea 
+                        placeholder="Any additional notes about this lead..."
+                        className="min-h-[100px] text-sm" />
                     </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="company"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Company *</FormLabel>
-                    <FormControl>
-                      <Input placeholder="Example Corp" {...field} />
-                    </FormControl>
+                    <FormDescription>
+                      Optional notes to help personalize your outreach
+                    </FormDescription>
                     <FormMessage />
                   </FormItem>
                 )}
               />
 
-              <FormField
-                control={form.control}
-                name="role"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Role/Title</FormLabel>
-                    <FormControl>
-                      <Input placeholder="CEO, Marketing Director, etc." {...field} />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            </div>
-
-            <FormField
-              control={form.control}
-              name="status"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Status</FormLabel>
-                  <Select onValueChange={field.onChange} defaultValue={field.value}>
-                    <FormControl>
-                      <SelectTrigger>
-                        <SelectValue placeholder="Select lead status" />
-                      </SelectTrigger>
-                    </FormControl>
-                    <SelectContent>
-                      <SelectItem value="new">New</SelectItem>
-                      <SelectItem value="contacted">Contacted</SelectItem>
-                      <SelectItem value="replied">Replied</SelectItem>
-                      <SelectItem value="follow_up_scheduled">Follow-up Scheduled</SelectItem>
-                      <SelectItem value="qualified">Qualified</SelectItem>
-                      <SelectItem value="closed">Closed</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="notes"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Notes</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Any additional notes about this lead..."
-                      className="min-h-[100px]"
-                      {...field}
-                    />
-                  </FormControl>
-                  <FormDescription>
-                    Optional notes to help personalize your outreach
-                  </FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <DialogFooter>
-              <Button
-                type="button"
-                variant="outline"
-                onClick={onClose}
-                disabled={isPending}
-              >
-                Cancel
-              </Button>
-              <Button
-                type="submit"
-                disabled={isPending}
-                className="bg-blue-600 hover:bg-blue-700 text-white"
-              >
-                {isPending ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    {isEditing ? "Updating..." : "Creating..."}
-                  </>
-                ) : (
-                  <>
-                    <i className={`fas ${isEditing ? "fa-save" : "fa-plus"} mr-2`}></i>
-                    {isEditing ? "Update Lead" : "Create Lead"}
-                  </>
-                )}
-              </Button>
-            </DialogFooter>
-          </form>
-        </Form>
+              <DialogFooter className="flex flex-col sm:flex-row gap-2 sm:gap-0 pt-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={onClose}
+                  disabled={isPending}
+                  className="w-full sm:w-auto"
+                >
+                  Cancel
+                </Button>
+                <Button
+                  type="submit"
+                  disabled={isPending}
+                  className="bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
+                >
+                  {isPending ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      {isEditing ? "Updating..." : "Creating..."}
+                    </>
+                  ) : (
+                    <>
+                      <i className={`fas ${isEditing ? "fa-save" : "fa-plus"} mr-2`}></i>
+                      {isEditing ? "Update Lead" : "Create Lead"}
+                    </>
+                  )}
+                </Button>
+              </DialogFooter>
+            </form>
+          </Form>
+        </div>
       </DialogContent>
     </Dialog>
   );

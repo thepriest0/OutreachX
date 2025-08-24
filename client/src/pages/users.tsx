@@ -133,9 +133,9 @@ export default function UsersPage() {
     return (
       <div className="min-h-screen bg-gray-50 flex">
         <Sidebar />
-        <main className="flex-1 ml-64">
+        <main className="flex-1 overflow-auto">
           <Header title="User Management" />
-          <div className="p-8">
+          <div className="p-2 sm:p-6">
             <div className="text-center py-12">
               <Shield className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">Access Denied</h3>
@@ -150,9 +150,9 @@ export default function UsersPage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
-      <main className="flex-1 ml-64">
+      <main className="flex-1 overflow-auto">
         <Header title="User Management" />
-        <div className="p-8">
+        <div className="p-2 sm:p-6">
           <div className="mb-8">
             <div className="flex items-center justify-between">
               <div>
@@ -160,8 +160,8 @@ export default function UsersPage() {
                 <p className="text-gray-600">Manage team members and their access levels</p>
               </div>
               <Dialog open={showInviteUser} onOpenChange={setShowInviteUser}>
-                <DialogTrigger asChild>
-                  <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
+        <DialogTrigger asChild>
+          <Button className="bg-primary hover:bg-primary/90 text-primary-foreground">
                     <Mail className="h-4 w-4 mr-2" />
                     Invite User
                   </Button>
@@ -228,29 +228,29 @@ export default function UsersPage() {
             <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
               {users?.map((userItem) => (
                 <Card key={userItem.id} className="hover:shadow-md transition-shadow">
-                  <CardContent className="p-6">
+                  <CardContent className="p-4">
                     <div className="flex items-start justify-between mb-4">
-                      <div className="flex items-center space-x-3">
-                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
+                      <div className="flex items-center space-x-3 min-w-0">
+                        <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                           <Users className="h-5 w-5 text-primary" />
                         </div>
-                        <div>
-                          <h3 className="font-semibold text-gray-900">
+                        <div className="min-w-0">
+                          <h3 className="font-semibold text-gray-900 truncate">
                             {userItem.firstName} {userItem.lastName}
                           </h3>
-                          <p className="text-sm text-gray-600">@{userItem.username}</p>
+                          <p className="text-sm text-gray-600 truncate">@{userItem.username}</p>
                         </div>
                       </div>
-                      <Badge className={getRoleBadgeColor(userItem.role || 'designer')}>
+                      <Badge className={`shrink-0 ${getRoleBadgeColor(userItem.role || 'designer')}`}>
                         {formatRole(userItem.role || 'designer')}
                       </Badge>
                     </div>
                     
                     <div className="space-y-2 mb-4">
                       {userItem.email && (
-                        <div className="flex items-center text-sm text-gray-600">
-                          <Mail className="h-4 w-4 mr-2" />
-                          {userItem.email}
+                        <div className="flex items-center text-sm text-gray-600 min-w-0">
+                          <Mail className="h-4 w-4 mr-2 flex-shrink-0" />
+                          <span className="truncate">{userItem.email}</span>
                         </div>
                       )}
                       <div className="flex items-center text-sm text-gray-600">
@@ -268,7 +268,7 @@ export default function UsersPage() {
                             role: value 
                           })}
                         >
-                          <SelectTrigger className="flex-1">
+                          <SelectTrigger className="w-36">
                             <SelectValue />
                           </SelectTrigger>
                           <SelectContent>

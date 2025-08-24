@@ -136,13 +136,46 @@
   
   /* Layout improvements */
   .content-grid {
-    @apply grid gap-6;
-    grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+    @apply grid gap-4 sm:gap-6;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
   }
   
   .stats-grid {
-    @apply grid gap-6;
-    grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+    @apply grid gap-4 sm:gap-6;
+    grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  }
+  
+  /* Mobile responsive stats grid */
+  @media (max-width: 640px) {
+    .stats-grid {
+      grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+      @apply gap-3;
+    }
+  }
+  
+  @media (min-width: 641px) and (max-width: 768px) {
+    .stats-grid {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+  
+  /* Mobile-specific utilities */
+  @media (max-width: 768px) {
+    .mobile-text-sm {
+      @apply text-sm;
+    }
+    
+    .mobile-p-4 {
+      @apply p-4;
+    }
+    
+    .mobile-hidden {
+      @apply hidden;
+    }
+    
+    .mobile-flex {
+      @apply flex;
+    }
   }
   
   /* Loading states */

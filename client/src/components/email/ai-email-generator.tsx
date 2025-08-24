@@ -269,306 +269,316 @@ export default function AIEmailGenerator({ onClose, onSuccess, preselectedLead, 
   ];
 
   return (
-    <Dialog open={true} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-[800px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
-          <DialogTitle className="flex items-center">
-            <i className="fas fa-robot mr-3 text-secondary-500"></i>
-            AI Email Generator
-          </DialogTitle>
-          <DialogDescription>
-            Generate personalized outreach emails using AI based on your lead information.
-          </DialogDescription>
-        </DialogHeader>
-
-        <div className="space-y-6">
-          {/* Lead Selection */}
-          {!preselectedLead && (!preselectedLeads || preselectedLeads.length === 0) && (
-            <div className="space-y-2">
-              <label className="text-sm font-medium text-gray-700">Select Leads</label>
-              <Popover open={leadSelectorOpen} onOpenChange={setLeadSelectorOpen}>
-                <PopoverTrigger asChild>
-                  <Button
-                    variant="outline"
-                    role="combobox"
-                    aria-expanded={leadSelectorOpen}
-                    className="w-full justify-between h-auto min-h-[40px] p-3"
-                  >
-                    <div className="flex flex-wrap gap-1">
-                      {selectedLeads.length === 0 ? (
-                        <span className="text-gray-500">Select leads...</span>
-                      ) : (
-                        <>
-                          {selectedLeads.slice(0, 2).map((lead: Lead) => (
-                            <Badge key={lead.id} variant="secondary" className="mr-1">
-                              {lead.name}
-                              <X
-                                className="ml-1 h-3 w-3 cursor-pointer"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
-                                }}
-                              />
-                            </Badge>
-                          ))}
-                          {selectedLeads.length > 2 && (
-                            <Badge variant="secondary">
-                              +{selectedLeads.length - 2} more
-                            </Badge>
-                          )}
-                        </>
-                      )}
-                    </div>
-                    <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
-                  </Button>
-                </PopoverTrigger>
-                <PopoverContent className="w-[400px] p-0">
-                  <Command>
-                    <CommandInput 
-                      placeholder="Search leads..." 
-                      value={searchTerm}
-                      onValueChange={setSearchTerm}
-                    />
-                    <CommandList>
-                      <CommandEmpty>No leads found.</CommandEmpty>
-                      <CommandGroup>
-                        {filteredLeads.map((lead: Lead) => (
-                          <CommandItem
-                            key={lead.id}
-                            value={lead.id}
-                            onSelect={() => {
-                              const isSelected = selectedLeadIds.includes(lead.id);
-                              if (isSelected) {
-                                setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
-                              } else {
-                                setSelectedLeadIds([...selectedLeadIds, lead.id]);
-                              }
-                            }}
-                            className="flex items-center space-x-2 cursor-pointer"
-                          >
-                            <Checkbox
-                              checked={selectedLeadIds.includes(lead.id)}
-                              onChange={() => {}} // Handled by parent onSelect
-                            />
-                            <div className="flex-1">
-                              <div className="font-medium text-sm">{lead.name}</div>
-                              <div className="text-xs text-gray-500">
-                                {lead.company} • {lead.email}
-                              </div>
-                            </div>
-                            {selectedLeadIds.includes(lead.id) && (
-                              <Check className="h-4 w-4 text-primary" />
-                            )}
-                          </CommandItem>
-                        ))}
-                      </CommandGroup>
-                    </CommandList>
-                  </Command>
-                </PopoverContent>
-              </Popover>
-              {selectedLeads.length > 0 && (
-                <p className="text-sm text-gray-600">
-                  {selectedLeads.length} lead(s) selected
-                </p>
-              )}
-            </div>
-          )}
-
-          {/* Selected Leads Info */}
-          {selectedLeads.length > 0 && (
-            <Card className="border-blue-200 bg-blue-50">
-              <CardContent className="p-4">
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="font-medium text-gray-900">Selected Leads ({selectedLeads.length})</span>
-                  </div>
-                  <div className="space-y-2">
-                    {selectedLeads.map((lead: Lead) => (
-                      <div key={lead.id} className="flex items-center space-x-3">
-                        <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-medium">
-                            {lead.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
-                          </span>
-                        </div>
-                        <div>
-                          <p className="font-medium text-sm text-gray-900">{lead.name}</p>
-                          <p className="text-xs text-gray-600">
-                            {lead.role || 'Contact'} at {lead.company}
-                          </p>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              </CardContent>
-            </Card>
-          )}
-
-          {/* Tone Selection */}
-          <div className="space-y-3">
-            <label className="text-sm font-medium text-gray-700">Email Tone</label>
-            <div className="grid grid-cols-3 gap-3">
-              {toneOptions.map((tone) => (
-                <Button
-                  key={tone.value}
-                  variant={selectedTone === tone.value ? "default" : "outline"}
-                  onClick={() => setSelectedTone(tone.value)}
-                  className={`p-4 h-auto flex-col items-start ${
-                    selectedTone === tone.value
-                      ? "bg-blue-600 hover:bg-blue-700 text-white"
-                      : "border-gray-300 hover:border-gray-400"
-                  }`}
-                >
-                  <span className="font-medium">{tone.label}</span>
-                  <span className="text-xs opacity-80">{tone.description}</span>
-                </Button>
-              ))}
-            </div>
+    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-0 sm:p-4">
+      <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-4xl rounded-t-lg sm:rounded-lg overflow-hidden sm:overflow-auto">
+        <div className="h-full flex flex-col">
+          <div className="flex items-center justify-between p-4 border-b sm:p-6">
+            <h2 className="text-lg sm:text-xl font-semibold flex items-center">
+              <i className="fas fa-robot mr-3 text-secondary-500"></i>
+              AI Email Generator
+            </h2>
+            <Button
+              variant="ghost"
+              onClick={onClose}
+              data-testid="button-close-email-generator"
+            >
+              ×
+            </Button>
           </div>
 
-          {/* Generate Button */}
-          {!generatedEmail && (
-            <div className="text-center">
-              <Button
-                onClick={handleGenerate}
-                disabled={selectedLeadIds.length === 0 || generateMutation.isPending}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-                size="lg"
-              >
-                {generateMutation.isPending ? (
-                  <>
-                    <i className="fas fa-spinner fa-spin mr-2"></i>
-                    Generating...
-                  </>
-                ) : (
-                  <>
-                    <i className="fas fa-magic mr-2"></i>
-                    Generate AI Email
-                  </>
+          <div className="p-4 sm:p-6 overflow-y-auto flex-1 space-y-6">
+            {/* Lead Selection */}
+            {!preselectedLead && (!preselectedLeads || preselectedLeads.length === 0) && (
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-gray-700">Select Leads</label>
+                <Popover open={leadSelectorOpen} onOpenChange={setLeadSelectorOpen}>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      role="combobox"
+                      aria-expanded={leadSelectorOpen}
+                      className="w-full justify-between h-auto min-h-[40px] p-3"
+                    >
+                      <div className="flex flex-wrap gap-1">
+                        {selectedLeads.length === 0 ? (
+                          <span className="text-gray-500">Select leads...</span>
+                        ) : (
+                          <>
+                            {selectedLeads.slice(0, 2).map((lead: Lead) => (
+                              <Badge key={lead.id} variant="secondary" className="mr-1">
+                                {lead.name}
+                                <X
+                                  className="ml-1 h-3 w-3 cursor-pointer"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
+                                  }}
+                                />
+                              </Badge>
+                            ))}
+                            {selectedLeads.length > 2 && (
+                              <Badge variant="secondary">
+                                +{selectedLeads.length - 2} more
+                              </Badge>
+                            )}
+                          </>
+                        )}
+                      </div>
+                      <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-full sm:w-[400px] max-h-[60vh] p-0 overflow-auto">
+                    <Command>
+                      <CommandInput 
+                        placeholder="Search leads..." 
+                        value={searchTerm}
+                        onValueChange={setSearchTerm}
+                      />
+                      <CommandList>
+                        <CommandEmpty>No leads found.</CommandEmpty>
+                        <CommandGroup>
+                          {filteredLeads.map((lead: Lead) => (
+                            <CommandItem
+                              key={lead.id}
+                              value={lead.id}
+                              onSelect={() => {
+                                const isSelected = selectedLeadIds.includes(lead.id);
+                                if (isSelected) {
+                                  setSelectedLeadIds(selectedLeadIds.filter(id => id !== lead.id));
+                                } else {
+                                  setSelectedLeadIds([...selectedLeadIds, lead.id]);
+                                }
+                              }}
+                              className="flex items-center space-x-2 cursor-pointer"
+                            >
+                              <Checkbox
+                                checked={selectedLeadIds.includes(lead.id)}
+                                onChange={() => {}} // Handled by parent onSelect
+                              />
+                              <div className="flex-1">
+                                <div className="font-medium text-sm">{lead.name}</div>
+                                <div className="text-xs text-gray-500">
+                                  {lead.company} • {lead.email}
+                                </div>
+                              </div>
+                              {selectedLeadIds.includes(lead.id) && (
+                                <Check className="h-4 w-4 text-primary" />
+                              )}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
+                {selectedLeads.length > 0 && (
+                  <p className="text-sm text-gray-600">
+                    {selectedLeads.length} lead(s) selected
+                  </p>
                 )}
-              </Button>
-            </div>
-          )}
-
-          {/* Generated Email */}
-          {generatedEmail && (
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <h3 className="text-lg font-medium text-gray-900">Generated Email</h3>
-                <Badge variant="outline" className="text-secondary-600 border-secondary-300">
-                  {selectedTone.charAt(0).toUpperCase() + selectedTone.slice(1)} tone
-                </Badge>
               </div>
+            )}
 
-              {/* Subject Line */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Subject Line</label>
-                <input
-                  type="text"
-                  value={editedSubject}
-                  onChange={(e) => setEditedSubject(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
-                />
-              </div>
-
-              {/* Email Content */}
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email Content</label>
-                <Textarea
-                  value={editedContent}
-                  onChange={(e) => setEditedContent(e.target.value)}
-                  className="min-h-[300px] font-mono text-sm"
-                  placeholder="Email content will appear here..."
-                />
-              </div>
-
-              {/* Email Preview */}
-              <Card className="border-gray-200">
-                <CardContent className="p-4">
-                  <div className="space-y-3">
-                    <div className="text-sm text-gray-600">
-                      <strong>To:</strong> {selectedLeads.map(lead => lead.email).join(', ')}
+            {/* Selected Leads Info */}
+            {selectedLeads.length > 0 && (
+              <Card className="border-blue-200 bg-blue-50">
+                <CardContent className="p-3">
+                  <div className="">
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-medium text-gray-900">Selected Leads ({selectedLeads.length})</span>
                     </div>
-                    <div className="text-sm text-gray-600">
-                      <strong>Subject:</strong> {editedSubject}
-                    </div>
-                    <hr className="border-gray-200" />
-                    <div className="text-sm text-gray-800 whitespace-pre-wrap">
-                      {editedContent}
+                    <div className="divide-y divide-blue-100">
+                      {selectedLeads.map((lead: Lead) => (
+                        <div key={lead.id} className="flex items-center space-x-3 py-2">
+                          <div className="w-8 h-8 bg-gradient-to-br from-blue-400 to-purple-500 rounded-full flex items-center justify-center flex-shrink-0">
+                            <span className="text-white text-xs font-medium">
+                              {lead.name.split(' ').map((n: string) => n[0]).join('').toUpperCase()}
+                            </span>
+                          </div>
+                          <div className="min-w-0">
+                            <p className="font-medium text-sm text-gray-900 truncate">{lead.name}</p>
+                            <p className="text-xs text-gray-600 truncate">
+                              {lead.role || 'Contact'}{lead.company ? ` at ${lead.company}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                      ))}
                     </div>
                   </div>
                 </CardContent>
               </Card>
-            </div>
-          )}
-        </div>
+            )}
 
-        <DialogFooter className="flex items-center justify-between">
-          <div className="flex items-center space-x-3">
+            {/* Tone Selection */}
+            <div className="space-y-3">
+              <label className="text-sm font-medium text-gray-700">Email Tone</label>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                {toneOptions.map((tone) => (
+                  <Button
+                    key={tone.value}
+                    variant={selectedTone === tone.value ? "default" : "outline"}
+                    onClick={() => setSelectedTone(tone.value)}
+                    className={`p-4 h-auto flex-col items-start ${
+                      selectedTone === tone.value
+                        ? "bg-blue-600 hover:bg-blue-700 text-white"
+                        : "border-gray-300 hover:border-gray-400"
+                    }`}
+                  >
+                    <span className="font-medium">{tone.label}</span>
+                    <span className="text-xs opacity-80">{tone.description}</span>
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Generate Button */}
+            {!generatedEmail && (
+              <div className="text-center">
+                <Button
+                  onClick={handleGenerate}
+                  disabled={selectedLeadIds.length === 0 || generateMutation.isPending}
+                  className="w-full sm:w-auto bg-purple-600 hover:bg-purple-700 text-white"
+                  size="lg"
+                >
+                  {generateMutation.isPending ? (
+                    <>
+                      <i className="fas fa-spinner fa-spin mr-2"></i>
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <i className="fas fa-magic mr-2"></i>
+                      Generate AI Email
+                    </>
+                  )}
+                </Button>
+              </div>
+            )}
+
+            {/* Generated Email */}
             {generatedEmail && (
-              <Button
-                variant="outline"
-                onClick={handleRegenerate}
-                disabled={generateMutation.isPending}
-                className="text-gray-600 hover:text-gray-800"
-              >
-                <i className="fas fa-sync-alt mr-2"></i>
-                Regenerate
-              </Button>
+              <div className="space-y-4">
+                <div className="flex items-center justify-between">
+                  <h3 className="text-lg font-medium text-gray-900">Generated Email</h3>
+                  <Badge variant="outline" className="text-secondary-600 border-secondary-300">
+                    {selectedTone.charAt(0).toUpperCase() + selectedTone.slice(1)} tone
+                  </Badge>
+                </div>
+
+                {/* Subject Line */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Subject Line</label>
+                  <input
+                    type="text"
+                    value={editedSubject}
+                    onChange={(e) => setEditedSubject(e.target.value)}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-primary-500 focus:border-transparent"
+                  />
+                </div>
+
+                {/* Email Content */}
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Email Content</label>
+                  <Textarea
+                    value={editedContent}
+                    onChange={(e) => setEditedContent(e.target.value)}
+                    className="min-h-[200px] sm:min-h-[300px] text-sm"
+                    placeholder="Email content will appear here..."
+                  />
+                </div>
+
+                {/* Email Preview */}
+                <Card className="border-gray-200">
+                  <CardContent className="p-4">
+                    <div className="space-y-3">
+                      <div className="text-sm text-gray-600 truncate">
+                        <strong>To:</strong> {selectedLeads.map(lead => lead.email).join(', ')}
+                      </div>
+                      <div className="text-sm text-gray-600 truncate">
+                        <strong>Subject:</strong> {editedSubject}
+                      </div>
+                      <hr className="border-gray-200" />
+                      <div className="text-sm text-gray-800 whitespace-pre-wrap break-words">
+                        {editedContent}
+                      </div>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
             )}
           </div>
 
-          <div className="flex items-center space-x-3">
-            <Button
-              variant="outline"
-              onClick={onClose}
-              disabled={generateMutation.isPending || saveMutation.isPending || sendEmailMutation.isPending}
-            >
-              Cancel
-            </Button>
+          <div className="p-4 sm:p-6 border-t">
+            <div className="flex flex-col sm:flex-row items-center justify-between gap-3">
+              <div className="w-full sm:w-auto">
+                {generatedEmail && (
+                  <Button
+                    variant="outline"
+                    onClick={handleRegenerate}
+                    disabled={generateMutation.isPending}
+                    className="w-full sm:w-auto text-gray-600 hover:text-gray-800"
+                  >
+                    <i className="fas fa-sync-alt mr-2"></i>
+                    Regenerate
+                  </Button>
+                )}
+              </div>
 
-            {generatedEmail && (
-              <>
+              <div className="w-full sm:w-auto flex flex-col sm:flex-row items-center sm:space-x-3 gap-3 w-full">
                 <Button
                   variant="outline"
-                  onClick={handleSave}
-                  disabled={saveMutation.isPending || sendEmailMutation.isPending}
+                  onClick={onClose}
+                  disabled={generateMutation.isPending || saveMutation.isPending || sendEmailMutation.isPending}
+                  className="w-full sm:w-auto"
                 >
-                  {saveMutation.isPending ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Saving...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-save mr-2"></i>
-                      Save Draft
-                    </>
-                  )}
+                  Cancel
                 </Button>
 
-                <Button
-                  className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={handleSendEmail}
-                  disabled={saveMutation.isPending || sendEmailMutation.isPending}
-                >
-                  {sendEmailMutation.isPending ? (
-                    <>
-                      <i className="fas fa-spinner fa-spin mr-2"></i>
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <i className="fas fa-paper-plane mr-2"></i>
-                      Send Email
-                    </>
-                  )}
-                </Button>
-              </>
-            )}
+                {generatedEmail && (
+                  <>
+                    <Button
+                      variant="outline"
+                      onClick={handleSave}
+                      disabled={saveMutation.isPending || sendEmailMutation.isPending}
+                      className="w-full sm:w-auto"
+                    >
+                      {saveMutation.isPending ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin mr-2"></i>
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-save mr-2"></i>
+                          Save Draft
+                        </>
+                      )}
+                    </Button>
+
+                    <Button
+                      className="bg-green-600 hover:bg-green-700 text-white w-full sm:w-auto"
+                      onClick={handleSendEmail}
+                      disabled={saveMutation.isPending || sendEmailMutation.isPending}
+                    >
+                      {sendEmailMutation.isPending ? (
+                        <>
+                          <i className="fas fa-spinner fa-spin mr-2"></i>
+                          Sending...
+                        </>
+                      ) : (
+                        <>
+                          <i className="fas fa-paper-plane mr-2"></i>
+                          Send Email
+                        </>
+                      )}
+                    </Button>
+                  </>
+                )}
+              </div>
+            </div>
           </div>
-        </DialogFooter>
-      </DialogContent>
-    </Dialog>
+        </div>
+      </div>
+    </div>
   );
 }

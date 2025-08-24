@@ -127,9 +127,9 @@ export default function ProfilePage() {
   return (
     <div className="min-h-screen bg-gray-50 flex">
       <Sidebar />
-      <main className="flex-1 ml-64">
+      <main className="flex-1 overflow-auto">
         <Header title="Profile & Settings" />
-        <div className="p-8 max-w-4xl">
+        <div className="p-2 sm:p-6 max-w-4xl mx-auto">
           <div className="mb-8">
             <div className="flex items-center space-x-3">
               <div className="p-2 bg-blue-100 rounded-lg">
@@ -154,7 +154,7 @@ export default function ProfilePage() {
                   Update your personal information. Only name, email, and username can be changed.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <form onSubmit={profileForm.handleSubmit(onProfileSubmit)} className="space-y-4">
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -241,7 +241,7 @@ export default function ProfilePage() {
                   Update your password to keep your account secure.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <form onSubmit={passwordForm.handleSubmit(onPasswordSubmit)} className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="currentPassword">Current Password *</Label>
@@ -354,7 +354,7 @@ export default function ProfilePage() {
                   Read-only account details that cannot be modified.
                 </CardDescription>
               </CardHeader>
-              <CardContent>
+              <CardContent className="p-4">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label className="text-gray-500">Account ID</Label>

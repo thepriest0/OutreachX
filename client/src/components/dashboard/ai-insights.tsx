@@ -180,12 +180,12 @@ export default function AIInsights() {
       <Card>
         <CardHeader>
           <div className="flex items-center justify-between">
-            <div>
+            <div className="min-w-0 flex-1">
               <CardTitle className="flex items-center space-x-2">
                 <Brain className="h-5 w-5 text-primary" />
                 <span>AI Insights</span>
               </CardTitle>
-              <CardDescription>
+              <CardDescription className="hidden sm:block">
                 AI-powered recommendations for your outreach
               </CardDescription>
             </div>
@@ -195,8 +195,10 @@ export default function AIInsights() {
               onClick={() => refetch()}
               disabled={isRefetching}
               data-testid="button-refresh-insights"
+              className="shrink-0"
             >
               <RefreshCw className={`h-4 w-4 ${isRefetching ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline ml-2">Refresh</span>
             </Button>
           </div>
         </CardHeader>

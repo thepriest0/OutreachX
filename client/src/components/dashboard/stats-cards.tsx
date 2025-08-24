@@ -70,21 +70,21 @@ function StatCard({
   return (
     <Card className="card-hover">
       <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-        <CardTitle className="text-sm font-medium text-muted-foreground">
+        <CardTitle className="text-xs sm:text-sm font-medium text-muted-foreground truncate">
           {title}
         </CardTitle>
-        <Icon className="h-4 w-4 text-muted-foreground" />
+        <Icon className="h-4 w-4 text-muted-foreground shrink-0" />
       </CardHeader>
       <CardContent>
-        <div className="text-2xl font-bold">{format(value)}</div>
-        <div className="flex items-center space-x-2 mt-1">
-          <CardDescription className="text-xs">
+        <div className="text-xl sm:text-2xl font-bold truncate">{format(value)}</div>
+        <div className="flex items-center justify-between sm:justify-start sm:space-x-2 mt-1">
+          <CardDescription className="text-xs truncate flex-1 sm:flex-none">
             {description}
           </CardDescription>
           {!isNeutral && (
             <Badge 
               variant="secondary" 
-              className={`text-xs px-1.5 py-0.5 ${
+              className={`text-xs px-1.5 py-0.5 ml-1 sm:ml-0 shrink-0 ${
                 isPositive 
                   ? "bg-green-100 text-green-800 dark:bg-green-900/50 dark:text-green-200" 
                   : "bg-red-100 text-red-800 dark:bg-red-900/50 dark:text-red-200"

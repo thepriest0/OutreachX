@@ -289,24 +289,24 @@ export default function QuickActions() {
             <Button
               key={action.id}
               variant={action.variant}
-              className={`w-full justify-start h-auto py-3 px-4 ${
+              className={`w-full justify-start h-auto py-3 px-3 sm:px-4 ${
                 action.variant === "default" ? action.color : ""
               }`}
               onClick={() => handleAction(action.id)}
               data-testid={`button-quick-${action.id}`}
             >
-              <div className="flex items-center space-x-3 w-full">
+              <div className="flex items-center space-x-2 sm:space-x-3 w-full">
                 <Icon className="h-4 w-4 shrink-0" />
-                <div className="flex-1 text-left">
+                <div className="flex-1 text-left min-w-0">
                   <div className="flex items-center space-x-2">
-                    <span className="font-medium">{action.title}</span>
+                    <span className="font-medium text-sm sm:text-base truncate">{action.title}</span>
                     {action.badge && (
-                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5">
+                      <Badge variant="secondary" className="text-xs px-1.5 py-0.5 shrink-0">
                         {action.badge}
                       </Badge>
                     )}
                   </div>
-                  <div className="text-xs opacity-75">{action.description}</div>
+                  <div className="text-xs opacity-75 truncate sm:text-wrap">{action.description}</div>
                 </div>
               </div>
             </Button>

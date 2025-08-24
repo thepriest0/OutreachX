@@ -251,21 +251,21 @@ export default function Campaigns() {
           subtitle="Manage your email outreach campaigns and track performance."
         />
 
-        <div className="p-6">
+        <div className="p-2 sm:p-6">
           {/* Action Bar */}
-          <div className="flex items-center justify-between mb-6">
-            <div className="flex items-center space-x-4">
-              <h3 className="text-lg font-medium text-gray-900">Campaign Management</h3>
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 mb-6">
+            <div className="flex items-center space-x-3">
+              <h3 className="hidden sm:block text-lg font-medium text-gray-900">Campaign Management</h3>
               {selectedCampaigns.length > 0 && (
                 <Badge variant="secondary">
                   {selectedCampaigns.length} selected
                 </Badge>
               )}
             </div>
-            <div className="flex items-center space-x-2">
+            <div className="flex items-center w-full sm:w-auto">
               <Button
                 onClick={() => setShowEmailGenerator(true)}
-                className="bg-primary hover:bg-primary/90 text-primary-foreground flex items-center space-x-2"
+                className="w-full sm:w-auto justify-center bg-primary hover:bg-primary/90 text-primary-foreground flex items-center space-x-2"
                 data-testid="button-generate-email"
               >
                 <Mail className="h-4 w-4" />
@@ -275,55 +275,57 @@ export default function Campaigns() {
           </div>
 
           {/* Filters and Search */}
-          <div className="bg-white rounded-lg border p-4 mb-6">
-            <div className="flex items-center justify-between space-x-4">
-              <div className="flex items-center space-x-4 flex-1">
-                <div className="relative flex-1 max-w-md">
+          <div className="bg-white rounded-lg border p-3 sm:p-4 mb-6">
+            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+              <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-4 flex-1">
+                <div className="relative w-full sm:max-w-md">
                   <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
                   <Input
                     placeholder="Search campaigns..."
                     value={searchTerm}
                     onChange={(e) => setSearchTerm(e.target.value)}
-                    className="pl-10"
+                    className="pl-10 w-full"
                     data-testid="input-search-campaigns"
                   />
                 </div>
-                <Select value={statusFilter} onValueChange={setStatusFilter}>
-                  <SelectTrigger className="w-40" data-testid="select-status-filter">
-                    <SelectValue placeholder="All Status" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Status</SelectItem>
-                    <SelectItem value="draft">Draft</SelectItem>
-                    <SelectItem value="sent">Sent</SelectItem>
-                    <SelectItem value="opened">Opened</SelectItem>
-                    <SelectItem value="replied">Replied</SelectItem>
-                    <SelectItem value="bounced">Bounced</SelectItem>
-                  </SelectContent>
-                </Select>
-                <Select value={createdByFilter} onValueChange={setCreatedByFilter}>
-                  <SelectTrigger className="w-40">
-                    <SelectValue placeholder="Added By" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="all">All Users</SelectItem>
-                    {campaigns && Array.from(
-                      new Map(
-                        campaigns
-                          .filter(c => c.createdByUser)
-                          .map(c => [c.createdByUser!.id, c.createdByUser!])
-                      ).values()
-                    ).map(user => (
-                      <SelectItem key={user.id} value={user.id}>
-                        {`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
+                <div className="flex gap-2 mt-2 sm:mt-0 flex-wrap">
+                  <Select value={statusFilter} onValueChange={setStatusFilter}>
+                    <SelectTrigger className="w-full sm:w-40" data-testid="select-status-filter">
+                      <SelectValue placeholder="All Status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Status</SelectItem>
+                      <SelectItem value="draft">Draft</SelectItem>
+                      <SelectItem value="sent">Sent</SelectItem>
+                      <SelectItem value="opened">Opened</SelectItem>
+                      <SelectItem value="replied">Replied</SelectItem>
+                      <SelectItem value="bounced">Bounced</SelectItem>
+                    </SelectContent>
+                  </Select>
+                  <Select value={createdByFilter} onValueChange={setCreatedByFilter}>
+                    <SelectTrigger className="w-full sm:w-40">
+                      <SelectValue placeholder="Added By" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">All Users</SelectItem>
+                      {campaigns && Array.from(
+                        new Map(
+                          campaigns
+                            .filter(c => c.createdByUser)
+                            .map(c => [c.createdByUser!.id, c.createdByUser!])
+                        ).values()
+                      ).map(user => (
+                        <SelectItem key={user.id} value={user.id}>
+                          {`${user.firstName || ''} ${user.lastName || ''}`.trim() || user.username}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
               
               {selectedCampaigns.length > 0 && (
-                <div className="flex items-center space-x-2">
+                <div className="flex items-center">
                   <AlertDialog>
                     <AlertDialogTrigger asChild>
                       <Button variant="destructive" size="sm" data-testid="button-bulk-delete">
@@ -372,13 +374,13 @@ export default function Campaigns() {
               )}
               
               <div className="space-y-6">
-                {filteredGroupedCampaigns.map((group) => (
-                  <div key={group.parent.id} className="space-y-3">
+        {filteredGroupedCampaigns.map((group) => (
+          <div key={group.parent.id} className="space-y-3">
                     {/* Parent Campaign */}
-                    <Card className="hover:shadow-md transition-shadow border-l-4 border-l-primary">
-                      <CardContent className="p-6">
-                        <div className="flex items-start space-x-4">
-                          <div className="pt-1">
+                      <Card className="w-full hover:shadow-md transition-shadow border-l-4 border-l-primary">
+                        <CardContent className="p-4 sm:p-6">
+                          <div className="flex flex-col sm:flex-row items-start sm:space-x-4">
+                            <div className="pt-1 sm:pt-0 sm:mr-3">
                             <Checkbox
                               checked={selectedCampaigns.includes(group.parent.id)}
                               onCheckedChange={(checked) => handleCampaignSelect(group.parent.id, !!checked)}
@@ -386,15 +388,15 @@ export default function Campaigns() {
                             />
                           </div>
                           
-                          <div className="flex-1 min-w-0">
+                          <div className="flex-1 min-w-0 mt-3 sm:mt-0 pr-2">
                             {/* Header Section */}
-                            <div className="flex items-start justify-between mb-4">
+                              <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-4 gap-3">
                               <div className="flex-1 min-w-0">
-                                <div className="flex items-center space-x-3 mb-2">
-                                  <h3 className="text-lg font-semibold text-gray-900 truncate">
+                                <div className="flex items-center space-x-3 mb-2 min-w-0">
+                                  <h3 className="text-base sm:text-lg font-semibold text-gray-900 truncate">
                                     {group.parent.subject}
                                   </h3>
-                                  <Badge variant="outline" className="text-xs shrink-0">
+                                  <Badge variant="outline" className="text-xs shrink-0 hidden sm:inline">
                                     Original Email
                                   </Badge>
                                 </div>
@@ -416,7 +418,7 @@ export default function Campaigns() {
                               </div>
                               
                               {/* Quick Actions */}
-                              <div className="flex items-center space-x-1 ml-4 shrink-0">
+                              <div className="flex items-center space-x-1 mt-2 sm:mt-0 ml-0 sm:ml-4 shrink-0">
                                 <Button variant="ghost" size="sm" data-testid={`button-view-${group.parent.id}`} onClick={() => { setEditingCampaign(group.parent); setIsEditMode(false); }}> 
                                   <Eye className="h-4 w-4" />
                                 </Button>
@@ -461,16 +463,16 @@ export default function Campaigns() {
                                   const lead = leads?.find(l => l.id === group.parent.leadId);
                                   return lead ? (
                                     <div className="flex items-center justify-between">
-                                      <div>
-                                        <div className="flex items-center space-x-2">
-                                          <span className="text-sm font-medium text-gray-900">{lead.name}</span>
+                                      <div className="min-w-0 pr-2">
+                                        <div className="flex items-center space-x-2 min-w-0">
+                                          <span className="text-sm font-medium text-gray-900 truncate block">{lead.name}</span>
                                           {lead.company && (
-                                            <span className="text-sm text-gray-500">at {lead.company}</span>
+                                            <span className="text-sm text-gray-500 truncate hidden sm:inline">at {lead.company}</span>
                                           )}
                                         </div>
-                                        <span className="text-sm text-gray-600">{lead.email}</span>
+                                        <span className="text-sm text-gray-600 truncate block">{lead.email}</span>
                                       </div>
-                                      <Badge className={`text-xs ${getStatusColor(lead.status || 'new')}`}>
+                                      <Badge className={`text-xs shrink-0 ${getStatusColor(lead.status || 'new')}`}>
                                         {formatStatus(lead.status || 'new')}
                                       </Badge>
                                     </div>
@@ -482,8 +484,8 @@ export default function Campaigns() {
                             )}
                             
                             {/* Action Buttons */}
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-2">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div className="flex items-center gap-2">
                                 {group.parent.status === 'draft' && (
                                   <Button 
                                     size="sm"
@@ -535,12 +537,12 @@ export default function Campaigns() {
 
                     {/* Follow-up Campaigns */}
                     {group.followUps.length > 0 && (
-                      <div className="ml-8 space-y-3">
+                      <div className="ml-0 sm:ml-8 pl-0 sm:pl-4 space-y-3">
                         {group.followUps.map((followUp) => (
-                          <Card key={followUp.id} className="hover:shadow-sm transition-shadow border-l-4 border-l-blue-300 bg-blue-50/30">
+                          <Card key={followUp.id} className="w-full hover:shadow-sm transition-shadow border-l-4 border-l-blue-300 bg-blue-50/30">
                             <CardContent className="p-4">
-                              <div className="flex items-start space-x-4">
-                                <div className="pt-1">
+                              <div className="flex flex-col sm:flex-row items-start sm:space-x-4 space-y-3 sm:space-y-0">
+                                <div className="pt-1 sm:pt-0">
                                   <Checkbox
                                     checked={selectedCampaigns.includes(followUp.id)}
                                     onCheckedChange={(checked) => handleCampaignSelect(followUp.id, !!checked)}
@@ -550,10 +552,10 @@ export default function Campaigns() {
                                 
                                 <div className="flex-1">
                                   {/* Header Section */}
-                                  <div className="flex items-start justify-between mb-3">
+                                  <div className="flex flex-col sm:flex-row sm:items-start sm:justify-between mb-3 gap-3">
                                     <div className="flex-1">
                                       <div className="flex items-center space-x-2 mb-2">
-                                        <h4 className="text-md font-medium text-gray-800">
+                                        <h4 className="text-md font-medium text-gray-800 break-words">
                                           {followUp.subject}
                                         </h4>
                                         <Badge variant="outline" className="text-xs bg-blue-100 text-blue-700 border-blue-200">
@@ -577,7 +579,7 @@ export default function Campaigns() {
                                     </div>
                                     
                                     {/* Action Buttons */}
-                                    <div className="flex items-center space-x-1 ml-4">
+                                    <div className="flex items-center space-x-1 mt-3 sm:mt-0 ml-0 sm:ml-4">
                                       <Button 
                                         variant="ghost" 
                                         size="sm" 
@@ -585,7 +587,7 @@ export default function Campaigns() {
                                         className="text-gray-600 hover:text-gray-900"
                                       > 
                                         <Eye className="h-3 w-3 mr-1" />
-                                        View
+                                        <span className="hidden sm:inline">View</span>
                                       </Button>
                                       {followUp.status === 'draft' && (
                                         <>
@@ -596,7 +598,7 @@ export default function Campaigns() {
                                             className="text-blue-600 hover:text-blue-900"
                                           >
                                             <Edit className="h-3 w-3 mr-1" />
-                                            Edit
+                                            <span className="hidden sm:inline">Edit</span>
                                           </Button>
                                           <Button 
                                             variant="ghost" 
@@ -605,7 +607,7 @@ export default function Campaigns() {
                                             className="text-green-600 hover:text-green-900"
                                           >
                                             <Send className="h-3 w-3 mr-1" />
-                                            Send
+                                            <span className="hidden sm:inline">Send</span>
                                           </Button>
                                         </>
                                       )}
@@ -617,7 +619,7 @@ export default function Campaigns() {
                                             className="text-red-600 hover:text-red-900"
                                           >
                                             <Trash2 className="h-3 w-3 mr-1" />
-                                            Delete
+                                            <span className="hidden sm:inline">Delete</span>
                                           </Button>
                                         </AlertDialogTrigger>
                                         <AlertDialogContent>
@@ -777,11 +779,11 @@ export default function Campaigns() {
         )}
 
         {showFollowUpScheduler && selectedCampaignForSchedule && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-4xl w-full max-h-[90vh] overflow-auto">
-              <div className="p-6">
-                <div className="flex justify-between items-center mb-4">
-                  <h2 className="text-xl font-semibold">Follow-up Campaign Manager</h2>
+          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-start sm:items-center justify-center z-50 p-0 sm:p-4">
+            <div className="bg-white w-full h-full sm:h-auto sm:max-h-[90vh] sm:max-w-4xl rounded-t-lg sm:rounded-lg overflow-hidden sm:overflow-auto">
+              <div className="h-full flex flex-col">
+                <div className="flex items-center justify-between p-4 border-b sm:p-6">
+                  <h2 className="text-lg sm:text-xl font-semibold">Follow-up Campaign Manager</h2>
                   <Button
                     variant="ghost"
                     onClick={() => {
@@ -793,17 +795,20 @@ export default function Campaigns() {
                     ×
                   </Button>
                 </div>
-                <FollowUpScheduler
-                  campaignId={selectedCampaignForSchedule.id}
-                  leadName={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.name || 'Lead'}
-                  leadCompany={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.company || 'Company'}
-                  leadRole={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.role || 'Decision Maker'}
-                  originalTone={selectedCampaignForSchedule.tone || 'professional'}
-                  onSuccess={() => {
-                    setShowFollowUpScheduler(false);
-                    setSelectedCampaignForSchedule(null);
-                  }}
-                />
+
+                <div className="p-4 sm:p-6 overflow-y-auto flex-1">
+                  <FollowUpScheduler
+                    campaignId={selectedCampaignForSchedule.id}
+                    leadName={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.name || 'Lead'}
+                    leadCompany={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.company || 'Company'}
+                    leadRole={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.role || 'Decision Maker'}
+                    originalTone={selectedCampaignForSchedule.tone || 'professional'}
+                    onSuccess={() => {
+                      setShowFollowUpScheduler(false);
+                      setSelectedCampaignForSchedule(null);
+                    }}
+                  />
+                </div>
               </div>
             </div>
           </div>
