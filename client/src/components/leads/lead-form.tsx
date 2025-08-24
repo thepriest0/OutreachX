@@ -249,6 +249,7 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
                     <FormLabel>Notes</FormLabel>
                     <FormControl>
                       <Textarea 
+                        {...field}
                         placeholder="Any additional notes about this lead..."
                         className="min-h-[100px] text-sm" />
                     </FormControl>

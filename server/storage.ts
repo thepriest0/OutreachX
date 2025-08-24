@@ -21,7 +21,7 @@ import {
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { db, pool } from "./db";
-import { eq, desc, count, and, gte, sql, lt, isNotNull } from "drizzle-orm";
+import { eq, desc, count, and, or, gte, sql, lt, isNotNull } from "drizzle-orm";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -541,7 +541,8 @@ export class DatabaseStorage implements IStorage {
       .leftJoin(leads, eq(emailCampaigns.leadId, leads.id))
       .where(
         and(
-          eq(emailCampaigns.status, 'sent'),
+          // Consider campaigns that were sent or that have been opened (opened implies sent)
+          or(eq(emailCampaigns.status, 'sent'), eq(emailCampaigns.status, 'opened')),
           isNotNull(emailCampaigns.messageId),
           isNotNull(emailCampaigns.sentAt)
         )

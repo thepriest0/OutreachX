@@ -24,18 +24,21 @@ export interface EmailGenerationResponse {
 export async function generateColdEmail(request: EmailGenerationRequest): Promise<EmailGenerationResponse> {
   const { name, role, company, tone, senderName, senderCompany, notes } = request;
 
-  const notesSection = notes ? `\nADDITIONAL CONTEXT ABOUT ${name.toUpperCase()}:
-${notes}
+  const notesSection = notes
+    ? `\n\nIMPORTANT: The following notes contain key information about ${name.toUpperCase()} that MUST be used to personalize and tailor the email.\nNOTES:\n${notes}\n\nYou should prioritize these notes when crafting the email. Reference them directly if possible, and ensure the email feels highly personalized based on this context.`
+    : '';
 
-Use this information to personalize the email and make it more relevant.` : '';
-
-  const prompt = `Write a cold outreach email to ${name}, who is a ${role} at ${company}. 
-Tone: ${tone}. 
+  const prompt = `Write a cold outreach email to ${name}, who is a ${role} at ${company}.
+Tone: ${tone}.
 
 SENDER INFORMATION:
-- Your name is: ${senderName}
 - Your company is: ${senderCompany}
-- You are from a UI/UX and branding design studio${notesSection}
+- You are from a Product Design and Branding Studio
+${notesSection}
+
+PROMPT PRIORITY:
+- If notes are present above, you MUST use them to personalize the email. Reference specific details from the notes and make the email feel tailored and relevant to the recipient.
+- The goal is to make the recipient feel understood and that the outreach is not generic.
 
 FORMATTING REQUIREMENTS:
 - Use proper line breaks and spacing
@@ -54,10 +57,12 @@ EMAIL STRUCTURE:
 5. Professional closing
 
 Make the email short, personalized, and with a clear call-to-action to book a call.
-Use the sender's real name (${senderName}) and company name (${senderCompany}) in the email content naturally.
-Do not use placeholders - use the actual names provided.
+Use only the company name (${senderCompany}) in the email content naturally. Do not mention any individual sender name.
+Do not use placeholders - use the actual company name provided.
 
 Format the response as JSON with 'subject' and 'content' fields.`;
+
+  console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
     const response = await ai.models.generateContent({
@@ -119,19 +124,22 @@ export async function generateFollowUpEmail({
 
   const sequenceGuidance = sequenceContext[followUpSequence as keyof typeof sequenceContext] || sequenceContext[1];
 
-  const notesSection = notes ? `\nADDITIONAL CONTEXT ABOUT ${name.toUpperCase()}:
-${notes}
-
-Use this information to personalize the follow-up email and make it more relevant.` : '';
+  const notesSection = notes
+    ? `\n\nIMPORTANT: The following notes contain key information about ${name.toUpperCase()} that MUST be used to personalize and tailor the follow-up email.\nNOTES:\n${notes}\n\nYou should prioritize these notes when crafting the follow-up. Reference them directly if possible, and ensure the email feels highly personalized based on this context.`
+    : '';
 
   const prompt = `Generate a ${tone} follow-up email for ${name}, a ${role} at ${company}.
 This is follow-up #${followUpSequence} to the previous email content:
 ${previousEmailContent}
 
 SENDER INFORMATION:
-- Your name is: ${senderName}
 - Your company is: ${senderCompany}
-- You are from a UI/UX and branding design studio${notesSection}
+- You are from a Product Design and Branding Studio
+${notesSection}
+
+PROMPT PRIORITY:
+- If notes are present above, you MUST use them to personalize the follow-up email. Reference specific details from the notes and make the email feel tailored and relevant to the recipient.
+- The goal is to make the recipient feel understood and that the outreach is not generic.
 
 ${sequenceGuidance}
 
@@ -152,10 +160,12 @@ The follow-up should:
 - Keep the same ${tone} tone
 - Be concise and compelling
 - Include a clear call-to-action
-- Use the sender's real name (${senderName}) and company name (${senderCompany}) naturally
-- Do not use placeholders - use the actual names provided
+- Use only the company name (${senderCompany}) in the email content naturally. Do not mention any individual sender name.
+- Do not use placeholders - use the actual company name provided
 
 Return as JSON with "subject" and "content" fields.`;
+
+  console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
     const response = await ai.models.generateContent({

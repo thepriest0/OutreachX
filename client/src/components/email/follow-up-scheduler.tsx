@@ -326,10 +326,8 @@ export default function FollowUpScheduler({
                         </SelectTrigger>
                         <SelectContent>
                           <SelectItem value="professional">Professional</SelectItem>
-                          <SelectItem value="friendly">Friendly</SelectItem>
                           <SelectItem value="casual">Casual</SelectItem>
                           <SelectItem value="direct">Direct</SelectItem>
-                          <SelectItem value="enthusiastic">Enthusiastic</SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
