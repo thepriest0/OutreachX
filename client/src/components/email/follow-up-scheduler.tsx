@@ -235,34 +235,39 @@ export default function FollowUpScheduler({
   };
 
   const getStatusBadge = (schedule: FollowUpSchedule) => {
-    if (!schedule.enabled) return <Badge variant="secondary">Disabled</Badge>;
+    if (!schedule.enabled) return <Badge variant="secondary" className="bg-secondary text-secondary-foreground dark:bg-secondary dark:text-secondary-foreground">Disabled</Badge>;
     if (!schedule.id) {
       // If it has content but no ID, it's ready to be saved
       if (schedule.subject && schedule.content) {
-        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">Ready to Save</Badge>;
+        return <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200 dark:bg-green-900 dark:text-green-100 dark:border-green-800">Ready to Save</Badge>;
       }
-      return <Badge variant="outline">Not Created</Badge>;
+      return <Badge variant="outline" className="bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground">Not Created</Badge>;
     }
     
     switch (schedule.status) {
       case "draft":
-        return <Badge variant="default" className="bg-blue-100 text-blue-800">Created & Scheduled</Badge>;
+        return <Badge variant="default" className="bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100">Created & Scheduled</Badge>;
       case "sent":
-        return <Badge variant="destructive">Sent</Badge>;
+        return <Badge variant="destructive" className="bg-destructive text-destructive-foreground dark:bg-destructive dark:text-destructive-foreground">Sent</Badge>;
       case "bounced":
-        return <Badge variant="secondary">Cancelled</Badge>;
+        return <Badge variant="secondary" className="bg-secondary text-secondary-foreground dark:bg-secondary dark:text-secondary-foreground">Cancelled</Badge>;
       default:
-        return <Badge variant="outline">Unknown</Badge>;
+        return <Badge variant="outline" className="bg-muted text-muted-foreground dark:bg-muted dark:text-muted-foreground">Unknown</Badge>;
     }
   };
 
   return (
-    <Card className="w-full">
-      <CardHeader>
-        <CardTitle className="text-lg">Follow-up Campaign Manager</CardTitle>
-        <p className="text-sm text-muted-foreground">
-          Configure up to 3 automated follow-ups for {leadName} at {leadCompany}
-        </p>
+    <Card className="w-full border-l-4 border-blue-500 dark:border-blue-400 bg-card text-card-foreground shadow-md">
+      <CardHeader className="flex flex-row items-center justify-between p-6">
+        <div>
+          <CardTitle className="text-lg flex items-center gap-2">
+            <span className="inline-block px-2 py-1 rounded bg-blue-100 text-blue-800 dark:bg-blue-900 dark:text-blue-100 text-xs font-semibold">Follow-up</span>
+            Campaign Manager
+          </CardTitle>
+          <p className="text-sm text-muted-foreground mt-1">
+            Configure up to 3 automated follow-ups for {leadName} at {leadCompany}
+          </p>
+        </div>
       </CardHeader>
       <CardContent>
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
@@ -271,7 +276,7 @@ export default function FollowUpScheduler({
               <TabsTrigger key={index} value={`schedule-${index + 1}`} className="relative">
                 Follow-up #{index + 1}
                 {schedule.enabled && (
-                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full" />
+                  <div className="absolute -top-1 -right-1 w-2 h-2 bg-blue-500 rounded-full dark:bg-blue-400" />
                 )}
               </TabsTrigger>
             ))}
