@@ -83,37 +83,11 @@ export class EmailService {
   }
 
   // Simple email sending method for invitations and other non-campaign emails
-  async sendEmail(params: { to: string; subject: string; content: string; fromName?: string; fromEmail?: string; recipientName?: string; }): Promise<EmailSendResult> {
-    // Import the email formatter for proper formatting
-    const { EmailFormatter } = require('./emailFormatter');
-    
-    // Extract recipient name from email if not provided
-    const recipientName = params.recipientName || params.to.split('@')[0];
-    
-    // Ensure content is properly formatted
-    const formattedContent = EmailFormatter.formatCompleteEmail(params.content, {
-      recipientName: recipientName,
-      senderCompany: process.env.FROM_COMPANY || "OutreachX",
-      senderName: params.fromName,
-      tone: 'professional',
-      includeSignature: true
-    });
-
-    // Validate and enhance subject line
-    const subjectValidation = EmailFormatter.validateSubjectLine(params.subject);
-    let enhancedSubject = params.subject;
-    
-    if (!subjectValidation.isCompelling) {
-      const company = params.to.split('@')[1]?.split('.')[0] || 'your company';
-      const subjectVariations = EmailFormatter.generateSubjectVariations(params.subject, recipientName, company);
-      enhancedSubject = subjectVariations[0];
-      console.log(`📧 Enhanced subject for simple email from "${params.subject}" to "${enhancedSubject}"`);
-    }
-
+  async sendEmail(params: { to: string; subject: string; content: string; fromName?: string; fromEmail?: string; }): Promise<EmailSendResult> {
     return await this.provider.sendEmail({
       to: params.to,
-      subject: enhancedSubject,
-      content: formattedContent,
+      subject: params.subject,
+      content: params.content,
       fromName: params.fromName || process.env.FROM_NAME || "OutreachX Team",
       fromEmail: params.fromEmail || process.env.FROM_EMAIL || "noreply@outreachx.com",
     });
@@ -134,34 +108,12 @@ export class EmailService {
     // Generate unique Message-ID for reply tracking
     const messageId = `<${campaignId}.${Date.now()}@outreachx.com>`;
 
-    // Import the email formatter for proper formatting
-    const { EmailFormatter } = require('./emailFormatter');
-    
-    // Ensure campaign content is properly formatted
-    let formattedContent = EmailFormatter.formatCompleteEmail(campaign.content, {
-      recipientName: lead.name,
-      senderCompany: process.env.FROM_COMPANY || "OutreachX",
-      tone: 'professional',
-      includeSignature: true
-    });
-
     // Add tracking pixels and links to email content
-    const trackedContent = this.addEmailTracking(formattedContent, trackingId);
-
-    // Validate and enhance subject line if needed
-    const subjectValidation = EmailFormatter.validateSubjectLine(campaign.subject);
-    let enhancedSubject = campaign.subject;
-    
-    // If subject is not compelling, enhance it
-    if (!subjectValidation.isCompelling) {
-      const subjectVariations = EmailFormatter.generateSubjectVariations(campaign.subject, lead.name, lead.company);
-      enhancedSubject = subjectVariations[0]; // Use the first enhanced variation
-      console.log(`📧 Enhanced subject from "${campaign.subject}" to "${enhancedSubject}"`);
-    }
+    const trackedContent = this.addEmailTracking(campaign.content, trackingId);
 
     const result = await this.provider.sendEmail({
       to: lead.email,
-      subject: enhancedSubject,
+      subject: campaign.subject,
       content: trackedContent,
       fromName: process.env.FROM_NAME || "OutreachX Team",
       fromEmail: process.env.FROM_EMAIL || "outreach@yourcompany.com",
@@ -175,8 +127,6 @@ export class EmailService {
       // Update campaign with tracking info and sent status
       await storage.updateEmailCampaign(campaignId, {
         status: "sent",
-        subject: enhancedSubject, // Store the enhanced subject
-        content: formattedContent, // Store the formatted content
         messageId: messageId, // Use our generated messageId for reply tracking
         trackingId: result.trackingId,
         sentAt: new Date()
@@ -187,19 +137,14 @@ export class EmailService {
         lastContactDate: new Date(),
         status: 'contacted'
       });
-
-      console.log(`✅ Email sent successfully with enhanced formatting to ${lead.email}`);
     }
 
     return result;
   }
 
   addEmailTracking(content: string, trackingId?: string): string {
-    // Import the email formatter
-    const { EmailFormatter } = require('./emailFormatter');
-    
-    // Ensure content is properly formatted first
-    let formattedContent = EmailFormatter.ensureProperFormatting(content);
+    // Convert newlines to HTML breaks for proper formatting
+    let formattedContent = content.replace(/\n/g, '<br>');
     
     if (!trackingId) return formattedContent;
 

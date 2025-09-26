@@ -28,77 +28,93 @@ export async function generateColdEmail(request: EmailGenerationRequest): Promis
     ? `\n\nIMPORTANT: The following notes contain key information about ${name.toUpperCase()} that MUST be used to personalize and tailor the email.\nNOTES:\n${notes}\n\nYou should prioritize these notes when crafting the email. Reference them directly if possible, and ensure the email feels highly personalized based on this context.`
     : '';
 
-  const prompt = `You are the world's #1 email copywriter with 15+ years creating IRRESISTIBLE emails with 40%+ open rates.
-Your expertise: emails so compelling they feel like personal messages from a trusted colleague.
+  const prompt = `You are a senior email copywriter with 10+ years of experience writing high-converting cold outreach emails. 
+Your expertise lies in creating emails that feel genuinely human, build immediate trust, and compel action.
 
 TARGET RECIPIENT: ${name}, ${role} at ${company}
-SENDER: ${senderCompany} (Product Design and Branding Studio)  
+SENDER: ${senderCompany} (Product Design and Branding Studio)
 TONE: ${tone}
 ${notesSection}
 
-🎯 CRITICAL REQUIREMENTS - NO EXCEPTIONS:
+COPYWRITER'S FRAMEWORK - FOLLOW THIS EXACTLY:
 
-1. SUBJECT LINE MASTERY (ABSOLUTELY COMPELLING):
-   - MUST create instant curiosity that demands opening
-   - 6-10 words MAXIMUM (mobile optimization)
-   - Include ${name} when natural
-   - Pattern interrupt that stands out in crowded inbox
-   - Feel personal, NOT mass-sent
-   - Pass the "coworker test" - could be from a colleague
+1. IRRESISTIBLE SUBJECT LINE PSYCHOLOGY:
+   - MUST create immediate curiosity that compels opening
+   - Use pattern interrupt, intrigue, or benefit-driven language
+   - Test these proven formulas: "Question about [company]", "[Name], quick question", "Impressed by [specific achievement]", "[Industry] insight for you"
+   - NEVER use generic subjects like "Introduction" or "Partnership opportunity"
+   - Maximum 4-6 words that create genuine curiosity
+   - Should work seamlessly with opening line to create cohesive message
 
-2. EMAIL STRUCTURE & FORMATTING (PERFECT EVERY TIME):
-   - Start: "Hi ${name}," (warm, personal greeting)
-   - Use <br><br> for paragraph breaks (proper HTML formatting)
-   - Short paragraphs: 1-2 sentences max
-   - Clear visual hierarchy with proper spacing
-   - End with professional signature block
+2. MANDATORY EMAIL STRUCTURE AND FORMATTING:
+   - ALWAYS start with proper greeting: "Hi [Name]," or "Hello [Name],"
+   - Use proper line breaks between paragraphs (\n\n)
+   - Structure: Greeting → Hook → Value → Call-to-Action → Professional closing
+   - End with professional signature: "Best regards," or "Best," followed by sender info
+   - Every paragraph should be 1-2 sentences maximum for readability
+   - Use conversational, human language throughout
 
-3. OPENING HOOK (FIRST SENTENCE):
-   - Must grab attention immediately
-   - Create curiosity gap or pattern interrupt
-   - Reference their company/role specifically
-   - Feel researched and personalized
-   - Make them want to keep reading
+3. COMPELLING OPENING REQUIREMENTS:
+   - First sentence MUST grab attention and feel genuinely personal
+   - Reference something specific about them/their company
+   - Create immediate relevance to their role/challenges
+   - Avoid generic openings like "I hope this email finds you well"
+   - Use pattern interrupt or curiosity-driven hook
 
-4. PSYCHOLOGY PRINCIPLES (ADVANCED):
-   - Pattern interrupt: Start unexpectedly
-   - Reciprocity: Give value before asking
-   - Social proof: Mention similar company success
-   - Curiosity gap: Intrigue that requires response
-   - Authority: Show expertise subtly
-   - Urgency: Natural timing reasons
+4. VALUE-FIRST CONTENT STRATEGY:
+   - Offer genuine insight, resource, or benefit upfront
+   - Reference specific results or case studies when relevant
+   - Ask thought-provoking questions related to their business
+   - Focus on "you" and their success, not your services
+   - Include social proof naturally in conversation
 
-5. CONVERSION ELEMENTS (HIGH-CONVERTING):
-   - Focus on THEIR benefits, not your services
-   - Include specific numbers/results when possible
-   - Ask compelling question about their challenges
-   - Provide easy, low-commitment next step
-   - Create momentum toward response
-
-6. FORMATTING REQUIREMENTS (MOBILE-OPTIMIZED):
-   - Start with: Hi ${name},<br><br>
-   - Use <br><br> between all paragraphs
-   - End with: Best regards,<br>[Sender Name]<br>${senderCompany}
+5. PROFESSIONAL FORMATTING STANDARDS:
+   - Proper greeting at start
+   - Clear paragraph breaks with double line spacing (\n\n)
+   - Professional closing with sender information
    - Maximum 150 words total
-   - Scannable on mobile devices
+   - Easy to scan with short paragraphs
+   - Human, conversational tone throughout
 
-7. QUALITY STANDARDS (MASTER-LEVEL):
-   - Subject line is absolutely irresistible
-   - Email feels like personal message, not marketing
-   - Every word serves a purpose
-   - Natural, conversational flow
-   - Compels action through curiosity, not pressure
+6. CONVERSION PSYCHOLOGY:
+   - Create momentum toward response without pressure
+   - Make responding feel professionally smart
+   - Lower barrier to engagement
+   - End with easiest possible next step
+   - Build micro-relationship in first interaction
 
-EXAMPLE PERFECT FORMAT:
-{
-  "subject": "[Compelling 4-6 word subject with curiosity]",
-  "content": "Hi ${name},<br><br>[Attention-grabbing opening sentence about their company]<br><br>[Value proposition paragraph with specific benefit]<br><br>[Social proof or compelling question]<br><br>[Clear, simple call-to-action]<br><br>Best regards,<br>${senderName || 'The Team'}<br>${senderCompany}"
-}
+SUBJECT LINE EXAMPLES (ADAPT TO CONTEXT):
+- "Quick question, ${name}"
+- "${company}'s growth caught my attention"
+- "Insight for ${company}"
+- "${name}, 30-second favor?"
 
-Create an email so compelling that ${name} will HAVE to open and respond.
+EMAIL TEMPLATE STRUCTURE:
+Hi ${name},
+
+[Attention-grabbing, personalized opening line]
+
+[Value proposition with specific benefit/insight]
+
+[Social proof or relevant example]
+
+[Clear, low-friction call-to-action]
+
+Best regards,
+${senderCompany} Team
+
+QUALITY STANDARDS:
+- Subject must compel immediate opening
+- Email must have proper greeting and professional closing
+- Perfect formatting with proper line breaks
+- Zero marketing jargon
+- Passes "would I open this?" test
+- Feels like colleague reaching out, not salesperson
+
+Write an email with an irresistible subject line and perfectly formatted content.
 Format as JSON with 'subject' and 'content' fields.`;
 
-  console.log("[Enhanced Gemini Prompt]", prompt); // Debug log for prompt
+  console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
     const response = await ai.models.generateContent({
@@ -164,8 +180,8 @@ export async function generateFollowUpEmail({
     ? `\n\nIMPORTANT: The following notes contain key information about ${name.toUpperCase()} that MUST be used to personalize and tailor the follow-up email.\nNOTES:\n${notes}\n\nYou should prioritize these notes when crafting the follow-up. Reference them directly if possible, and ensure the email feels highly personalized based on this context.`
     : '';
 
-  const prompt = `You are the world's #1 follow-up email copywriter with 40%+ response rates on follow-up sequences.
-Your expertise: creating follow-ups that re-engage without being pushy or annoying.
+  const prompt = `You are a senior copywriter with 10+ years of experience writing high-converting follow-up emails.
+Your expertise is in creating follow-ups that re-engage prospects without being pushy or annoying.
 
 TARGET: ${name}, ${role} at ${company} 
 SENDER: ${senderCompany} (Product Design and Branding Studio)
@@ -174,79 +190,107 @@ FOLLOW-UP SEQUENCE: #${followUpSequence}
 PREVIOUS EMAIL: ${previousEmailContent}
 ${notesSection}
 
-🎯 CRITICAL FOLLOW-UP REQUIREMENTS - NO EXCEPTIONS:
+SENIOR COPYWRITER'S FOLLOW-UP STRATEGY:
 
-1. SUBJECT LINE (ABSOLUTELY COMPELLING):
-   - MUST be different from first email subject
-   - Create fresh curiosity using new angle
-   - 6-10 words maximum for mobile
-   - Pattern interrupt that re-engages
-   - Feel like natural conversation continuation
+SEQUENCE ${followUpSequence} PSYCHOLOGY:
+${sequenceGuidance}
 
-2. PERFECT FORMATTING (MOBILE-OPTIMIZED):
-   - Start: "Hi ${name}," (warm acknowledgment)
-   - Use <br><br> between all paragraphs 
-   - Short paragraphs: 1-2 sentences max
-   - End with professional signature
-   - Maximum 120 words total
+FOLLOW-UP MASTERY PRINCIPLES:
 
-3. FOLLOW-UP #${followUpSequence} STRATEGY:
+1. IRRESISTIBLE FOLLOW-UP SUBJECT LINES:
+   - MUST differentiate from previous email subject
+   - Create fresh curiosity that compels opening
+   - Use different psychological trigger than email #1
+   - Examples for sequence #${followUpSequence}:
+     ${followUpSequence === 1 ? 
+       `• "Following up, ${name}"
+        • "One more thought for ${company}"
+        • "Did you see my email about ${company}?"
+        • "${name}, quick follow-up"`
+       : followUpSequence === 2 ?
+       `• "Last attempt, ${name}"
+        • "${company} - final thought"  
+        • "Closing the loop, ${name}"
+        • "One final idea for you"`
+       : `• "Final note, ${name}"
+        • "Last email from me"
+        • "Signing off, ${name}"
+        • "Final thought for ${company}"`}
+
+2. MANDATORY FOLLOW-UP FORMATTING:
+   - ALWAYS start with proper greeting: "Hi ${name}," or "Hello ${name},"
+   - Use proper line breaks between paragraphs (\n\n)
+   - Structure: Greeting → Context → Fresh Value → Call-to-Action → Professional closing
+   - End with professional signature: "Best regards," or "Best," followed by sender info
+   - Maximum 1-2 sentences per paragraph for readability
+   - Professional, conversational tone throughout
+
+3. STRATEGIC APPROACH FOR FOLLOW-UP #${followUpSequence}:
    ${followUpSequence === 1 ? `
-   ✅ FIRST FOLLOW-UP PSYCHOLOGY:
-   - Assume they're busy, not uninterested
-   - Add NEW value/angle, don't repeat
-   - Reference original email subtly
+   - Acknowledge they're busy, show understanding
+   - Add NEW value or angle, never repeat previous content
+   - Reference the original email subtly but don't dwell
    - Create fresh reason to respond today
-   - Show understanding of their time constraints
+   - Maintain professional persistence without pressure
    ` : followUpSequence === 2 ? `
-   ✅ SECOND FOLLOW-UP PSYCHOLOGY:
-   - Acknowledge this is attempt #2 professionally
-   - Shift value proposition completely
-   - Include social proof or case study
-   - Create gentle urgency without pressure  
-   - Give easy "not interested" option
+   - Acknowledge this is your second attempt professionally
+   - Shift the value proposition or provide social proof
+   - Create slight momentum without being pushy
+   - Make it easy to say "not interested" or "yes, let's talk"
+   - Show respect for their decision-making process
    ` : `
-   ✅ FINAL FOLLOW-UP PSYCHOLOGY:
-   - Last attempt with grace and class
-   - Provide absolute best value upfront
-   - Make it clear this is final email
-   - End sequence professionally
-   - Leave door open for future
+   - Final attempt with grace and professionalism
+   - Provide your best value or insight upfront
+   - Make it clear this is your last email
+   - End the sequence with class, leaving door open
+   - Respect their silence while offering final opportunity
    `}
 
-4. RE-ENGAGEMENT ELEMENTS:
-   - Fresh opening (different from email #1)
-   - NEW information or angle
-   - Social proof relevant to their situation
-   - Different call-to-action approach
-   - Respect their position and time
+4. PROFESSIONAL FOLLOW-UP STRUCTURE:
+   - Proper greeting and professional closing mandatory
+   - Perfect formatting with clear paragraph breaks
+   - Reference previous email without being repetitive
+   - Add fresh perspective or value
+   - Natural, pressure-free call-to-action
+   - Human, respectful tone throughout
 
-5. CONVERSION PSYCHOLOGY:
-   - Pattern interrupt with new approach
-   - Show you understand they got first email
-   - Provide reason why timing matters now
-   - Make response feel professional/smart
-   - Lower barrier to engagement
+5. FOLLOW-UP CONVERSION PSYCHOLOGY:
+   - Pattern interrupt: Start differently than previous email
+   - Fresh value: New insight, case study, or perspective
+   - Social proof: Recent wins or relevant examples
+   - Respectful persistence: Show professionalism
+   - Easy response: Lower barrier to engagement
 
-6. FORMATTING STRUCTURE:
-   Hi ${name},<br><br>
-   [Acknowledge previous email subtly]<br><br>
-   [New value proposition or angle]<br><br>
-   [Social proof or compelling reason]<br><br>
-   [Clear, appropriate CTA for sequence position]<br><br>
-   Best regards,<br>
-   [Name]<br>
-   ${senderCompany}
+FOLLOW-UP TEMPLATE STRUCTURE:
+Hi ${name},
 
-QUALITY STANDARDS FOR FOLLOW-UP #${followUpSequence}:
-- Subject line creates fresh curiosity
-- Email feels like natural progression
-- Adds genuine new value
-- Respects their time and position
-- Builds relationship even if no response
-- Professional persistence without pest-istence
+[Acknowledge context/reference previous email naturally]
 
-Create a follow-up so compelling they'll want to respond even if they ignored email #1.
+[Fresh value proposition or new angle]
+
+[Social proof or compelling reason to respond]
+
+[Clear, low-pressure call-to-action]
+
+Best regards,
+${senderCompany} Team
+
+QUALITY STANDARDS FOR FOLLOW-UPS:
+- Subject must create fresh curiosity, different from email #1  
+- Perfect professional formatting with proper greetings/closings
+- Must feel like natural progression, not repetition
+- Cannot sound desperate or pushy
+- Should add new value, not rehash old points
+- Respects their time and decision-making process
+
+CONSTRAINTS:
+- Maximum 120 words in email body
+- Subject: 3-5 compelling words that differentiate from previous
+- Perfect formatting with proper line breaks (\n\n)
+- Professional greeting and closing required
+- Reference previous email without being needy
+
+Create a follow-up that demonstrates advanced copywriting skills and psychology.
 Format as JSON with 'subject' and 'content' fields.`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
