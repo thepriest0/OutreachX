@@ -39,10 +39,9 @@ CRITICAL REQUIREMENTS - FAILURE TO FOLLOW MEANS REJECTION:
 
 1. SUBJECT LINE MUST BE COMPELLING AND CLEAR:
    - 6-12 words that immediately communicate VALUE or BENEFIT to them
-   - MUST hint at what you're offering (design services, branding help, etc.)
-   - Examples: "Transform ${company}'s brand in 30 days", "Design upgrade for ${company}", "Brand makeover proposal for ${name}", "${company} deserves better branding"
+   - MUST hint at design services (product design, UI/UX, branding, etc.)
    - NEVER vague subjects like "Quick question" or company name only
-   - Must create curiosity while being clear about your intent
+   - Must create curiosity while being clear about your design expertise
 
 2. EMAIL FORMATTING IS MANDATORY:
    - Start with: "Hi ${name},"
@@ -51,33 +50,35 @@ CRITICAL REQUIREMENTS - FAILURE TO FOLLOW MEANS REJECTION:
    - End with: "Best regards,\\n${senderCompany} Team"
    - PERFECT formatting required - no walls of text
 
-3. EMAIL STRUCTURE (EXACTLY 4 PARAGRAPHS):
+3. CONTENT PRIORITIZATION:
+   - IF NOTES ARE PROVIDED: Use them as primary personalization - reference specific details from notes naturally
+   - Primary service: Product Design (UI/UX, app design, web design)
+   - Secondary services: Branding, visual identity, design systems
+   - Focus on their business needs and how design can solve their problems
+   - Tailor service mentions based on their role and company type
 
-   Paragraph 1: Personal greeting + attention-grabbing opener about their business
+4. EMAIL STRUCTURE (EXACTLY 4 PARAGRAPHS):
+
+   Paragraph 1: Personal greeting + attention-grabbing opener (use notes if available)
    
-   Paragraph 2: What you do and how it specifically helps companies like theirs
+   Paragraph 2: What you do (product design focus) and how it helps companies like theirs
    
-   Paragraph 3: Social proof or specific benefit they'd get
+   Paragraph 3: Social proof or specific benefit they'd get from design improvements
    
    Paragraph 4: Clear call-to-action + professional closing
 
-4. CONTENT REQUIREMENTS:
-   - Clearly state you're offering design/branding services
-   - Mention specific benefits for their business
-   - Include a compelling reason to respond
+5. CONTENT REQUIREMENTS:
+   - Clearly state you're a product design studio (mention UI/UX, app design, web design)
+   - Reference branding only if relevant to their business or mentioned in notes
+   - Include specific benefits for their business type
    - Professional but conversational tone
-   - Focus on their success, not your services
-
-EXAMPLE STRUCTURE:
-{
-  "subject": "Brand transformation for ${company}",
-  "content": "Hi ${name},\\n\\nI noticed ${company}'s innovative approach to [industry] and thought you might be interested in a brand upgrade that matches your forward-thinking vision.\\n\\nWe help companies like yours increase customer trust and sales through strategic design and branding that tells your story powerfully.\\n\\nOur recent client saw a 40% increase in customer engagement after their brand refresh, and I believe ${company} could see similar results.\\n\\nWould you be open to a brief 15-minute call this week to discuss how we could elevate ${company}'s brand?\\n\\nBest regards,\\n${senderCompany} Team"
-}
+   - Focus on their success through better design
 
 Your response MUST:
-- Have a subject line that clearly hints at design/branding services
+- Have a subject line that clearly hints at design services (not just branding)
 - Be perfectly formatted with proper line breaks (\\n\\n)
-- Have exactly 4 well-structured paragraphs
+- Prioritize and reference NOTES if provided for personalization
+- Focus on product design as primary service
 - Start with "Hi ${name}," and end with "Best regards,\\n${senderCompany} Team"
 - Be compelling and professional
 
@@ -163,21 +164,8 @@ CRITICAL REQUIREMENTS - FOLLOW EXACTLY OR EMAIL WILL BE REJECTED:
 1. SUBJECT LINE REQUIREMENTS:
    - Must be different from previous email subject
    - 6-12 words that create urgency or curiosity
-   - Examples for follow-up #${followUpSequence}:
-   ${followUpSequence === 1 ? 
-     `• "Following up on ${company}'s brand design"
-      • "${name}, did you see my design proposal?"
-      • "Brand upgrade timeline for ${company}"
-      • "Quick follow-up about ${company}"`
-     : followUpSequence === 2 ?
-     `• "Final proposal for ${company}'s branding"  
-      • "${name}, last chance for brand upgrade"
-      • "Closing our branding discussion"
-      • "One more try - ${company}'s design"`
-     : `• "Last email about ${company}'s branding"
-      • "Final note on your brand upgrade"
-      • "Closing the loop on ${company}'s design"
-      • "My final design proposal"`}
+   - Should reference follow-up context and design services
+   - Create compelling reason to open this follow-up
 
 2. MANDATORY EMAIL FORMATTING:
    - Start with: "Hi ${name},"
@@ -186,41 +174,43 @@ CRITICAL REQUIREMENTS - FOLLOW EXACTLY OR EMAIL WILL BE REJECTED:
    - End with: "Best regards,\\n${senderCompany} Team"
    - NO walls of text - perfect formatting required
 
-3. FOLLOW-UP STRUCTURE (EXACTLY 3-4 PARAGRAPHS):
+3. CONTENT PRIORITIZATION:
+   - IF NOTES ARE PROVIDED: Use them as primary personalization source
+   - Focus on product design services (UI/UX, app design, web design)
+   - Mention branding only if relevant or in notes
+   - Reference specific details from notes naturally if available
+
+4. FOLLOW-UP STRUCTURE (EXACTLY 3-4 PARAGRAPHS):
 
    Paragraph 1: Reference previous email + acknowledge they're busy
    
-   Paragraph 2: NEW value or angle (never repeat previous content)
+   Paragraph 2: NEW value or angle (never repeat previous content) - use notes if available
    
    Paragraph 3: ${followUpSequence === 1 ? 'Social proof or specific benefit' : followUpSequence === 2 ? 'Urgency or final opportunity' : 'Graceful final attempt with door left open'}
    
    Paragraph 4: Clear call-to-action + professional closing
 
-4. FOLLOW-UP #${followUpSequence} STRATEGY:
+5. FOLLOW-UP #${followUpSequence} STRATEGY:
    ${followUpSequence === 1 ? 
      `- Show understanding they're busy
-      - Add fresh perspective on branding benefits
+      - Add fresh perspective on design benefits
       - Reference previous email briefly
       - Create new reason to respond`
      : followUpSequence === 2 ?
      `- Acknowledge second attempt professionally
-      - Provide compelling case study or result
+      - Provide compelling design case study or result
       - Create appropriate urgency without pressure
       - Make it easy to say yes or no`
      : `- Final attempt with complete professionalism
-      - Offer best value upfront
+      - Offer best design value upfront
       - Make clear this is last email
       - Leave door open respectfully`}
-
-EXAMPLE STRUCTURE:
-{
-  "subject": "${followUpSequence === 1 ? `Following up on ${company}'s branding` : followUpSequence === 2 ? `Final branding proposal for ${company}` : `Last note about ${company}'s design`}",
-  "content": "Hi ${name},\\n\\n${followUpSequence === 1 ? `I sent an email last week about elevating ${company}'s brand design and wanted to follow up in case it got buried in your inbox.` : followUpSequence === 2 ? `I've reached out twice now about ${company}'s branding opportunity and wanted to try one more time.` : `This is my final email about the branding opportunity for ${company}.`}\\n\\n${followUpSequence === 1 ? `Since then, I've been thinking about how a strategic rebrand could help ${company} stand out even more in your competitive market.` : followUpSequence === 2 ? `We just helped a similar company increase their customer trust by 45% through strategic branding, and I believe ${company} could see similar results.` : `I genuinely believe ${company} has incredible potential for a brand transformation that could significantly impact your growth.`}\\n\\n${followUpSequence === 1 ? `Would you be interested in a quick 15-minute call this week to explore how we could enhance ${company}'s brand presence?` : followUpSequence === 2 ? `If you're interested, I'd love to share some specific ideas for ${company}. If not, I completely understand and won't reach out again.` : `If there's any interest in discussing this, I'm here. If not, I respect your decision and wish ${company} continued success.`}\\n\\nBest regards,\\n${senderCompany} Team"
-}
 
 Your response MUST:
 - Have a compelling subject that's different from previous email
 - Be perfectly formatted with proper line breaks (\\n\\n)
+- Prioritize and reference NOTES if provided for personalization
+- Focus on product design as primary service
 - Reference previous email appropriately for sequence #${followUpSequence}
 - Start with "Hi ${name}," and end with "Best regards,\\n${senderCompany} Team"
 - Add NEW value, never repeat previous content
