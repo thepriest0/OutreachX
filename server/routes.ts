@@ -645,10 +645,130 @@ export async function registerRoutes(app: Express): Promise<Server> {
         });
       }
 
-      res.json(generatedEmail);
+      // Import EmailFormatter to ensure the generated email is properly formatted
+      const { EmailFormatter } = require('./services/emailFormatter');
+      
+      // Format the generated content to ensure proper structure
+      const formattedContent = EmailFormatter.formatCompleteEmail(generatedEmail.content, {
+        recipientName: lead.name,
+        senderCompany: senderCompany,
+        senderName: senderName,
+        tone: tone,
+        includeSignature: true
+      });
+
+      // Validate and potentially enhance the subject line
+      const subjectValidation = EmailFormatter.validateSubjectLine(generatedEmail.subject);
+      let finalSubject = generatedEmail.subject;
+      
+      if (!subjectValidation.isCompelling) {
+        const subjectVariations = EmailFormatter.generateSubjectVariations(generatedEmail.subject, lead.name, lead.company);
+        finalSubject = subjectVariations[0];
+      }
+
+      // Return enhanced email with formatting metadata
+      res.json({
+        ...generatedEmail,
+        subject: finalSubject,
+        content: formattedContent,
+        formatting: {
+          validation: EmailFormatter.validateEmailStructure(formattedContent),
+          subjectValidation: EmailFormatter.validateSubjectLine(finalSubject),
+          alternativeSubjects: EmailFormatter.generateSubjectVariations(finalSubject, lead.name, lead.company)
+        }
+      });
     } catch (error) {
       console.error("Error generating email:", error);
       res.status(500).json({ message: "Failed to generate email" });
+    }
+  });
+
+  // Email quality validation endpoint
+  app.post('/api/email/validate-quality', requireAuth, async (req: any, res) => {
+    try {
+      const { subject, content, recipientName, recipientCompany } = req.body;
+      
+      if (!subject || !content) {
+        return res.status(400).json({ message: "Subject and content are required" });
+      }
+
+      const { EmailFormatter } = require('./services/emailFormatter');
+      
+      // Validate subject line
+      const subjectValidation = EmailFormatter.validateSubjectLine(subject);
+      
+      // Validate email structure
+      const structureValidation = EmailFormatter.validateEmailStructure(content);
+      
+      // Generate suggestions for improvement
+      const improvements = [];
+      const alternativeSubjects = [];
+      
+      if (!subjectValidation.isCompelling) {
+        improvements.push("Subject line could be more compelling");
+        if (recipientName && recipientCompany) {
+          alternativeSubjects.push(...EmailFormatter.generateSubjectVariations(subject, recipientName, recipientCompany));
+        }
+      }
+      
+      if (!structureValidation.hasGreeting) {
+        improvements.push("Add a personalized greeting");
+      }
+      
+      if (!structureValidation.hasProperFormatting) {
+        improvements.push("Improve formatting with proper line breaks");
+      }
+      
+      if (!structureValidation.hasSignature) {
+        improvements.push("Add a professional signature");
+      }
+      
+      if (structureValidation.wordCount > 150) {
+        improvements.push("Consider shortening the email (current: " + structureValidation.wordCount + " words)");
+      }
+      
+      if (structureValidation.readabilityScore === 'poor') {
+        improvements.push("Simplify sentences for better readability");
+      }
+
+      // Calculate overall quality score
+      let qualityScore = 0;
+      if (subjectValidation.isCompelling) qualityScore += 25;
+      if (structureValidation.hasGreeting) qualityScore += 15;
+      if (structureValidation.hasProperFormatting) qualityScore += 20;
+      if (structureValidation.hasSignature) qualityScore += 10;
+      if (structureValidation.wordCount <= 150) qualityScore += 15;
+      if (structureValidation.readabilityScore === 'good') qualityScore += 15;
+
+      const qualityRating = qualityScore >= 80 ? 'Excellent' :
+                           qualityScore >= 60 ? 'Good' :
+                           qualityScore >= 40 ? 'Fair' : 'Poor';
+
+      res.json({
+        qualityScore,
+        qualityRating,
+        subject: {
+          ...subjectValidation,
+          alternatives: alternativeSubjects
+        },
+        content: structureValidation,
+        improvements,
+        compellingElements: {
+          hasPersonalization: content.toLowerCase().includes(recipientName?.toLowerCase() || ''),
+          hasCuriosity: ['question', 'noticed', 'thought', 'wondered'].some(word => 
+            content.toLowerCase().includes(word)
+          ),
+          hasSocialProof: ['helped', 'worked with', 'similar', 'like you'].some(phrase => 
+            content.toLowerCase().includes(phrase)
+          ),
+          hasCallToAction: ['call', 'chat', 'meet', 'discuss', 'talk'].some(word => 
+            content.toLowerCase().includes(word)
+          )
+        }
+      });
+    } catch (error) {
+      console.error("Error validating email quality:", error);
+      res.status(500).json({ message: "Failed to validate email quality" });
     }
   });
 
