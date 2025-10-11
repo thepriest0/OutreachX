@@ -55,7 +55,10 @@ export class InvitationService {
   private async sendInvitationEmail(email: string, token: string, role: string): Promise<void> {
     console.log(`📧 sendInvitationEmail called for ${email} with role ${role}`);
     
-    const inviteUrl = `${process.env.APP_URL || 'http://localhost:5173'}/invite/${token}`;
+  let baseUrl = process.env.APP_URL || 'http://localhost:5173';
+  // Remove trailing slash if present
+  if (baseUrl.endsWith('/')) baseUrl = baseUrl.slice(0, -1);
+  const inviteUrl = `${baseUrl}/invite/${token}`;
     
     const subject = "You're invited to join OutreachX";
     const htmlContent = `
