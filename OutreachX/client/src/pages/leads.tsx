@@ -22,7 +22,7 @@ import {
 import { Card, CardContent } from "@/components/ui/card";
 import LeadForm from "@/components/leads/lead-form";
 import CSVImport from "@/components/leads/csv-import";
-import AIEmailGenerator from "@/components/email/ai-email-generator";
+import AIEmailGenerator from "@/components/email/ai-email-generator-modern";
 import { Edit, Trash2, Search, Plus, Upload, Download, Mail } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 import type { Lead } from "@shared/schema";

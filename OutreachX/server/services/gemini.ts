@@ -1,7 +1,7 @@
-import { GoogleGenAI } from "@google/genai";
+import Groq from "groq-sdk";
 
-const ai = new GoogleGenAI({ 
-  apiKey: process.env.GEMINI_API_KEY || process.env.GOOGLE_AI_API_KEY || ""
+const ai = new Groq({ 
+  apiKey: process.env.GROQ_API_KEY || ""
 });
 
 export interface EmailGenerationRequest {
@@ -31,7 +31,7 @@ export async function generateColdEmail(request: EmailGenerationRequest): Promis
   const prompt = `You are an expert email copywriter. Your task is to write a compelling cold outreach email that gets opened and responded to.
 
 TARGET: ${name}, ${role} at ${company}
-FROM: ${senderCompany} (Product Design and Branding Studio)
+FROM: ${senderName}, an expert Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)
 TONE: ${tone}
 ${notesSection}
 
@@ -45,9 +45,9 @@ CRITICAL REQUIREMENTS - FAILURE TO FOLLOW MEANS REJECTION:
 
 2. EMAIL FORMATTING IS MANDATORY:
    - Start with: "Hi ${name},"
-   - Each paragraph separated by TWO line breaks (\\n\\n)
+   - Each paragraph separated by TWO line breaks (\n\n)
    - Maximum 2 sentences per paragraph
-   - End with: "Best regards,\\n${senderCompany} Team"
+   - End with: "Best regards,\n${senderName}"
    - PERFECT formatting required - no walls of text
 
 3. CONTENT PRIORITIZATION:
@@ -68,47 +68,42 @@ CRITICAL REQUIREMENTS - FAILURE TO FOLLOW MEANS REJECTION:
    Paragraph 4: Clear call-to-action + professional closing
 
 5. CONTENT REQUIREMENTS:
-   - Clearly state you're a product design studio (mention UI/UX, app design, web design)
-   - Reference branding only if relevant to their business or mentioned in notes
-   - Include specific benefits for their business type
+   - Clearly position yourself as an experienced independent Product Designer (B2C, SaaS, Design Systems)
+   - Focus on how your thoughtful, intent-driven interfaces can solve their specific problems
+   - Reference specific benefits for their business type
    - Professional but conversational tone
    - Focus on their success through better design
 
 Your response MUST:
 - Have a subject line that clearly hints at design services (not just branding)
-- Be perfectly formatted with proper line breaks (\\n\\n)
+- Be perfectly formatted with proper line breaks (\n\n)
 - Prioritize and reference NOTES if provided for personalization
-- Focus on product design as primary service
-- Start with "Hi ${name}," and end with "Best regards,\\n${senderCompany} Team"
+- Focus on your individual expertise as a Product Designer
+- Start with "Hi ${name}," and end with "Best regards,\n${senderName}"
 - Be compelling and professional
 
-Generate the email now:`;
+Generate the email now in JSON format:`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            subject: { type: "string" },
-            content: { type: "string" },
-          },
-          required: ["subject", "content"],
-        },
-      },
-      contents: prompt,
+    const response = await ai.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        }
+      ],
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" },
     });
 
-    const rawJson = response.text;
+    const rawJson = response.choices[0]?.message?.content;
     if (rawJson) {
       const data: EmailGenerationResponse = JSON.parse(rawJson);
       return data;
     } else {
-      throw new Error("Empty response from Gemini");
+      throw new Error("Empty response from Groq");
     }
   } catch (error) {
     throw new Error(`Failed to generate email: ${error}`);
@@ -153,7 +148,7 @@ export async function generateFollowUpEmail({
   const prompt = `You are an expert email copywriter. Your task is to write a compelling follow-up email that gets responses.
 
 TARGET: ${name}, ${role} at ${company} 
-FROM: ${senderCompany} (Product Design and Branding Studio)
+FROM: ${senderName}, an expert Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)
 TONE: ${tone}
 FOLLOW-UP #: ${followUpSequence}
 PREVIOUS EMAIL: ${previousEmailContent}
@@ -169,9 +164,9 @@ CRITICAL REQUIREMENTS - FOLLOW EXACTLY OR EMAIL WILL BE REJECTED:
 
 2. MANDATORY EMAIL FORMATTING:
    - Start with: "Hi ${name},"
-   - Each paragraph separated by TWO line breaks (\\n\\n)
+   - Each paragraph separated by TWO line breaks (\n\n)
    - Maximum 2 sentences per paragraph
-   - End with: "Best regards,\\n${senderCompany} Team"
+   - End with: "Best regards,\n${senderName}"
    - NO walls of text - perfect formatting required
 
 3. CONTENT PRIORITIZATION:
@@ -208,40 +203,35 @@ CRITICAL REQUIREMENTS - FOLLOW EXACTLY OR EMAIL WILL BE REJECTED:
 
 Your response MUST:
 - Have a compelling subject that's different from previous email
-- Be perfectly formatted with proper line breaks (\\n\\n)
+- Be perfectly formatted with proper line breaks (\n\n)
 - Prioritize and reference NOTES if provided for personalization
-- Focus on product design as primary service
+- Position yourself as an independent expert Product Designer
 - Reference previous email appropriately for sequence #${followUpSequence}
-- Start with "Hi ${name}," and end with "Best regards,\\n${senderCompany} Team"
+- Start with "Hi ${name}," and end with "Best regards,\n${senderName}"
 - Add NEW value, never repeat previous content
 
-Generate the follow-up email now:`;
+Generate the follow-up email now in JSON format:`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      config: {
-        responseMimeType: "application/json",
-        responseSchema: {
-          type: "object",
-          properties: {
-            subject: { type: "string" },
-            content: { type: "string" },
-          },
-          required: ["subject", "content"],
-        },
-      },
-      contents: prompt,
+    const response = await ai.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        }
+      ],
+      model: "llama-3.3-70b-versatile",
+      response_format: { type: "json_object" },
     });
 
-    const rawJson = response.text;
+    const rawJson = response.choices[0]?.message?.content;
     if (rawJson) {
       const data: EmailGenerationResponse = JSON.parse(rawJson);
       return data;
     } else {
-      throw new Error("Empty response from Gemini");
+      throw new Error("Empty response from Groq");
     }
   } catch (error) {
     throw new Error(`Failed to generate follow-up email: ${error}`);
@@ -261,12 +251,17 @@ export async function generateInsights(data: InsightRequest): Promise<string> {
 Mention reply rate, follow-up effectiveness, and any improvement suggestions.`;
 
   try {
-    const response = await ai.models.generateContent({
-      model: "gemini-2.5-flash",
-      contents: prompt,
+    const response = await ai.chat.completions.create({
+      messages: [
+        {
+          role: "user",
+          content: prompt,
+        }
+      ],
+      model: "llama-3.3-70b-versatile",
     });
 
-    return response.text || "Unable to generate insights at this time.";
+    return response.choices[0]?.message?.content || "Unable to generate insights at this time.";
   } catch (error) {
     throw new Error(`Failed to generate insights: ${error}`);
   }

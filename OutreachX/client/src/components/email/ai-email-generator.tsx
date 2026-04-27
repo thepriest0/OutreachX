@@ -1,0 +1,1 @@
+export { default } from "./ai-email-generator-modern";

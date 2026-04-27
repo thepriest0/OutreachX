@@ -12,7 +12,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Checkbox } from "@/components/ui/checkbox";
 import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
-import AIEmailGenerator from "@/components/email/ai-email-generator";
+import AIEmailGenerator from "@/components/email/ai-email-generator-modern";
 import FollowUpScheduler from "@/components/email/follow-up-scheduler";
 import EmailTracker from "@/components/email/email-tracker";
 import { Search, Filter, Plus, Trash2, Edit, Send, Clock, Eye, MoreHorizontal, Mail } from "lucide-react";

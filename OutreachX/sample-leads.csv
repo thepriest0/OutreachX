@@ -1,0 +1,11 @@
+name,email,company,role,notes
+John Doe,john.doe@example.com,Example Corp,CEO,"Interested in design services, available for call"
+Jane Smith,jane.smith@example.org,Acme Inc.,Head of Marketing,"Requested pricing and case studies"
+Carlos Mendez,carlos.mendez@startup.io,Startup.io,CTO,"Follow up about integration options"
+Aisha Khan,aisha.khan@enterprise.co,Enterprise Co,Product Manager,"Likes the demo; schedule follow-up"
+Liu Wei,liu.wei@globaltech.com,GlobalTech,Engineering Lead,"Prefers email contact"
+Priya Patel,priya.patel@finserve.com,FinServe,,"No role provided in CRM"
+"O'Connor, liam",liam.oconnor@business.ie,Business Ireland,Founder,"Has a complex company name"
+Marta García,marta.garcia@example.es,Internacional S.L.,Head of Design,"Speaks Spanish; time zone: CET"
+Sam Brown,sam.brown@example.com,SmallBiz LLC,Operations,"Uses commas, needs quoting, e.g., ""prefers Friday"""
+Olivia Zhang,olivia.zhang@example.cn,AsiaCorp,Sales,"Interested in pilot program"

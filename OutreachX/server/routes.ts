@@ -467,9 +467,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Lead not found" });
       }
 
-      // Create sender name from user's first and last name
-      const senderName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.username;
-      const senderCompany = "Nydl Studio";
+      // Use the explicitly requested sender name
+      const senderName = "Oladimeji Abubakar";
+      const senderCompany = "Oladimeji Abubakar - Product Designer";
 
       const followUpEmail = await generateFollowUpEmail({
         name: lead.name,
@@ -615,9 +615,9 @@ export async function registerRoutes(app: Express): Promise<Server> {
         return res.status(404).json({ message: "Lead not found" });
       }
 
-      // Create sender name from user's first and last name
-      const senderName = `${currentUser.firstName || ''} ${currentUser.lastName || ''}`.trim() || currentUser.username;
-      const senderCompany = "Nydl Studio";
+      // Use the explicitly requested sender name
+      const senderName = "Oladimeji Abubakar";
+      const senderCompany = "Oladimeji Abubakar - Product Designer";
 
       let generatedEmail;
       if (isFollowUp && parentEmailId) {
