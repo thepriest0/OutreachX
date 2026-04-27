@@ -41,6 +41,7 @@ export class GmailProvider implements EmailProvider {
         fromName: params.fromName,
         fromEmail: params.fromEmail,
         messageId: messageId,
+        attachments: params.attachments,
       });
 
       const response = await this.gmail.users.messages.send({
@@ -81,6 +82,7 @@ export class GmailProvider implements EmailProvider {
     fromName: string;
     fromEmail: string;
     messageId?: string;
+    attachments?: { filename: string; content: string; mimeType: string }[];
   }): string {
     const emailLines = [
       `From: ${params.fromName} <${params.fromEmail}>`,
@@ -93,11 +95,38 @@ export class GmailProvider implements EmailProvider {
       emailLines.push(`Message-ID: ${params.messageId}`);
     }
     
-    emailLines.push(
-      'Content-Type: text/html; charset=utf-8',
-      '',
-      params.content
-    );
+    if (params.attachments && params.attachments.length > 0) {
+      const boundary = `----=_NextPart_${Date.now()}`;
+      emailLines.push(`Content-Type: multipart/mixed; boundary="${boundary}"`);
+      emailLines.push('');
+      
+      emailLines.push(`--${boundary}`);
+      emailLines.push('Content-Type: text/html; charset=utf-8');
+      emailLines.push('');
+      emailLines.push(params.content);
+      emailLines.push('');
+
+      for (const attachment of params.attachments) {
+        emailLines.push(`--${boundary}`);
+        emailLines.push(`Content-Type: ${attachment.mimeType}; name="${attachment.filename}"`);
+        emailLines.push(`Content-Disposition: attachment; filename="${attachment.filename}"`);
+        emailLines.push('Content-Transfer-Encoding: base64');
+        emailLines.push('');
+        // Chunk base64 string every 76 characters as per MIME standard
+        const b64 = attachment.content;
+        for (let i = 0; i < b64.length; i += 76) {
+          emailLines.push(b64.substring(i, i + 76));
+        }
+        emailLines.push('');
+      }
+      emailLines.push(`--${boundary}--`);
+    } else {
+      emailLines.push(
+        'Content-Type: text/html; charset=utf-8',
+        '',
+        params.content
+      );
+    }
 
     const email = emailLines.join('\n');
     return Buffer.from(email).toString('base64').replace(/\+/g, '-').replace(/\//g, '_');

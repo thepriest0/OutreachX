@@ -20,6 +20,11 @@ export interface EmailSendParams {
   leadId?: string;
   campaignId?: string;
   messageId?: string;
+  attachments?: {
+    filename: string;
+    content: string; // base64 encoded
+    mimeType: string;
+  }[];
 }
 
 export interface EmailSendResult {
@@ -93,7 +98,7 @@ export class EmailService {
     });
   }
 
-  async sendCampaignEmail(campaignId: string, leadId: string): Promise<EmailSendResult> {
+  async sendCampaignEmail(campaignId: string, leadId: string, attachments?: {filename: string, content: string, mimeType: string}[]): Promise<EmailSendResult> {
     const campaign = await storage.getEmailCampaignById(campaignId);
     const lead = await storage.getLeadById(leadId);
 
@@ -120,7 +125,8 @@ export class EmailService {
       trackingId,
       leadId,
       campaignId,
-      messageId
+      messageId,
+      attachments
     });
 
     if (result.success) {

@@ -1,5 +1,7 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import fs from "fs";
+import path from "path";
 import { storage } from "./storage";
 import { setupAuth, requireAuth, requireRole } from "./auth";
 import { emailService } from "./services/emailService";
@@ -361,8 +363,26 @@ export async function registerRoutes(app: Express): Promise<Server> {
       if (!campaign.leadId) {
         return res.status(400).json({ message: "Campaign has no associated lead" });
       }
+      const { includeResume } = req.body;
       
-      const result = await emailService.sendCampaignEmail(campaignId, campaign.leadId);
+      let attachments = undefined;
+      if (includeResume) {
+        try {
+          const resumePath = path.join(process.cwd(), "server", "assets", "Oladimeji_Abubakar_Resume.pdf");
+          if (fs.existsSync(resumePath)) {
+            const content = fs.readFileSync(resumePath, { encoding: 'base64' });
+            attachments = [{
+              filename: "Oladimeji_Abubakar_Resume.pdf",
+              content: content,
+              mimeType: "application/pdf"
+            }];
+          }
+        } catch (e) {
+          console.error("Failed to attach resume:", e);
+        }
+      }
+      
+      const result = await emailService.sendCampaignEmail(campaignId, campaign.leadId, attachments);
       
       if (result.success) {
         res.json({ message: "Email sent successfully", result });
@@ -737,13 +757,30 @@ export async function registerRoutes(app: Express): Promise<Server> {
   app.post('/api/campaigns/:id/send', requireAuth, async (req: any, res) => {
     try {
       const { id } = req.params;
-      const { leadId } = req.body;
+      const { leadId, includeResume } = req.body;
       
       if (!leadId) {
         return res.status(400).json({ success: false, error: "Lead ID is required" });
       }
       
-      const result = await emailService.sendCampaignEmail(id, leadId);
+      let attachments = undefined;
+      if (includeResume) {
+        try {
+          const resumePath = path.join(process.cwd(), "server", "assets", "Oladimeji_Abubakar_Resume.pdf");
+          if (fs.existsSync(resumePath)) {
+            const content = fs.readFileSync(resumePath, { encoding: 'base64' });
+            attachments = [{
+              filename: "Oladimeji_Abubakar_Resume.pdf",
+              content: content,
+              mimeType: "application/pdf"
+            }];
+          }
+        } catch (e) {
+          console.error("Failed to attach resume:", e);
+        }
+      }
+      
+      const result = await emailService.sendCampaignEmail(id, leadId, attachments);
       
       if (result.success) {
         res.json({ success: true, messageId: result.messageId, trackingId: result.trackingId });

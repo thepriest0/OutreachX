@@ -48,6 +48,7 @@ export default function AIEmailGenerator({
   const [generatedContent, setGeneratedContent] = useState("");
   const [leadPickerOpen, setLeadPickerOpen] = useState(false);
   const [step, setStep] = useState<"configure" | "review">("configure");
+  const [includeResume, setIncludeResume] = useState(true);
 
   // Fetch leads if not provided
   const { data: fetchedLeads } = useQuery<Lead[]>({
@@ -95,6 +96,7 @@ export default function AIEmailGenerator({
         status: "draft",
         isFollowUp: false,
         followUpSequence: 0,
+        includeResume,
       });
       return res.json();
     },
@@ -127,12 +129,14 @@ export default function AIEmailGenerator({
         status: "draft",
         isFollowUp: false,
         followUpSequence: 0,
+        includeResume,
       });
       const draft = await draftRes.json();
       
       // 2. Then immediately send it
       const sendRes = await apiRequest("POST", `/api/campaigns/${draft.id}/send`, {
-        leadId: selectedLead.id
+        leadId: selectedLead.id,
+        includeResume
       });
       return sendRes.json();
     },
@@ -315,6 +319,24 @@ export default function AIEmailGenerator({
                 className="font-mono text-sm resize-none"
                 placeholder="Email content…"
               />
+            </div>
+            <div className="flex items-center space-x-2 pt-2 border-t">
+              <Checkbox
+                id="include-resume"
+                checked={includeResume}
+                onCheckedChange={(c) => setIncludeResume(!!c)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="include-resume"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Attach Resume PDF
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Includes Oladimeji_Abubakar_Resume.pdf as an attachment.
+                </p>
+              </div>
             </div>
           </div>
         )}

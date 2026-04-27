@@ -47,8 +47,7 @@ CRITICAL REQUIREMENTS - FAILURE TO FOLLOW MEANS REJECTION:
    - Start with: "Hi ${name},"
    - Each paragraph separated by TWO line breaks (\n\n)
    - Maximum 2 sentences per paragraph
-   - End with: "Best regards,\n${senderName}"
-   - PERFECT formatting required - no walls of text
+   - NO walls of text - perfect formatting required
 
 3. CONTENT PRIORITIZATION:
    - IF NOTES ARE PROVIDED: Use them as primary personalization - reference specific details from notes naturally
@@ -79,7 +78,11 @@ Your response MUST:
 - Be perfectly formatted with proper line breaks (\n\n)
 - Prioritize and reference NOTES if provided for personalization
 - Focus on your individual expertise as a Product Designer
-- Start with "Hi ${name}," and end with "Best regards,\n${senderName}"
+- End the email exactly like this (including the portfolio link and resume mention):
+"Best regards,
+${senderName}
+Portfolio: https://uxdimeji.com
+P.S. I've attached my resume for your reference."
 - Be compelling and professional
 
 Generate the email now in JSON format:`;
@@ -166,7 +169,6 @@ CRITICAL REQUIREMENTS - FOLLOW EXACTLY OR EMAIL WILL BE REJECTED:
    - Start with: "Hi ${name},"
    - Each paragraph separated by TWO line breaks (\n\n)
    - Maximum 2 sentences per paragraph
-   - End with: "Best regards,\n${senderName}"
    - NO walls of text - perfect formatting required
 
 3. CONTENT PRIORITIZATION:
@@ -207,7 +209,11 @@ Your response MUST:
 - Prioritize and reference NOTES if provided for personalization
 - Position yourself as an independent expert Product Designer
 - Reference previous email appropriately for sequence #${followUpSequence}
-- Start with "Hi ${name}," and end with "Best regards,\n${senderName}"
+- End the email exactly like this (including the portfolio link and resume mention):
+"Best regards,
+${senderName}
+Portfolio: https://uxdimeji.com
+P.S. I've attached my resume for your reference."
 - Add NEW value, never repeat previous content
 
 Generate the follow-up email now in JSON format:`;

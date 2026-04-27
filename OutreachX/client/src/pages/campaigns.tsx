@@ -79,7 +79,8 @@ export default function Campaigns() {
         throw new Error("Campaign not found");
       }
       return apiRequest("POST", `/api/campaigns/${campaignId}/send`, {
-        leadId: campaign.leadId
+        leadId: campaign.leadId,
+        includeResume: true
       });
     },
     onSuccess: () => {
