@@ -155,7 +155,7 @@ export class EmailService {
       baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://outreachx.onrender.com';
     } else {
       // Development environment
-      baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+      baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:10000';
     }
 
     // Ensure protocol is present (default to http for dev, https for prod)

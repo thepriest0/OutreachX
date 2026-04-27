@@ -698,7 +698,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   });
 
   // Email campaign tracking routes
-  app.get('/api/email/track/open/:trackingId', async (req, res) => {
+  app.get('/api/email/track-open/:trackingId', async (req, res) => {
     try {
       const { trackingId } = req.params;
       await emailService.handleEmailOpen(trackingId);
@@ -717,7 +717,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
     }
   });
 
-  app.get('/api/email/track/click/:trackingId', async (req, res) => {
+  app.get('/api/email/track-click/:trackingId', async (req, res) => {
     try {
       const { trackingId } = req.params;
       const { url } = req.query;

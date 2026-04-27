@@ -109,8 +109,7 @@ export class GmailProvider implements EmailProvider {
     let baseUrl = '';
     if (process.env.NODE_ENV === 'production') {
       baseUrl = process.env.APP_URL || process.env.RENDER_EXTERNAL_URL || 'https://outreachx.onrender.com';
-    } else {
-      baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:5000';
+      baseUrl = process.env.REPLIT_DOMAINS?.split(',')[0] || 'http://localhost:10000';
     }
 
     if (!/^https?:\/\//i.test(baseUrl)) {
