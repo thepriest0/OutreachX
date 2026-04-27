@@ -85,7 +85,7 @@ Portfolio: https://uxdimeji.com
 P.S. I've attached my resume for your reference."
 - Be compelling and professional
 
-Generate the email now in JSON format:`;
+Generate the email now in JSON format. The response MUST be a valid JSON object with exactly these two keys: "subject" (string) and "content" (string). Do not use nested objects:`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
@@ -103,7 +103,9 @@ Generate the email now in JSON format:`;
 
     const rawJson = response.choices[0]?.message?.content;
     if (rawJson) {
-      const data: EmailGenerationResponse = JSON.parse(rawJson);
+      // Clean up markdown formatting if Groq wraps the JSON
+      const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      const data: EmailGenerationResponse = JSON.parse(cleanJson);
       return data;
     } else {
       throw new Error("Empty response from Groq");
@@ -216,7 +218,7 @@ Portfolio: https://uxdimeji.com
 P.S. I've attached my resume for your reference."
 - Add NEW value, never repeat previous content
 
-Generate the follow-up email now in JSON format:`;
+Generate the follow-up email now in JSON format. The response MUST be a valid JSON object with exactly these two keys: "subject" (string) and "content" (string). Do not use nested objects:`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
@@ -234,7 +236,9 @@ Generate the follow-up email now in JSON format:`;
 
     const rawJson = response.choices[0]?.message?.content;
     if (rawJson) {
-      const data: EmailGenerationResponse = JSON.parse(rawJson);
+      // Clean up markdown formatting if Groq wraps the JSON
+      const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      const data: EmailGenerationResponse = JSON.parse(cleanJson);
       return data;
     } else {
       throw new Error("Empty response from Groq");
