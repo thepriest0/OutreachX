@@ -105,8 +105,27 @@ Generate the email now in JSON format. The response MUST be a valid JSON object 
     if (rawJson) {
       // Clean up markdown formatting if Groq wraps the JSON
       const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-      const data: EmailGenerationResponse = JSON.parse(cleanJson);
-      return data;
+      let data: any = JSON.parse(cleanJson);
+      
+      // Normalize Groq's unpredictable object schemas
+      if (!data.content) {
+        if (data.emailBody && Array.isArray(data.emailBody)) {
+          data.content = data.emailBody.map((p: any) => p.paragraph || p).join('\n\n');
+        } else if (data.emailBody && typeof data.emailBody === 'string') {
+          data.content = data.emailBody;
+        } else if (data.body) {
+          data.content = data.body;
+        } else if (data.email) {
+          data.content = data.email;
+        } else if (data.message) {
+          data.content = data.message;
+        } else {
+          // If we still can't find it, stringify the whole object as a fallback
+          data.content = JSON.stringify(data, null, 2);
+        }
+      }
+      
+      return data as EmailGenerationResponse;
     } else {
       throw new Error("Empty response from Groq");
     }
@@ -238,8 +257,27 @@ Generate the follow-up email now in JSON format. The response MUST be a valid JS
     if (rawJson) {
       // Clean up markdown formatting if Groq wraps the JSON
       const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
-      const data: EmailGenerationResponse = JSON.parse(cleanJson);
-      return data;
+      let data: any = JSON.parse(cleanJson);
+      
+      // Normalize Groq's unpredictable object schemas
+      if (!data.content) {
+        if (data.emailBody && Array.isArray(data.emailBody)) {
+          data.content = data.emailBody.map((p: any) => p.paragraph || p).join('\n\n');
+        } else if (data.emailBody && typeof data.emailBody === 'string') {
+          data.content = data.emailBody;
+        } else if (data.body) {
+          data.content = data.body;
+        } else if (data.email) {
+          data.content = data.email;
+        } else if (data.message) {
+          data.content = data.message;
+        } else {
+          // If we still can't find it, stringify the whole object as a fallback
+          data.content = JSON.stringify(data, null, 2);
+        }
+      }
+      
+      return data as EmailGenerationResponse;
     } else {
       throw new Error("Empty response from Groq");
     }
