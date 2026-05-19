@@ -1,8 +1,68 @@
-import Groq from "groq-sdk";
+import { GoogleGenAI } from "@google/genai";
 
-const ai = new Groq({ 
-  apiKey: process.env.GROQ_API_KEY || ""
+const ai = new GoogleGenAI({
+  apiKey: process.env.GEMINI_API_KEY || "",
 });
+const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
+const JSON_RESPONSE_CONFIG = { responseMimeType: "application/json" };
+
+async function getResponseText(response: any): Promise<string> {
+  if (!response) {
+    return "";
+  }
+
+  if (typeof response.text === "function") {
+    const text = await response.text();
+    if (text) {
+      return text;
+    }
+  }
+
+  if (typeof response.text === "string") {
+    return response.text;
+  }
+
+  const parts = response?.candidates?.[0]?.content?.parts;
+  if (Array.isArray(parts)) {
+    return parts
+      .map((part: any) => (typeof part === "string" ? part : part?.text || ""))
+      .join("");
+  }
+
+  return "";
+}
+
+function normalizeEmailResponse(data: any): EmailGenerationResponse {
+  const normalized = typeof data === "object" && data ? data : {};
+
+  if (!normalized.content) {
+    if (normalized.emailBody && Array.isArray(normalized.emailBody)) {
+      normalized.content = normalized.emailBody
+        .map((p: any) => p.paragraph || p)
+        .join("\n\n");
+    } else if (normalized.emailBody && typeof normalized.emailBody === "string") {
+      normalized.content = normalized.emailBody;
+    } else if (normalized.body) {
+      normalized.content = normalized.body;
+    } else if (normalized.email) {
+      normalized.content = normalized.email;
+    } else if (normalized.message) {
+      normalized.content = normalized.message;
+    } else {
+      normalized.content = typeof data === "string" ? data : JSON.stringify(data, null, 2);
+    }
+  }
+
+  if (!normalized.subject && normalized.title) {
+    normalized.subject = normalized.title;
+  }
+
+  if (!normalized.subject) {
+    normalized.subject = "";
+  }
+
+  return normalized as EmailGenerationResponse;
+}
 
 export interface EmailGenerationRequest {
   name: string;
@@ -90,45 +150,22 @@ Generate the email now in JSON format. The response MUST be a valid JSON object 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
-    const response = await ai.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        }
-      ],
-      model: "llama-3.3-70b-versatile",
-      response_format: { type: "json_object" },
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: JSON_RESPONSE_CONFIG,
     });
 
-    const rawJson = response.choices[0]?.message?.content;
+    const rawJson = await getResponseText(response);
     if (rawJson) {
-      // Clean up markdown formatting if Groq wraps the JSON
-      const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Clean up markdown formatting if Gemini wraps the JSON
+      const cleanJson = rawJson.replace(/```json/g, "").replace(/```/g, "").trim();
       let data: any = JSON.parse(cleanJson);
-      
-      // Normalize Groq's unpredictable object schemas
-      if (!data.content) {
-        if (data.emailBody && Array.isArray(data.emailBody)) {
-          data.content = data.emailBody.map((p: any) => p.paragraph || p).join('\n\n');
-        } else if (data.emailBody && typeof data.emailBody === 'string') {
-          data.content = data.emailBody;
-        } else if (data.body) {
-          data.content = data.body;
-        } else if (data.email) {
-          data.content = data.email;
-        } else if (data.message) {
-          data.content = data.message;
-        } else {
-          // If we still can't find it, stringify the whole object as a fallback
-          data.content = JSON.stringify(data, null, 2);
-        }
-      }
-      
-      return data as EmailGenerationResponse;
-    } else {
-      throw new Error("Empty response from Groq");
+
+      return normalizeEmailResponse(data);
     }
+
+    throw new Error("Empty response from Gemini");
   } catch (error) {
     throw new Error(`Failed to generate email: ${error}`);
   }
@@ -242,45 +279,22 @@ Generate the follow-up email now in JSON format. The response MUST be a valid JS
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
   try {
-    const response = await ai.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        }
-      ],
-      model: "llama-3.3-70b-versatile",
-      response_format: { type: "json_object" },
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
+      config: JSON_RESPONSE_CONFIG,
     });
 
-    const rawJson = response.choices[0]?.message?.content;
+    const rawJson = await getResponseText(response);
     if (rawJson) {
-      // Clean up markdown formatting if Groq wraps the JSON
-      const cleanJson = rawJson.replace(/```json/g, '').replace(/```/g, '').trim();
+      // Clean up markdown formatting if Gemini wraps the JSON
+      const cleanJson = rawJson.replace(/```json/g, "").replace(/```/g, "").trim();
       let data: any = JSON.parse(cleanJson);
-      
-      // Normalize Groq's unpredictable object schemas
-      if (!data.content) {
-        if (data.emailBody && Array.isArray(data.emailBody)) {
-          data.content = data.emailBody.map((p: any) => p.paragraph || p).join('\n\n');
-        } else if (data.emailBody && typeof data.emailBody === 'string') {
-          data.content = data.emailBody;
-        } else if (data.body) {
-          data.content = data.body;
-        } else if (data.email) {
-          data.content = data.email;
-        } else if (data.message) {
-          data.content = data.message;
-        } else {
-          // If we still can't find it, stringify the whole object as a fallback
-          data.content = JSON.stringify(data, null, 2);
-        }
-      }
-      
-      return data as EmailGenerationResponse;
-    } else {
-      throw new Error("Empty response from Groq");
+
+      return normalizeEmailResponse(data);
     }
+
+    throw new Error("Empty response from Gemini");
   } catch (error) {
     throw new Error(`Failed to generate follow-up email: ${error}`);
   }
@@ -299,17 +313,13 @@ export async function generateInsights(data: InsightRequest): Promise<string> {
 Mention reply rate, follow-up effectiveness, and any improvement suggestions.`;
 
   try {
-    const response = await ai.chat.completions.create({
-      messages: [
-        {
-          role: "user",
-          content: prompt,
-        }
-      ],
-      model: "llama-3.3-70b-versatile",
+    const response = await ai.models.generateContent({
+      model: GEMINI_MODEL,
+      contents: [{ role: "user", parts: [{ text: prompt }] }],
     });
 
-    return response.choices[0]?.message?.content || "Unable to generate insights at this time.";
+    const text = await getResponseText(response);
+    return text || "Unable to generate insights at this time.";
   } catch (error) {
     throw new Error(`Failed to generate insights: ${error}`);
   }
