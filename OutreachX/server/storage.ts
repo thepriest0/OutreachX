@@ -286,7 +286,7 @@ export class DatabaseStorage implements IStorage {
       .select()
       .from(leads)
       .where(
-        sql`(${leads.name} ILIKE ${`%${query}%`} OR ${leads.company} ILIKE ${`%${query}%`} OR ${leads.email} ILIKE ${`%${query}%`})`
+        sql`(${leads.name} ILIKE ${`%${query}%`} OR coalesce(${leads.company}, '') ILIKE ${`%${query}%`} OR ${leads.email} ILIKE ${`%${query}%`})`
       )
       .orderBy(desc(leads.createdAt));
   }

@@ -76,6 +76,7 @@ export class FollowUpScheduler {
       company: lead.company,
       tone: parentCampaign.tone,
       isFollowUp: true,
+      previousEmailSubject: parentCampaign.subject,
       previousEmailContent: parentCampaign.content,
       senderName,
       senderCompany,

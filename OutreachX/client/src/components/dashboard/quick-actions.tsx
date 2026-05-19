@@ -13,6 +13,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   Select,
   SelectContent,
@@ -85,6 +86,7 @@ interface GenerateEmailFormData {
   leadId: string;
   tone: "professional" | "casual" | "direct";
   isFollowUp: boolean;
+  isJobApplication: boolean;
 }
 
 export default function QuickActions() {
@@ -104,7 +106,8 @@ export default function QuickActions() {
   const [emailData, setEmailData] = useState<GenerateEmailFormData>({
     leadId: "",
     tone: "professional",
-    isFollowUp: false
+    isFollowUp: false,
+    isJobApplication: false,
   });
 
   // Create lead mutation
@@ -246,10 +249,10 @@ export default function QuickActions() {
   };
 
   const handleCreateLead = () => {
-    if (!newLeadData.name || !newLeadData.email || !newLeadData.company) {
+    if (!newLeadData.name || !newLeadData.email) {
       toast({
         title: "Missing Information",
-        description: "Please fill in name, email, and company fields.",
+        description: "Please fill in name and email fields.",
         variant: "destructive",
       });
       return;
@@ -368,10 +371,10 @@ export default function QuickActions() {
               />
             </div>
             <div className="space-y-2">
-              <Label htmlFor="company">Company *</Label>
+              <Label htmlFor="company">Company</Label>
               <Input
                 id="company"
-                placeholder="Acme Corp"
+                placeholder="Company (optional)"
                 value={newLeadData.company}
                 onChange={(e) => setNewLeadData({ ...newLeadData, company: e.target.value })}
                 data-testid="input-lead-company"
@@ -422,7 +425,7 @@ export default function QuickActions() {
               <span>Generate AI Email</span>
             </DialogTitle>
             <DialogDescription>
-              Let AI create a personalized email for your outreach campaign.
+                Let AI create a personalized email draft.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -451,6 +454,21 @@ export default function QuickActions() {
                   <SelectItem value="direct">Direct</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="job-application"
+                checked={emailData.isJobApplication}
+                onCheckedChange={(checked) =>
+                  setEmailData({ ...emailData, isJobApplication: !!checked })
+                }
+              />
+              <div className="grid gap-1.5 leading-none">
+                <Label htmlFor="job-application">Job application</Label>
+                <p className="text-xs text-muted-foreground">
+                  Tailor the email as a formal job application.
+                </p>
+              </div>
             </div>
           </div>
           <div className="flex justify-end space-x-2">

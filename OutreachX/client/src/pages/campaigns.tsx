@@ -186,14 +186,17 @@ export default function Campaigns() {
   const filteredGroupedCampaigns = groupedCampaigns().filter(group => {
     const { parent } = group;
     const lead = leads?.find(l => l.id === parent.leadId);
+    const leadName = lead?.name || "";
+    const leadEmail = lead?.email || "";
+    const leadCompany = lead?.company || "";
     
     // Search filter
     const matchesSearch = !searchTerm || 
       parent.subject.toLowerCase().includes(searchTerm.toLowerCase()) ||
       parent.content?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead?.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead?.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      lead?.company?.toLowerCase().includes(searchTerm.toLowerCase());
+      leadName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      leadEmail.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      leadCompany.toLowerCase().includes(searchTerm.toLowerCase());
     
     // Status filter
     const matchesStatus = statusFilter === "all" || parent.status === statusFilter;
@@ -713,7 +716,9 @@ export default function Campaigns() {
                             />
                             <div className="flex-1">
                               <div className="font-medium">{lead.name}</div>
-                              <div className="text-sm text-gray-500">{lead.company} • {lead.email}</div>
+                              <div className="text-sm text-gray-500">
+                                {lead.company ? `${lead.company} • ${lead.email}` : lead.email}
+                              </div>
                             </div>
                           </div>
                         ))}
@@ -801,7 +806,7 @@ export default function Campaigns() {
                   <FollowUpScheduler
                     campaignId={selectedCampaignForSchedule.id}
                     leadName={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.name || 'Lead'}
-                    leadCompany={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.company || 'Company'}
+                    leadCompany={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.company || ""}
                     leadRole={leads?.find(l => l.id === selectedCampaignForSchedule.leadId)?.role || 'Decision Maker'}
                     originalTone={selectedCampaignForSchedule.tone || 'professional'}
                     onSuccess={() => {

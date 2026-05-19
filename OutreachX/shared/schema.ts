@@ -178,6 +178,8 @@ export const insertLeadSchema = createInsertSchema(leads).pick({
   role: true,
   notes: true,
   status: true,
+}).extend({
+  company: z.string().optional().default(""),
 });
 
 export const insertEmailCampaignSchema = createInsertSchema(emailCampaigns).pick({

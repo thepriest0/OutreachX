@@ -47,11 +47,6 @@ export function validateCSVLeads(leads: CSVLead[]): { valid: CSVLead[]; errors: 
       return;
     }
     
-    if (!lead.company?.trim()) {
-      errors.push(`Row ${rowNumber}: Company is required`);
-      return;
-    }
-
     // Basic email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(lead.email)) {
@@ -69,7 +64,7 @@ export function convertLeadsToCSV(leads: Lead[]): string {
   const csvData = leads.map(lead => ({
     name: lead.name,
     email: lead.email,
-    company: lead.company,
+    company: lead.company || "",
     role: lead.role || '',
     status: lead.status,
     notes: lead.notes || '',

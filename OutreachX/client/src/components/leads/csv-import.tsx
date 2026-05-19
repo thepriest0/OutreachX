@@ -218,8 +218,8 @@ export default function CSVImport({ onClose, onSuccess }: CSVImportProps) {
               </div>
 
               <ul className="text-sm text-gray-700 list-disc list-inside space-y-1 mb-3">
-                <li><strong>Required:</strong> <code>name</code>, <code>email</code>, <code>company</code></li>
-                <li><strong>Optional:</strong> <code>role</code>, <code>notes</code></li>
+                <li><strong>Required:</strong> <code>name</code>, <code>email</code></li>
+                <li><strong>Optional:</strong> <code>company</code>, <code>role</code>, <code>notes</code></li>
               </ul>
 
               <div className="text-sm text-gray-600">

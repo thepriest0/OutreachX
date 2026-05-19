@@ -49,10 +49,11 @@ export default function Leads() {
 
   // Filter leads based on search query and status
   const filteredLeads = leads?.filter((lead: Lead) => {
+    const companyValue = lead.company || "";
     const matchesSearch = !searchQuery || 
       lead.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
       lead.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      lead.company.toLowerCase().includes(searchQuery.toLowerCase());
+      companyValue.toLowerCase().includes(searchQuery.toLowerCase());
     
     const matchesStatus = statusFilter === "all" || lead.status === statusFilter;
     
@@ -342,7 +343,7 @@ export default function Leads() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <p className="text-xs sm:text-sm text-foreground">{lead.company}</p>
+                              <p className="text-xs sm:text-sm text-foreground">{lead.company || "Not provided"}</p>
                               <p className="text-[10px] sm:text-xs text-muted-foreground">{lead.email}</p>
                             </TableCell>
                             <TableCell>
@@ -416,7 +417,7 @@ export default function Leads() {
                           </div>
                         </div>
                         <div className="flex flex-col gap-1">
-                          <p className="text-sm text-foreground font-medium">{lead.company}</p>
+                          <p className="text-sm text-foreground font-medium">{lead.company || "Not provided"}</p>
                           <p className="text-xs text-muted-foreground">{lead.email}</p>
                         </div>
                         <div className="flex items-center gap-2 mt-1">

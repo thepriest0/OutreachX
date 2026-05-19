@@ -5,6 +5,46 @@ const ai = new GoogleGenAI({
 });
 const GEMINI_MODEL = process.env.GEMINI_MODEL || "gemini-1.5-flash";
 const JSON_RESPONSE_CONFIG = { responseMimeType: "application/json" };
+const TONE_GUIDANCE: Record<string, string> = {
+  professional:
+    "- Formal and polished (treat this as a formal business tone).\n" +
+    "- No slang or emojis; prefer precise, respectful phrasing.\n" +
+    "- Calm confidence, measured claims, and clear benefit language.",
+  casual:
+    "- Friendly and conversational, but still professional.\n" +
+    "- Contractions are fine; keep it warm and human.\n" +
+    "- Avoid overly salesy language or hype.",
+  direct:
+    "- Clear, concise, and assertive.\n" +
+    "- Short sentences, minimal fluff, straight to the point.\n" +
+    "- Focus on the ask and the concrete value.",
+};
+
+function getToneGuidance(tone: string): string {
+  return TONE_GUIDANCE[tone] ||
+    "- Clear, professional, and respectful.\n" +
+    "- Match the requested formality and keep the writing concise.";
+}
+
+function formatTargetLine(name: string, role: string, company?: string | null): string {
+  const rolePart = role ? `, ${role}` : "";
+  const companyValue = company?.trim();
+  const companyPart = companyValue ? ` at ${companyValue}` : "";
+  return `${name}${rolePart}${companyPart}`.trim();
+}
+
+function getModeGuidance(isJobApplication: boolean): string {
+  if (isJobApplication) {
+    return "MODE: Job application. Write as a candidate applying for a role.\n" +
+      "- Focus on fit, relevant experience, and measurable outcomes.\n" +
+      "- Do not pitch services or freelance availability.\n" +
+      "- If company is not provided, do not mention a company or use \"at\".\n";
+  }
+
+  return "MODE: Freelance and contract design outreach.\n" +
+    "- Position yourself as an independent Product Designer, not a studio or agency.\n" +
+    "- Emphasize business outcomes from design improvements.\n";
+}
 
 async function getResponseText(response: any): Promise<string> {
   if (!response) {
@@ -67,10 +107,11 @@ function normalizeEmailResponse(data: any): EmailGenerationResponse {
 export interface EmailGenerationRequest {
   name: string;
   role: string;
-  company: string;
+  company?: string | null;
   tone: 'professional' | 'casual' | 'direct';
   isFollowUp?: boolean;
   previousEmailContent?: string;
+  isJobApplication?: boolean;
   senderName: string;
   senderCompany: string;
   notes?: string;
@@ -82,70 +123,100 @@ export interface EmailGenerationResponse {
 }
 
 export async function generateColdEmail(request: EmailGenerationRequest): Promise<EmailGenerationResponse> {
-  const { name, role, company, tone, senderName, senderCompany, notes } = request;
+  const { name, role, company, tone, senderName, senderCompany, notes, isJobApplication } = request;
+  const isJobApplicationMode = isJobApplication === true;
 
   const notesSection = notes
-    ? `\n\nIMPORTANT: The following notes contain key information about ${name.toUpperCase()} that MUST be used to personalize and tailor the email.\nNOTES:\n${notes}\n\nYou should prioritize these notes when crafting the email. Reference them directly if possible, and ensure the email feels highly personalized based on this context.`
-    : '';
+    ? `NOTES (use these for specificity and personalization):\n${notes}`
+    : "";
+  const toneGuidance = getToneGuidance(tone);
+  const modeGuidance = getModeGuidance(isJobApplicationMode);
+  const targetLine = formatTargetLine(name, role, company);
+  const fromLine = isJobApplicationMode
+    ? `${senderName}, Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)`
+    : `${senderName}, independent Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)`;
 
-  const prompt = `You are an expert email copywriter. Your task is to write a compelling cold outreach email that gets opened and responded to.
+  const voiceAndQuality = isJobApplicationMode
+    ? "- Write like a competent person sending a real email, not like an AI generating a cover letter\n" +
+      "- No openers: \"Hope you're well\", \"I wanted to reach out\", \"I came across\", \"Touching base\", \"Quick question\"\n" +
+      "- No filler phrases that pad without adding meaning\n" +
+      "- Every sentence must earn its place; if it does not add a specific fact, proof, or reason, cut it\n" +
+      "- Vary sentence length and rhythm to match the tone\n" +
+      "- Be specific: name things, cite outcomes, reference actual work, never speak in vague generalities\n" +
+      "- Do not hype or exaggerate; credibility comes from specificity, not enthusiasm"
+    : "- Write like a sharp professional reaching out to a peer, not a vendor pitching a client\n" +
+      "- No openers: \"Hope you're well\", \"I wanted to reach out\", \"I came across\", \"Touching base\", \"Quick question\"\n" +
+      "- No filler; every sentence must carry a specific fact, observation, or reason\n" +
+      "- Vary sentence length and rhythm to match the tone\n" +
+      "- Be specific: reference the lead's role, industry, or context so it does not feel mass-sent\n" +
+      "- Do not oversell or use hype; credibility comes from specificity and restraint\n" +
+      "- The email should feel written for this person specifically, not adapted from a template";
 
-TARGET: ${name}, ${role} at ${company}
-FROM: ${senderName}, an expert Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)
+  const subjectLineRules = isJobApplicationMode
+    ? "- 6-12 words, references the role or application context\n" +
+      "- Must include \"Application\" or \"Applying\"\n" +
+      "- If a role name is available, include it\n" +
+      "- Professional and specific; no ALL CAPS, no exclamation points, no urgency bait"
+    : "- 6-10 words, direct and specific\n" +
+      "- Should reference design, the lead's context, or a specific outcome\n" +
+      "- No ALL CAPS, no exclamation points, no urgency bait, no \"Quick question\"\n" +
+      "- Do NOT include \"Application\" or \"Applying\"\n" +
+      "- If NOTES include a specific observation about their product or problem, use it";
+
+  const structureRules = isJobApplicationMode
+    ? "Paragraph 1: State who you are and why you're applying. One specific hook - a shared context, a thing you noticed, or a direct statement of intent. Not a generic opener.\n\n" +
+      "Paragraph 2: Your most relevant experience with a measurable or specific outcome. Make it feel earned, not listed.\n\n" +
+      "Paragraph 3: Why this role or team specifically. If NOTES are provided, use them here. If not, use target info to say something specific and true.\n\n" +
+      "Paragraph 4: Clear, low-friction CTA. One ask. Then close."
+    : "Paragraph 1: Open with a specific, true observation about their product, team, or space - or a direct statement of who you are and why you're reaching out to them specifically. No generic praise. If NOTES include a specific observation, use it here.\n\n" +
+      "Paragraph 2: What you do and what it has produced - one or two specific outcomes or projects relevant to their context. Make it feel earned, not listed.\n\n" +
+      "Paragraph 3: The connection - why you're reaching out to them, what you could help with, and why it's relevant now. Keep it honest and low-pressure. If NOTES have context on their current situation or needs, use it here.\n\n" +
+      "Paragraph 4: Simple, low-friction CTA. One ask - usually a short call or a look at the portfolio. No pressure, no false urgency.";
+
+  const rules = isJobApplicationMode
+    ? `- Start with: "Hi ${name},"\n` +
+      "- This is a job application, not a freelance pitch or service offer\n" +
+      "- If company is missing, do not invent one or refer to \"your company\"\n" +
+      "- Do not repeat sentence starters or structures across paragraphs"
+    : `- Start with: "Hi ${name},"\n` +
+      "- This is a freelance pitch, not a job application and not a studio pitch\n" +
+      `- Position ${senderName} as an individual designer, not an agency or team\n` +
+      "- If company is missing, do not invent one or refer to \"your company\"\n" +
+      "- Do not repeat sentence starters or structures across paragraphs\n" +
+      "- Do not mention rates, timelines, or deliverables";
+
+  const signatureBlock = isJobApplicationMode
+    ? `Best regards,\n${senderName}\nPortfolio: https://uxdimeji.com\nP.S. I've attached my resume for your reference.`
+    : `Best regards,\n${senderName}\nPortfolio: https://uxdimeji.com`;
+
+  const notesBlock = notesSection ? `\n${notesSection}` : "";
+  const intentLine = isJobApplicationMode ? "apply for jobs" : "pitch freelance design services";
+
+  const prompt = `You are a professional email writer helping a product designer ${intentLine}. Write an email that reads like a real person wrote it - specific, confident, and direct. ${isJobApplicationMode ? "Not a template, not a pitch deck." : "Not a template, not a brochure. The goal is to start a conversation, not close a deal in one email."}
+
+TARGET: ${targetLine}
+FROM: ${fromLine}
 TONE: ${tone}
-${notesSection}
+TONE GUIDANCE:
+${toneGuidance}
+${modeGuidance}${notesBlock}
 
-CRITICAL REQUIREMENTS - FAILURE TO FOLLOW MEANS REJECTION:
+VOICE AND QUALITY (this is the most important section):
+${voiceAndQuality}
 
-1. SUBJECT LINE MUST BE COMPELLING AND CLEAR:
-   - 6-12 words that immediately communicate VALUE or BENEFIT to them
-   - MUST hint at design services (product design, UI/UX, branding, etc.)
-   - NEVER vague subjects like "Quick question" or company name only
-   - Must create curiosity while being clear about your design expertise
+SUBJECT LINE:
+${subjectLineRules}
 
-2. EMAIL FORMATTING IS MANDATORY:
-   - Start with: "Hi ${name},"
-   - Each paragraph separated by TWO line breaks (\n\n)
-   - Maximum 2 sentences per paragraph
-   - NO walls of text - perfect formatting required
+EMAIL STRUCTURE - exactly 4 paragraphs, max 2 sentences each, double line break between paragraphs:
 
-3. CONTENT PRIORITIZATION:
-   - IF NOTES ARE PROVIDED: Use them as primary personalization - reference specific details from notes naturally
-   - Primary service: Product Design (UI/UX, app design, web design)
-   - Secondary services: Branding, visual identity, design systems
-   - Focus on their business needs and how design can solve their problems
-   - Tailor service mentions based on their role and company type
+${structureRules}
 
-4. EMAIL STRUCTURE (EXACTLY 4 PARAGRAPHS):
+RULES:
+${rules}
+- End exactly with:
+"${signatureBlock}"
 
-   Paragraph 1: Personal greeting + attention-grabbing opener (use notes if available)
-   
-   Paragraph 2: What you do (product design focus) and how it helps companies like theirs
-   
-   Paragraph 3: Social proof or specific benefit they'd get from design improvements
-   
-   Paragraph 4: Clear call-to-action + professional closing
-
-5. CONTENT REQUIREMENTS:
-   - Clearly position yourself as an experienced independent Product Designer (B2C, SaaS, Design Systems)
-   - Focus on how your thoughtful, intent-driven interfaces can solve their specific problems
-   - Reference specific benefits for their business type
-   - Professional but conversational tone
-   - Focus on their success through better design
-
-Your response MUST:
-- Have a subject line that clearly hints at design services (not just branding)
-- Be perfectly formatted with proper line breaks (\n\n)
-- Prioritize and reference NOTES if provided for personalization
-- Focus on your individual expertise as a Product Designer
-- End the email exactly like this (including the portfolio link and resume mention):
-"Best regards,
-${senderName}
-Portfolio: https://uxdimeji.com
-P.S. I've attached my resume for your reference."
-- Be compelling and professional
-
-Generate the email now in JSON format. The response MUST be a valid JSON object with exactly these two keys: "subject" (string) and "content" (string). Do not use nested objects:`;
+OUTPUT: Valid JSON with exactly two keys - "subject" (string) and "content" (string). No markdown, no extra keys, no explanation.`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 
@@ -178,103 +249,124 @@ export async function generateFollowUpEmail({
   tone,
   isFollowUp = false,
   previousEmailContent,
+  previousEmailSubject,
   followUpSequence = 1,
+  isJobApplication,
   senderName,
   senderCompany,
   notes,
 }: {
   name: string;
   role: string;
-  company: string;
-  tone: string;
+  company?: string | null;
+  tone: "professional" | "casual" | "direct";
   isFollowUp?: boolean;
   previousEmailContent?: string;
+  previousEmailSubject?: string;
   followUpSequence?: number;
+  isJobApplication?: boolean;
   senderName: string;
   senderCompany: string;
   notes?: string;
 }): Promise<EmailGenerationResponse> {
-  const sequenceContext = {
-    1: "This is the first follow-up. Gently remind them of your previous email and add additional value or a different angle.",
-    2: "This is the second follow-up. Be more direct but still professional. Mention that you've reached out before and provide a clear reason to respond.",
-    3: "This is the final follow-up. Be respectful but direct. Mention this is your last attempt and provide a compelling reason to connect."
-  };
-
-  const sequenceGuidance = sequenceContext[followUpSequence as keyof typeof sequenceContext] || sequenceContext[1];
-
+  const isJobApplicationMode = isJobApplication === true;
   const notesSection = notes
-    ? `\n\nIMPORTANT: The following notes contain key information about ${name.toUpperCase()} that MUST be used to personalize and tailor the follow-up email.\nNOTES:\n${notes}\n\nYou should prioritize these notes when crafting the follow-up. Reference them directly if possible, and ensure the email feels highly personalized based on this context.`
-    : '';
+    ? `NOTES (use these for new value and personalization):\n${notes}`
+    : "";
+  const toneGuidance = getToneGuidance(tone);
+  const modeGuidance = getModeGuidance(isJobApplicationMode);
+  const targetLine = formatTargetLine(name, role, company);
+  const fromLine = isJobApplicationMode
+    ? `${senderName}, Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)`
+    : `${senderName}, independent Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)`;
 
-  const prompt = `You are an expert email copywriter. Your task is to write a compelling follow-up email that gets responses.
+  const notesBlock = notesSection ? `\n${notesSection}` : "";
+  const previousSubjectLine = previousEmailSubject?.trim();
+  const previousSubjectLabel = previousSubjectLine || "(not provided)";
 
-TARGET: ${name}, ${role} at ${company} 
-FROM: ${senderName}, an expert Product Designer with 5 years of experience crafting intuitive and scalable digital products (B2C, SaaS, Design Systems)
+  const subjectLineRules = isJobApplicationMode
+    ? `- Follow-up subjects are not new marketing headlines; they are continuations\n` +
+      `- Use \"Re: ${previousSubjectLine || "[previous subject line]"}\" OR a quiet, direct variation\n` +
+      "- Do NOT write urgency bait: no \"Last Chance\", \"Still Waiting\", \"Don't Miss This\"\n" +
+      "- Do NOT try to make the subject compelling; keep it calm and specific\n" +
+      "- If the previous subject is not available, include \"Application\" or \"Applying\" and the role if available\n" +
+      "- Good examples: \"Re: Product Designer Application\", \"Following Up - Product Designer Application\", \"Re: Applying for the UX Designer Role\"\n" +
+      "- Bad examples: \"Last Chance to Review My Application\", \"One More Thing Before You Decide\", \"Still Interested in Joining Your Team\""
+    : `- Use \"Re: ${previousSubjectLine || "[previous subject line]"}\" OR a calm, specific variation\n` +
+      "- No urgency bait: no \"Still Interested\", \"Last Chance\", \"One More Thing\"\n" +
+      "- Do not turn the subject into a marketing headline\n" +
+      "- Good examples: \"Re: Design Partnership Idea\", \"Following Up - Product Design\"\n" +
+      "- Bad examples: \"Don't Miss This\", \"Final Follow-Up Before I Move On\"";
+
+  const voiceAndQuality = isJobApplicationMode
+    ? "- Do not reuse any phrasing, structure, or sentences from the previous email\n" +
+      "- No openers: \"Just following up\", \"I know you're busy\", \"Hope this finds you well\", \"Circling back\"\n" +
+      "- Every paragraph must add something the previous email did not say\n" +
+      "- Be direct; state the reason for writing in the first sentence without apology or filler\n" +
+      "- Specific always beats general; cite a thing, a project, an outcome, or a detail"
+    : "- Do not reuse any phrasing, structure, or sentences from the previous email\n" +
+      "- No openers: \"Just following up\", \"Circling back\", \"I know you're busy\", \"Hope this finds you\"\n" +
+      "- Every paragraph must add something new - a different angle, a specific piece of work, a relevant observation\n" +
+      "- Be direct; state the reason for writing in the first sentence without apology or filler\n" +
+      "- Direct and specific always beats warm and vague";
+
+  const sequenceValueGuidance = isJobApplicationMode
+    ? followUpSequence === 1
+      ? "- Follow-up #1: A specific piece of work, outcome, or context not mentioned in the first email"
+      : followUpSequence === 2
+        ? "- Follow-up #2: A sharper angle on your fit - something you've thought about since sending, a relevant observation about their product or team"
+        : "- Follow-up #3: Keep it short and honest - you're still interested, one final reason why, and you'll leave it there"
+    : followUpSequence === 1
+      ? "- Follow-up #1: A specific project, outcome, or work sample relevant to their context. Something the first email did not mention"
+      : followUpSequence === 2
+        ? "- Follow-up #2: A sharper, more specific angle - a real observation about their product, a design problem their industry typically faces, something that shows you looked at their work"
+        : "- Follow-up #3: Short and honest - you're still available, one final specific reason why a conversation could help, and you'll leave it there";
+
+  const rules = isJobApplicationMode
+    ? `- Start with: "Hi ${name},"\n` +
+      "- Job application follow-up, not a freelance pitch\n" +
+      "- If company name is missing, do not invent one\n"
+    : `- Start with: "Hi ${name},"\n` +
+      "- Freelance pitch follow-up, not a job application\n" +
+      "- If company name is missing, do not invent one\n";
+
+  const signatureBlock = isJobApplicationMode
+    ? `Best regards,\n${senderName}\nPortfolio: https://uxdimeji.com\nP.S. I've attached my resume for your reference.`
+    : `Best regards,\n${senderName}\nPortfolio: https://uxdimeji.com`;
+
+  const prompt = `You are a professional email writer. Write a follow-up to a ${isJobApplicationMode ? "job application email" : "freelance design pitch email"}. This should read like a real person following up - calm, specific, and direct. Not a drip campaign. Not urgency marketing.
+
+TARGET: ${targetLine}
+FROM: ${fromLine}
 TONE: ${tone}
-FOLLOW-UP #: ${followUpSequence}
-PREVIOUS EMAIL: ${previousEmailContent}
-${notesSection}
+TONE GUIDANCE:
+${toneGuidance}
+${modeGuidance}FOLLOW-UP #: ${followUpSequence}
+PREVIOUS SUBJECT: ${previousSubjectLabel}
+PREVIOUS EMAIL CONTENT: ${previousEmailContent || ""}
+${notesBlock}
 
-CRITICAL REQUIREMENTS - FOLLOW EXACTLY OR EMAIL WILL BE REJECTED:
+SUBJECT LINE - CRITICAL:
+${subjectLineRules}
 
-1. SUBJECT LINE REQUIREMENTS:
-   - Must be different from previous email subject
-   - 6-12 words that create urgency or curiosity
-   - Should reference follow-up context and design services
-   - Create compelling reason to open this follow-up
+VOICE AND QUALITY:
+${voiceAndQuality}
 
-2. MANDATORY EMAIL FORMATTING:
-   - Start with: "Hi ${name},"
-   - Each paragraph separated by TWO line breaks (\n\n)
-   - Maximum 2 sentences per paragraph
-   - NO walls of text - perfect formatting required
+STRUCTURE - 3 paragraphs, max 2 sentences each, double line break between:
 
-3. CONTENT PRIORITIZATION:
-   - IF NOTES ARE PROVIDED: Use them as primary personalization source
-   - Focus on product design services (UI/UX, app design, web design)
-   - Mention branding only if relevant or in notes
-   - Reference specific details from notes naturally if available
+Paragraph 1: Reference that you sent the application or pitch - one sentence, direct. Then pivot immediately to something new. Do not be apologetic or acknowledge their workload.
 
-4. FOLLOW-UP STRUCTURE (EXACTLY 3-4 PARAGRAPHS):
+Paragraph 2: NEW value only. Never repeat the previous email.
+${sequenceValueGuidance}
+If NOTES are provided, use them here as the new value.
 
-   Paragraph 1: Reference previous email + acknowledge they're busy
-   
-   Paragraph 2: NEW value or angle (never repeat previous content) - use notes if available
-   
-   Paragraph 3: ${followUpSequence === 1 ? 'Social proof or specific benefit' : followUpSequence === 2 ? 'Urgency or final opportunity' : 'Graceful final attempt with door left open'}
-   
-   Paragraph 4: Clear call-to-action + professional closing
+Paragraph 3: CTA and close. One clear ask, no pressure. For follow-up #3, acknowledge this is your last touch.
 
-5. FOLLOW-UP #${followUpSequence} STRATEGY:
-   ${followUpSequence === 1 ? 
-     `- Show understanding they're busy
-      - Add fresh perspective on design benefits
-      - Reference previous email briefly
-      - Create new reason to respond`
-     : followUpSequence === 2 ?
-     `- Acknowledge second attempt professionally
-      - Provide compelling design case study or result
-      - Create appropriate urgency without pressure
-      - Make it easy to say yes or no`
-     : `- Final attempt with complete professionalism
-      - Offer best design value upfront
-      - Make clear this is last email
-      - Leave door open respectfully`}
+RULES:
+${rules}- End exactly with:
+"${signatureBlock}"
 
-Your response MUST:
-- Have a compelling subject that's different from previous email
-- Be perfectly formatted with proper line breaks (\n\n)
-- Prioritize and reference NOTES if provided for personalization
-- Position yourself as an independent expert Product Designer
-- Reference previous email appropriately for sequence #${followUpSequence}
-- End the email exactly like this (including the portfolio link and resume mention):
-"Best regards,
-${senderName}
-Portfolio: https://uxdimeji.com
-P.S. I've attached my resume for your reference."
-- Add NEW value, never repeat previous content
-
-Generate the follow-up email now in JSON format. The response MUST be a valid JSON object with exactly these two keys: "subject" (string) and "content" (string). Do not use nested objects:`;
+OUTPUT: Valid JSON with exactly two keys - "subject" (string) and "content" (string). No markdown, no extra keys, no explanation.`;
 
   console.log("[Gemini Prompt]", prompt); // Debug log for prompt
 

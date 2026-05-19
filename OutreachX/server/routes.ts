@@ -198,7 +198,11 @@ export async function registerRoutes(app: Express): Promise<Server> {
     try {
       const userId = req.user.id;
       const validatedData = insertLeadSchema.parse(req.body);
-      const lead = await storage.createLead({ ...validatedData, createdBy: userId });
+      const lead = await storage.createLead({
+        ...validatedData,
+        company: validatedData.company ?? "",
+        createdBy: userId,
+      });
       res.status(201).json(lead);
     } catch (error) {
       console.error("Error creating lead:", error);
@@ -497,6 +501,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
         company: lead.company,
         tone: tone,
         isFollowUp: true,
+        previousEmailSubject: campaign.subject,
         previousEmailContent: campaign.content,
         followUpSequence: sequence,
         senderName,
@@ -627,7 +632,7 @@ export async function registerRoutes(app: Express): Promise<Server> {
   // AI email generation routes
   app.post('/api/ai/generate-email', requireAuth, async (req: any, res) => {
     try {
-      const { leadId, tone, isFollowUp, parentEmailId } = req.body;
+      const { leadId, tone, isFollowUp, parentEmailId, isJobApplication } = req.body;
       const currentUser = req.user;
       
       const lead = await storage.getLeadById(leadId);
@@ -639,16 +644,21 @@ export async function registerRoutes(app: Express): Promise<Server> {
       const senderName = "Oladimeji Abubakar";
       const senderCompany = "Oladimeji Abubakar - Product Designer";
 
+      const roleFallback = isJobApplication ? "Hiring Manager" : "Decision Maker";
+      const leadRole = lead.role || roleFallback;
+
       let generatedEmail;
       if (isFollowUp && parentEmailId) {
         const parentEmail = await storage.getEmailCampaignById(parentEmailId);
         generatedEmail = await generateFollowUpEmail({
           name: lead.name,
-          role: lead.role || 'Decision Maker',
+          role: leadRole,
           company: lead.company,
           tone,
           isFollowUp: true,
+          previousEmailSubject: parentEmail?.subject || undefined,
           previousEmailContent: parentEmail?.content || '',
+          isJobApplication: isJobApplication === true,
           senderName,
           senderCompany,
           notes: lead.notes || undefined
@@ -656,9 +666,10 @@ export async function registerRoutes(app: Express): Promise<Server> {
       } else {
         generatedEmail = await generateColdEmail({
           name: lead.name,
-          role: lead.role || 'Decision Maker',
+          role: leadRole,
           company: lead.company,
           tone,
+          isJobApplication: isJobApplication === true,
           senderName,
           senderCompany,
           notes: lead.notes || undefined

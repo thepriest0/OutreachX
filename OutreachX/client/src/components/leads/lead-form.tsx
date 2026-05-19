@@ -38,7 +38,7 @@ interface LeadFormProps {
 const leadFormSchema = insertLeadSchema.extend({
   name: z.string().min(1, "Name is required"),
   email: z.string().email("Please enter a valid email address"),
-  company: z.string().min(1, "Company is required"),
+  company: z.string().optional(),
   role: z.string().optional(),
   notes: z.string().optional(),
   status: z.enum(["new", "contacted", "replied", "follow_up_scheduled", "qualified", "closed"]).optional(),
@@ -191,9 +191,9 @@ export default function LeadForm({ lead, onClose, onSuccess }: LeadFormProps) {
                   name="company"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Company *</FormLabel>
+                      <FormLabel>Company</FormLabel>
                       <FormControl>
-                        <Input placeholder="Example Corp" {...field} className="text-sm" />
+                        <Input placeholder="Company (optional)" {...field} className="text-sm" />
                       </FormControl>
                       <FormMessage />
                     </FormItem>

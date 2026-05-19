@@ -42,6 +42,7 @@ export default function FollowUpScheduler({
   originalTone,
   onSuccess 
 }: FollowUpSchedulerProps) {
+  const leadCompanyText = leadCompany?.trim();
   const [schedules, setSchedules] = useState<FollowUpSchedule[]>([
     {
       sequence: 1,
@@ -265,7 +266,7 @@ export default function FollowUpScheduler({
             Campaign Manager
           </CardTitle>
           <p className="text-sm text-muted-foreground mt-1">
-            Configure up to 3 automated follow-ups for {leadName} at {leadCompany}
+            Configure up to 3 automated follow-ups for {leadName}{leadCompanyText ? ` at ${leadCompanyText}` : ""}
           </p>
         </div>
       </CardHeader>

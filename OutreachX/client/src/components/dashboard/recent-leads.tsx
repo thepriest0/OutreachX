@@ -115,7 +115,7 @@ function LeadRow({ lead }: { lead: Lead }) {
             <div className="space-y-1">
               <div className="text-xs text-muted-foreground truncate">{lead.email}</div>
               <div className="text-xs text-muted-foreground">
-                <span className="truncate">{lead.company}</span>
+                <span className="truncate">{lead.company || "Not provided"}</span>
                 {lead.role && (
                   <span className="hidden sm:inline"> • {lead.role}</span>
                 )}

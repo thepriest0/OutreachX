@@ -49,6 +49,7 @@ export default function AIEmailGenerator({
   const [leadPickerOpen, setLeadPickerOpen] = useState(false);
   const [step, setStep] = useState<"configure" | "review">("configure");
   const [includeResume, setIncludeResume] = useState(true);
+  const [isJobApplication, setIsJobApplication] = useState(false);
 
   // Fetch leads if not provided
   const { data: fetchedLeads } = useQuery<Lead[]>({
@@ -68,6 +69,7 @@ export default function AIEmailGenerator({
       const res = await apiRequest("POST", "/api/ai/generate-email", {
         leadId: selectedLead.id,
         tone,
+        isJobApplication,
       });
       return res.json();
     },
@@ -172,7 +174,7 @@ export default function AIEmailGenerator({
           </DialogTitle>
           <DialogDescription>
             {step === "configure"
-              ? "Select a lead and tone to generate a personalised cold email."
+              ? "Select a lead and tone to generate a personalized email."
               : "Review and edit the generated email before saving."}
           </DialogDescription>
         </DialogHeader>
@@ -194,7 +196,7 @@ export default function AIEmailGenerator({
                       {selectedLead ? (
                         <span className="flex items-center gap-2">
                           <User className="h-4 w-4 text-muted-foreground" />
-                          {selectedLead.name} — {selectedLead.company}
+                          {selectedLead.name} — {selectedLead.company?.trim() ? selectedLead.company : "Not provided"}
                         </span>
                       ) : (
                         <span className="text-muted-foreground">Choose a lead…</span>
@@ -210,7 +212,7 @@ export default function AIEmailGenerator({
                         {availableLeads.map((lead) => (
                           <CommandItem
                             key={lead.id}
-                            value={`${lead.name} ${lead.company} ${lead.email}`}
+                            value={`${lead.name} ${lead.company || ""} ${lead.email}`}
                             onSelect={() => {
                               setSelectedLead(lead);
                               setLeadPickerOpen(false);
@@ -224,7 +226,7 @@ export default function AIEmailGenerator({
                             <div>
                               <p className="font-medium text-sm">{lead.name}</p>
                               <p className="text-xs text-muted-foreground">
-                                {lead.company} · {lead.email}
+                                {lead.company ? `${lead.company} · ${lead.email}` : lead.email}
                               </p>
                             </div>
                           </CommandItem>
@@ -253,7 +255,13 @@ export default function AIEmailGenerator({
                     <div className="min-w-0">
                       <p className="font-semibold text-foreground">{selectedLead.name}</p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
-                        <Building className="h-3 w-3" /> {selectedLead.company}
+                        {selectedLead.company?.trim() ? (
+                          <>
+                            <Building className="h-3 w-3" /> {selectedLead.company}
+                          </>
+                        ) : (
+                          <span>Company not provided</span>
+                        )}
                         {selectedLead.role && ` · ${selectedLead.role}`}
                       </p>
                       <p className="text-sm text-muted-foreground flex items-center gap-1">
@@ -295,6 +303,25 @@ export default function AIEmailGenerator({
                     <p className="text-xs text-muted-foreground mt-0.5">{toneLabels[t].desc}</p>
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div className="flex items-start space-x-2">
+              <Checkbox
+                id="job-application-mode"
+                checked={isJobApplication}
+                onCheckedChange={(checked) => setIsJobApplication(!!checked)}
+              />
+              <div className="grid gap-1.5 leading-none">
+                <label
+                  htmlFor="job-application-mode"
+                  className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70"
+                >
+                  Job application mode
+                </label>
+                <p className="text-xs text-muted-foreground">
+                  Tailor the email as a formal job application instead of a service pitch.
+                </p>
               </div>
             </div>
           </div>
